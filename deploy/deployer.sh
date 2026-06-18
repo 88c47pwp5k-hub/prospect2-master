@@ -43,7 +43,8 @@ cp ../dashboard/import_leads_v4.py "$BASE/dashboard/"
 cp ../dashboard/scanner_soumissions.py "$BASE/dashboard/"
 cp ../resume-matin/resume_matin.py "$BASE/resume-matin/"
 cp ../monitoring/test_sante_systeme.sh "$BASE/monitoring/"
-cp -r ../deploy/launchagents "$BASE/deploy/"
+mkdir -p "$BASE/deploy/launchagents"
+cp ../deploy/launchagents/*.plist "$BASE/deploy/launchagents/"
 
 # Remplacer les placeholders dans les plist
 for plist in "$BASE/deploy/launchagents/"*.plist; do
