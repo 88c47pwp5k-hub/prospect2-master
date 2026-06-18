@@ -36,5 +36,27 @@ sed -i '' "s/7373/$DASHBOARD_PORT/g" "$BASE/config.json"
 
 echo "✅ Structure créée dans $BASE"
 echo "✅ config.json personnalisé pour $NOM_CLIENT"
+echo "--- Copie des scripts ---"
+cp ../dashboard/dashboard_server.py "$BASE/dashboard/"
+cp ../dashboard/generer_dashboard.py "$BASE/dashboard/"
+cp ../dashboard/import_leads_v4.py "$BASE/dashboard/"
+cp ../dashboard/scanner_soumissions.py "$BASE/dashboard/"
+cp ../resume-matin/resume_matin.py "$BASE/resume-matin/"
+cp ../monitoring/test_sante_systeme.sh "$BASE/monitoring/"
+cp -r ../deploy/launchagents "$BASE/deploy/"
+
+# Remplacer les placeholders dans les plist
+for plist in "$BASE/deploy/launchagents/"*.plist; do
+    sed -i '' "s/NOM_CLIENT/$NOM_CLIENT/g" "$plist"
+    sed -i '' "s|CHEMIN_BASE|/Users/$NOM_USER|g" "$plist"
+done
+
+echo "✅ Scripts copiés"
+echo "✅ LaunchAgents configurés"
 echo ""
-echo "Prochaine étape : copier les scripts génériques dans $BASE/"
+echo "=== Déploiement terminé ==="
+echo "Prochaines étapes manuelles :"
+echo "1. Ajouter le logo dans $BASE/assets/logo.png"
+echo "2. Configurer Gmail App Password dans config.json"
+echo "3. Configurer la clé Anthropic dans config.json"
+echo "4. Lancer : bash $BASE/monitoring/test_sante_systeme.sh"
