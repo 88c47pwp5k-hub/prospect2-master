@@ -17,7 +17,7 @@ DASHBOARD_PORT=${DASHBOARD_PORT:-7373}
 echo ""
 echo "--- Création de la structure ---"
 
-BASE="/Users/$NOM_USER/prospect2-client"
+BASE="$HOME/prospect2-client"
 mkdir -p "$BASE/dashboard"
 mkdir -p "$BASE/resume-matin"
 mkdir -p "$BASE/monitoring"
@@ -49,7 +49,7 @@ cp ../deploy/launchagents/*.plist "$BASE/deploy/launchagents/"
 # Remplacer les placeholders dans les plist
 for plist in "$BASE/deploy/launchagents/"*.plist; do
     sed -i '' "s/NOM_CLIENT/$NOM_CLIENT/g" "$plist"
-    sed -i '' "s|CHEMIN_BASE|/Users/$NOM_USER|g" "$plist"
+    sed -i '' "s|CHEMIN_BASE|$HOME|g" "$plist"
 done
 
 echo "✅ Scripts copiés"
