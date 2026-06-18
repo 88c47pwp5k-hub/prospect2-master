@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.prospect2.NOM_CLIENT.dashboard</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>CHEMIN_BASE/prospect2-client/dashboard/dashboard_server.py</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>CHEMIN_BASE/Library/Logs/prospect2_dashboard.log</string>
+    <key>StandardErrorPath</key>
+    <string>CHEMIN_BASE/Library/Logs/prospect2_dashboard_error.log</string>
+</dict>
+</plist>

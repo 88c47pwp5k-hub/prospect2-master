@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.prospect2.NOM_CLIENT.resume-matin</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>CHEMIN_BASE/prospect2-client/resume-matin/resume_matin.py</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>3600</integer>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>CHEMIN_BASE/Library/Logs/prospect2_resume_matin.log</string>
+    <key>StandardErrorPath</key>
+    <string>CHEMIN_BASE/Library/Logs/prospect2_resume_matin_error.log</string>
+</dict>
+</plist>

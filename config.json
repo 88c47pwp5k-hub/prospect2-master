@@ -1,0 +1,46 @@
+{
+  "client": {
+    "nom": "NOM_CLIENT",
+    "secteur": "SECTEUR_ACTIVITE",
+    "logo": "assets/logo.png",
+    "couleur_primaire": "#000000",
+    "couleur_secondaire": "#FFFFFF"
+  },
+  "emails": {
+    "envoi_gmail": "GMAIL_CLIENT@gmail.com",
+    "reception": "info@DOMAINE_CLIENT.ca",
+    "imap_host": "IMAP_HOST",
+    "imap_port": 993,
+    "imap_password": "MOT_DE_PASSE_IMAP",
+    "smtp_host": "SMTP_HOST",
+    "smtp_port": 465,
+    "gmail_app_password": "MOT_DE_PASSE_APP_GMAIL",
+    "anthropic_key": "CLE_ANTHROPIC"
+  },
+  "serveurs": {
+    "dashboard_port": 7373,
+    "production_port": 5757
+  },
+  "chemins": {
+    "base": "/Users/NOM_USER",
+    "dashboard": "Library/ClientDashboard",
+    "logs": "Library/Logs"
+  },
+  "prospect_admin": {
+    "email": "bdprospect2.0@gmail.com"
+  },
+  "systeme": {
+    "os": "macos",
+    "python": "python3",
+    "scheduler": "launchd"
+  },
+  "microsoft": {
+    "client_id": "MS_CLIENT_ID"
+  },
+  "modules": {
+    "dashboard": true,
+    "resume_matin": true,
+    "monitoring": true,
+    "tournee": false
+  }
+}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.prospect2.NOM_CLIENT.monitoring</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>CHEMIN_BASE/prospect2-client/monitoring/test_sante_systeme.sh</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>86400</integer>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>CHEMIN_BASE/Library/Logs/prospect2_monitoring.log</string>
+    <key>StandardErrorPath</key>
+    <string>CHEMIN_BASE/Library/Logs/prospect2_monitoring_error.log</string>
+</dict>
+</plist>
