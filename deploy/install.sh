@@ -2,13 +2,11 @@
 echo "=== Prospect 2.0 — Installation ==="
 echo ""
 
-# Vérifie si git est installé
 if ! command -v git &> /dev/null; then
     echo "❌ Git n'est pas installé. Installe-le sur https://git-scm.com"
     exit 1
 fi
 
-# Vérifie si python3 est installé
 if ! command -v python3 &> /dev/null; then
     echo "❌ Python3 n'est pas installé. Installe-le sur https://python.org"
     exit 1
@@ -17,7 +15,6 @@ fi
 echo "✅ Prérequis OK"
 echo ""
 
-# Télécharge le master depuis GitHub
 MASTER_DIR="$HOME/prospect2-master"
 
 if [ -d "$MASTER_DIR" ]; then
@@ -30,7 +27,5 @@ fi
 
 echo "✅ Master téléchargé"
 echo ""
-
-# Lance le déploiement
-cd "$MASTER_DIR/deploy"
-bash deployer.sh
+echo "Lance maintenant :"
+echo "  bash $HOME/prospect2-master/deploy/deployer.sh"
