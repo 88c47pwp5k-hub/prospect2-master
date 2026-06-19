@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospect 2.0 — Guide processus de vente</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #E8EDEA; padding: 24px; }
+  h1 { font-size: 22px; font-weight: 700; color: #1B6B52; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6B7B74; margin-bottom: 20px; }
+  .phase { background: #fff; border: 1px solid #D8E5DF; border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+  .phase-header { padding: 14px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; }
+  .phase-header:hover { background: #F0F4F2; }
+  .phase-num { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+  .phase-title { flex: 1; }
+  .phase-title h3 { font-size: 15px; font-weight: 600; color: #1A1A1A; }
+  .phase-title p { font-size: 12px; color: #6B7B74; margin-top: 2px; }
+  .phase-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+  .chevron { font-size: 18px; color: #6B7B74; transition: transform .2s; }
+  .chevron.open { transform: rotate(180deg); }
+  .phase-body { border-top: 1px solid #D8E5DF; padding: 14px 18px; display: none; }
+  .phase-body.open { display: block; }
+  .step { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #EBF2EE; }
+  .step:last-child { border-bottom: none; }
+  .step-ico { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; margin-top: 1px; }
+  .step-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 4px; }
+  .step-desc { font-size: 12px; color: #6B7B74; line-height: 1.55; }
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tool-link { display: inline-flex; align-items: center; gap: 5px; background: #F0F4F2; border: 1px solid #C8D8D0; border-radius: 5px; font-size: 11px; color: #1B6B52; padding: 4px 10px; text-decoration: none; font-weight: 500; }
+  .tool-link:hover { background: #E1F5EE; border-color: #1B6B52; }
+  .p1 .phase-num { background: #E1F5EE; color: #085041; }
+  .p2 .phase-num { background: #E6F1FB; color: #0C447C; }
+  .p3 .phase-num { background: #FAEEDA; color: #633806; }
+  .p4 .phase-num { background: #EAF3DE; color: #27500A; }
+  .p5 .phase-num { background: #EEEDFE; color: #3C3489; }
+  .p1 .phase-badge { background: #E1F5EE; color: #085041; }
+  .p2 .phase-badge { background: #E6F1FB; color: #0C447C; }
+  .p3 .phase-badge { background: #FAEEDA; color: #633806; }
+  .p4 .phase-badge { background: #EAF3DE; color: #27500A; }
+  .p5 .phase-badge { background: #EEEDFE; color: #3C3489; }
+  .p1 .step-ico { background: #E1F5EE; color: #0F6E56; }
+  .p2 .step-ico { background: #E6F1FB; color: #185FA5; }
+  .p3 .step-ico { background: #FAEEDA; color: #854F0B; }
+  .p4 .step-ico { background: #EAF3DE; color: #3B6D11; }
+  .p5 .step-ico { background: #EEEDFE; color: #534AB7; }
+</style>
+</head>
+<body>
+
+<h1>Prospect 2.0 — Guide processus de vente</h1>
+<p class="subtitle">Du premier contact à la signature et au suivi mensuel · Benoît Dupuis</p>
+
+<div class="phase p1">
+  <div class="phase-header" onclick="toggle(this)">
+    <div class="phase-num">1</div>
+    <div class="phase-title"><h3>Prospection & premier contact</h3><p>Identifier le prospect et déclencher le processus</p></div>
+    <span class="phase-badge">Jour 1</span>
+    <span class="chevron open">&#8964;</span>
+  </div>
+  <div class="phase-body open">
+    <div class="step">
+      <div class="step-ico">&#x1F465;</div>
+      <div>
+        <div class="step-title">Identifier un prospect PME saisonnière</div>
+        <div class="step-desc">Paysagement, piscines, toiture, climatisation — propriétaire qui gère encore tout à la main. Source : référence, Facebook, LinkedIn, réseau.</div>
+        <div class="tools">
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/prospects_pipeline.html">&#x1F4CA; Pipeline prospects</a>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-ico">&#x1F4E7;</div>
+      <div>
+        <div class="step-title">Premier contact — courriel ou appel</div>
+        <div class="step-desc">"Je travaille avec des PME saisonnières pour automatiser leur gestion. 15 minutes cette semaine ?"</div>
+        <div class="tools">
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/invitation_courriel.html">&#x1F4E7; Template courriel</a>
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/formulaire_invitation.html">&#x1F4DD; Formulaire invitation</a>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-ico">&#x1F4C5;</div>
+      <div>
+        <div class="step-title">Fixer une rencontre découverte</div>
+        <div class="step-desc">Zoom ou en personne. Objectif : comprendre ses douleurs avant d'envoyer le questionnaire.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="phase p2">
+  <div class="phase-header" onclick="toggle(this)">
+    <div class="phase-num">2</div>
+    <div class="phase-title"><h3>Questionnaire diagnostic</h3><p>Comprendre la situation réelle du client</p></div>
+    <span class="phase-badge">Jour 2–5</span>
+    <span class="chevron">&#8964;</span>
+  </div>
+  <div class="phase-body">
+    <div class="step">
+      <div class="step-ico">&#x1F4E4;</div>
+      <div>
+        <div class="step-title">Envoyer le lien Google Forms</div>
+        <div class="step-desc">48 questions, 7 sections. Couvre : outils actuels, volume de leads, processus soumissions, gestion du temps, budget.</div>
+        <div class="tools">
+          <a class="tool-link" href="https://docs.google.com/forms/d/1cMJLbieugSF8QbpS9TU8Tl47kranoYoQarQBeR8w91Y" target="_blank">&#x1F517; Google Forms — diagnostic</a>
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/invitation_diagnostic.html">&#x1F4C4; Page invitation</a>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-ico">&#x1F4CA;</div>
+      <div>
+        <div class="step-title">Analyser les réponses & préparer le rapport</div>
+        <div class="step-desc">Identifier les 3 problèmes principaux. Calculer le temps perdu et la valeur potentielle récupérée.</div>
+        <div class="tools">
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/rapport_diagnostic_TEST.pdf">&#x1F4C8; Rapport diagnostic (exemple)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="phase p3">
+  <div class="phase-header" onclick="toggle(this)">
+    <div class="phase-num">3</div>
+    <div class="phase-title"><h3>Démo & présentation</h3><p>Montrer concrètement la valeur des outils</p></div>
+    <span class="phase-badge">Jour 5–10</span>
+    <span class="chevron">&#8964;</span>
+  </div>
+  <div class="phase-body">
+    <div class="step">
+      <div class="step-ico">&#x1F4BB;</div>
+      <div>
+        <div class="step-title">Ouvrir la démo interactive en rencontre</div>
+        <div class="step-desc">Navigue dans tous les onglets. Adapte le discours aux problèmes identifiés dans le diagnostic.</div>
+        <div class="tools">
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/demo_beausoleil.html">&#x1F4CA; Démo Paysagement Beausoleil</a>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-ico">&#x1F4C4;</div>
+      <div>
+        <div class="step-title">Présenter le rapport diagnostic personnalisé</div>
+        <div class="step-desc">PDF avec ses chiffres : temps perdu, leads manqués, valeur récupérable. Lui remettre une copie.</div>
+        <div class="tools">
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/rapport_diagnostic_TEST.pdf">&#x1F4C8; Rapport diagnostic PDF</a>
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/plan_service.html">&#x1F4CB; Plan de service</a>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-ico">&#x2B50;</div>
+      <div>
+        <div class="step-title">Recommander le forfait adapté</div>
+        <div class="step-desc">Essentiel 797 $/mois · Croissance 1 497 $/mois · Partenaire 2 497 $/mois</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="phase p4">
+  <div class="phase-header" onclick="toggle(this)">
+    <div class="phase-num">4</div>
+    <div class="phase-title"><h3>Signature du contrat</h3><p>Formaliser l'entente et collecter les infos d'implantation</p></div>
+    <span class="phase-badge">Jour 10–14</span>
+    <span class="chevron">&#8964;</span>
+  </div>
+  <div class="phase-body">
+    <div class="step">
+      <div class="step-ico">&#x1F4DD;</div>
+      <div>
+        <div class="step-title">Remplir le contrat ensemble et signer</div>
+        <div class="step-desc">Ouvre dans Chrome, remplis les champs en direct, imprime → Enregistrer en PDF → deux copies signées.</div>
+        <div class="tools">
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/Contrat_Prospect2_Final.html">&#x1F4C4; Contrat de services</a>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-ico">&#x1F4B3;</div>
+      <div>
+        <div class="step-title">Collecter les frais de mise en place</div>
+        <div class="step-desc">Payables à la signature · Essentiel 1 500 $ · Croissance 2 500 $ · Partenaire 3 500 $</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="phase p5">
+  <div class="phase-header" onclick="toggle(this)">
+    <div class="phase-num">5</div>
+    <div class="phase-title"><h3>Implantation & suivi mensuel</h3><p>Déployer les outils et rendre des comptes chaque mois</p></div>
+    <span class="phase-badge">Mois 1–3+</span>
+    <span class="chevron">&#8964;</span>
+  </div>
+  <div class="phase-body">
+    <div class="step">
+      <div class="step-ico">&#x2699;</div>
+      <div>
+        <div class="step-title">Semaine 1 — Déploiement</div>
+        <div class="step-desc">Connexion TeamViewer. Remplir config.json, lancer install.sh puis deployer.sh. Valider les 16 checks.</div>
+        <div class="tools">
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2-master/deployer.sh">&#x1F4BB; deployer.sh</a>
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2-master/test_sante_systeme.sh">&#x1F6E1; test_sante_systeme.sh</a>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-ico">&#x1F4CA;</div>
+      <div>
+        <div class="step-title">Chaque mois — Rapport de performance</div>
+        <div class="step-desc">Zoom 1h. Leads générés, soumissions suivies, temps économisé, alertes résolues. PDF de bilan mensuel.</div>
+        <div class="tools">
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/bilan_outils.html">&#x1F4C8; Bilan mensuel</a>
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/retention_clients.html">&#x1F49A; Rétention clients</a>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-ico">&#x1F504;</div>
+      <div>
+        <div class="step-title">Mois 3 — Renouvellement ou upgrade</div>
+        <div class="step-desc">Alerte automatique 30 jours avant. Proposer upgrade si le client a grandi. Renouvellement automatique sinon.</div>
+        <div class="tools">
+          <a class="tool-link" href="file:///Users/benoitdupuis/prospect2/plan_action_template.html">&#x1F4CB; Plan d'action</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggle(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+</script>
+</body>
+</html>
