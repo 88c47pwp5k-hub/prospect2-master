@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospect 2.0 — Démo Paysagement Beausoleil</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #E8EDEA; }
+  .demo-wrap { max-width: 960px; margin: 0 auto; background: #F0F4F2; min-height: 100vh; }
+  .top-bar { background: #1B6B52; color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .top-bar .logo { font-size: 14px; font-weight: 600; }
+  .top-bar .client { font-size: 11px; opacity: .7; margin-top: 2px; }
+  .top-bar .badge { background: rgba(255,255,255,.2); font-size: 11px; padding: 4px 12px; border-radius: 20px; }
+  .nav { background: #fff; border-bottom: 1px solid #D8E5DF; display: flex; gap: 2px; padding: 0 18px; overflow-x: auto; }
+  .nav-btn { background: none; border: none; padding: 11px 14px; font-size: 12px; color: #6B7B74; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: 6px; white-space: nowrap; font-family: inherit; }
+  .nav-btn.active { color: #1B6B52; border-bottom-color: #1B6B52; font-weight: 600; }
+  .nav-btn:hover:not(.active) { color: #1A1A1A; background: #F0F4F2; }
+  .panel { display: none; padding: 18px 24px; }
+  .panel.active { display: block; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: #fff; border: 1px solid #D8E5DF; border-radius: 8px; padding: 12px 14px; }
+  .kpi-label { font-size: 11px; color: #6B7B74; margin-bottom: 4px; }
+  .kpi-val { font-size: 22px; font-weight: 600; color: #1A1A1A; }
+  .kpi-sub { font-size: 10px; color: #2E8B6E; margin-top: 3px; }
+  .kpi-sub.warn { color: #C8922A; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { background: #fff; border: 1px solid #D8E5DF; border-radius: 8px; padding: 12px 14px; }
+  .sec-title { font-size: 10px; font-weight: 700; color: #6B7B74; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .sec-title .bc { background: #1B6B52; color: #fff; font-size: 9px; padding: 1px 7px; border-radius: 20px; }
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #EBF2EE; font-size: 12px; }
+  .row:last-child { border-bottom: none; }
+  .row-name { font-weight: 600; color: #1A1A1A; }
+  .row-sub { font-size: 10px; color: #6B7B74; margin-top: 1px; }
+  .pill { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; flex-shrink: 0; }
+  .p-new { background: #E1F5EE; color: #0F6E56; }
+  .p-contact { background: #E6F1FB; color: #185FA5; }
+  .p-rdv { background: #FAEEDA; color: #854F0B; }
+  .p-ok { background: #EAF3DE; color: #3B6D11; }
+  .p-att { background: #FCEBEB; color: #A32D2D; }
+  .p-todo { background: #EEEDFE; color: #534AB7; }
+  .soum-grid { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid #EBF2EE; font-size: 12px; }
+  .soum-grid:last-child { border-bottom: none; }
+  .alerte-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #EBF2EE; }
+  .alerte-row:last-child { border-bottom: none; }
+  .aico { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
+  .aico.err { background: #FCEBEB; color: #A32D2D; }
+  .aico.warn { background: #FAEEDA; color: #854F0B; }
+  .aico.ok { background: #EAF3DE; color: #3B6D11; }
+  .atxt strong { font-weight: 600; color: #1A1A1A; font-size: 12px; display: block; margin-bottom: 2px; }
+  .atxt span { color: #6B7B74; font-size: 11px; }
+  .map-ph { background: #E1F5EE; border-radius: 8px; height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #0F6E56; border: 1px solid #9FE1CB; margin-bottom: 12px; }
+  .map-ph .ico { font-size: 36px; }
+  .map-ph p { font-size: 13px; font-weight: 600; }
+  .map-ph span { font-size: 11px; }
+  .stop-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #EBF2EE; font-size: 12px; }
+  .stop-row:last-child { border-bottom: none; }
+  .stop-num { width: 20px; height: 20px; border-radius: 50%; background: #1B6B52; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .rsec { border-bottom: 1px solid #EBF2EE; padding: 11px 0; }
+  .rsec:last-child { border-bottom: none; }
+  .rsec-title { display: flex; align-items: center; gap: 7px; font-size: 9px; font-weight: 700; color: #1B6B52; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+  .rsec-title .bc { background: #1B6B52; color: #fff; font-size: 9px; padding: 1px 6px; border-radius: 20px; }
+  .ritem { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; border-bottom: 1px solid #EBF2EE; font-size: 12px; }
+  .ritem:last-child { border-bottom: none; }
+  .ritem-t { font-weight: 600; color: #1A1A1A; line-height: 1.4; }
+  .ritem-s { color: #6B7B74; font-size: 10px; margin-top: 2px; }
+  .dot { color: #1B6B52; font-size: 8px; margin-top: 4px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="demo-wrap">
+  <div class="top-bar">
+    <div>
+      <div class="logo">Prospect 2.0 — Tableau de bord</div>
+      <div class="client">Paysagement Beausoleil inc. · Granby, QC</div>
+    </div>
+    <div class="badge">&#x1F4CA; Démo interactive</div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="show('dashboard',this)">&#x1F4CA; Dashboard</button>
+    <button class="nav-btn" onclick="show('leads',this)">&#x1F465; Leads (23)</button>
+    <button class="nav-btn" onclick="show('soumissions',this)">&#x1F4C4; Soumissions</button>
+    <button class="nav-btn" onclick="show('alertes',this)">&#x1F514; Alertes</button>
+    <button class="nav-btn" onclick="show('tournee',this)">&#x1F4CD; Tournée</button>
+    <button class="nav-btn" onclick="show('resumer',this)">&#x1F4E7; Résumé matin</button>
+    <button class="nav-btn" onclick="show('rapport',this)">&#x1F4CA; Rapport mensuel</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="p-dashboard" class="panel active">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Leads ce mois</div><div class="kpi-val">23</div><div class="kpi-sub">&#x2191; +8 vs mois dernier</div></div>
+      <div class="kpi"><div class="kpi-label">Soumissions ouvertes</div><div class="kpi-val">7</div><div class="kpi-sub warn">&#x23F0; 2 suivis requis</div></div>
+      <div class="kpi"><div class="kpi-label">Valeur pipeline</div><div class="kpi-val">38 400 $</div><div class="kpi-sub">&#x2191; Saison forte</div></div>
+      <div class="kpi"><div class="kpi-label">Taux conversion</div><div class="kpi-val">34 %</div><div class="kpi-sub">&#x2191; +6 pts vs 2025</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="sec-title">Derniers leads</div>
+        <div class="row"><div><div class="row-name">Marie-Ève Tremblay</div><div class="row-sub">Facebook · il y a 2h</div></div><span class="pill p-new">Nouveau</span></div>
+        <div class="row"><div><div class="row-name">Jean-François Côté</div><div class="row-sub">Web · il y a 5h</div></div><span class="pill p-contact">Contacté</span></div>
+        <div class="row"><div><div class="row-name">Sylvie Beaumont</div><div class="row-sub">Facebook · hier</div></div><span class="pill p-rdv">RDV fixé</span></div>
+        <div class="row"><div><div class="row-name">Patrick Gagnon</div><div class="row-sub">Web · hier</div></div><span class="pill p-contact">Contacté</span></div>
+      </div>
+      <div class="card">
+        <div class="sec-title">Soumissions prioritaires</div>
+        <div class="row"><div><div class="row-name">Résidence Côté — 8 200 $</div><div class="row-sub">Envoyée il y a 3 jours</div></div><span class="pill p-att">Suivi requis</span></div>
+        <div class="row"><div><div class="row-name">Condo Sherbrooke — 4 750 $</div><div class="row-sub">Envoyée il y a 5 jours</div></div><span class="pill p-att">Suivi requis</span></div>
+        <div class="row"><div><div class="row-name">Tremblay — 6 100 $</div><div class="row-sub">Acceptée</div></div><span class="pill p-ok">Acceptée</span></div>
+        <div class="row"><div><div class="row-name">Beaumont — 3 200 $</div><div class="row-sub">En révision</div></div><span class="pill p-rdv">En révision</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADS -->
+  <div id="p-leads" class="panel">
+    <div class="card">
+      <div class="sec-title">23 leads — juin 2026</div>
+      <div class="row"><div><div class="row-name">Marie-Ève Tremblay</div><div class="row-sub">Facebook · 819-555-0142 · mtremblay@gmail.com</div></div><span class="pill p-new">Nouveau</span></div>
+      <div class="row"><div><div class="row-name">Jean-François Côté</div><div class="row-sub">Web · 450-555-0287 · jfcote@hotmail.com</div></div><span class="pill p-contact">Contacté</span></div>
+      <div class="row"><div><div class="row-name">Sylvie Beaumont</div><div class="row-sub">Facebook · 450-555-0391 · sbeaumont@gmail.com</div></div><span class="pill p-rdv">RDV fixé</span></div>
+      <div class="row"><div><div class="row-name">Patrick Gagnon</div><div class="row-sub">Web · 514-555-0418 · pgagnon@outlook.com</div></div><span class="pill p-contact">Contacté</span></div>
+      <div class="row"><div><div class="row-name">Nathalie Lacroix</div><div class="row-sub">Facebook · 450-555-0523 · nlacroix@videotron.ca</div></div><span class="pill p-ok">Fermé-gagné</span></div>
+      <div class="row"><div><div class="row-name">Robert Simard</div><div class="row-sub">Web · 450-555-0634 · rsimard@gmail.com</div></div><span class="pill p-contact">Contacté</span></div>
+      <div class="row"><div><div class="row-name">Isabelle Morin</div><div class="row-sub">Facebook · 819-555-0745 · imorin@yahoo.ca</div></div><span class="pill p-rdv">RDV fixé</span></div>
+      <div class="row"><div><div class="row-name">André Pelletier</div><div class="row-sub">Web · 450-555-0856 · apelletier@gmail.com</div></div><span class="pill p-new">Nouveau</span></div>
+      <div class="row" style="justify-content:center;color:#6B7B74;font-size:11px;border-bottom:none;padding-top:10px;">+ 15 autres leads dans le système</div>
+    </div>
+  </div>
+
+  <!-- SOUMISSIONS -->
+  <div id="p-soumissions" class="panel">
+    <div class="card">
+      <div class="sec-title">7 soumissions ouvertes</div>
+      <div class="soum-grid" style="font-size:10px;color:#6B7B74;font-weight:700;border-bottom:1px solid #EBF2EE;padding-bottom:6px;"><span>Client · travaux</span><span>Montant</span><span>Statut</span></div>
+      <div class="soum-grid"><div><div class="row-name">Résidence Côté</div><div class="row-sub">Aménagement complet · 16 juin</div></div><span style="font-size:12px;font-weight:600;">8 200 $</span><span class="pill p-att">Suivi requis</span></div>
+      <div class="soum-grid"><div><div class="row-name">Condo Sherbrooke</div><div class="row-sub">Gazon synthétique · 14 juin</div></div><span style="font-size:12px;font-weight:600;">4 750 $</span><span class="pill p-att">Suivi requis</span></div>
+      <div class="soum-grid"><div><div class="row-name">Tremblay</div><div class="row-sub">Terrasse et plantation · 12 juin</div></div><span style="font-size:12px;font-weight:600;">6 100 $</span><span class="pill p-ok">Acceptée</span></div>
+      <div class="soum-grid"><div><div class="row-name">Beaumont</div><div class="row-sub">Gazon + bordures · 11 juin</div></div><span style="font-size:12px;font-weight:600;">3 200 $</span><span class="pill p-rdv">En révision</span></div>
+      <div class="soum-grid"><div><div class="row-name">Gagnon</div><div class="row-sub">Haies et taille · 10 juin</div></div><span style="font-size:12px;font-weight:600;">1 850 $</span><span class="pill p-contact">En attente</span></div>
+      <div class="soum-grid"><div><div class="row-name">Lacroix</div><div class="row-sub">Jardin complet · 8 juin</div></div><span style="font-size:12px;font-weight:600;">9 600 $</span><span class="pill p-ok">Acceptée</span></div>
+      <div class="soum-grid"><div><div class="row-name">Simard</div><div class="row-sub">Drainage + pelouse · 6 juin</div></div><span style="font-size:12px;font-weight:600;">4 700 $</span><span class="pill p-new">Nouveau</span></div>
+    </div>
+  </div>
+
+  <!-- ALERTES -->
+  <div id="p-alertes" class="panel">
+    <div class="card">
+      <div class="sec-title">Alertes système — 07:00</div>
+      <div class="alerte-row"><div class="aico err">&#x26A0;</div><div class="atxt"><strong>Suivi soumission — Résidence Côté</strong><span>Aucune réponse depuis 3 jours · Relance recommandée aujourd'hui</span></div></div>
+      <div class="alerte-row"><div class="aico warn">&#x23F0;</div><div class="atxt"><strong>Suivi soumission — Condo Sherbrooke</strong><span>Aucune réponse depuis 5 jours · Urgence de relance</span></div></div>
+      <div class="alerte-row"><div class="aico warn">&#x1F465;</div><div class="atxt"><strong>3 nouveaux leads non contactés</strong><span>Tremblay, Pelletier + 1 autre · Depuis plus de 24h</span></div></div>
+      <div class="alerte-row"><div class="aico ok">&#x2713;</div><div class="atxt"><strong>Dashboard opérationnel</strong><span>Tous les systèmes actifs · Dernière vérification 07:00</span></div></div>
+      <div class="alerte-row"><div class="aico ok">&#x2713;</div><div class="atxt"><strong>Import leads complété</strong><span>8 nouveaux leads importés cette nuit · Facebook + Web</span></div></div>
+      <div class="alerte-row"><div class="aico ok">&#x2713;</div><div class="atxt"><strong>Sauvegarde automatique réussie</strong><span>Toutes les données sauvegardées · 06:45</span></div></div>
+    </div>
+  </div>
+
+  <!-- TOURNÉE -->
+  <div id="p-tournee" class="panel">
+    <div class="map-ph">
+      <div class="ico">&#x1F5FA;</div>
+      <p>Carte Granby et région — 6 arrêts optimisés</p>
+      <span>Distance totale : 47 km · Durée estimée : 6h30</span>
+    </div>
+    <div class="card">
+      <div class="sec-title">Itinéraire du jour</div>
+      <div class="stop-row"><div class="stop-num">1</div><div style="flex:1"><div class="row-name">Dépôt Beausoleil — Départ 07:30</div><div class="row-sub">433 rue Principale, Granby</div></div><span style="font-size:10px;color:#6B7B74;">— km</span></div>
+      <div class="stop-row"><div class="stop-num">2</div><div style="flex:1"><div class="row-name">Résidence Tremblay — 08:00</div><div class="row-sub">188 rue des Érables, Granby</div></div><span style="font-size:10px;color:#6B7B74;">+4 km</span></div>
+      <div class="stop-row"><div class="stop-num">3</div><div style="flex:1"><div class="row-name">Résidence Côté — 09:30</div><div class="row-sub">74 boul. Leclerc, Granby</div></div><span style="font-size:10px;color:#6B7B74;">+6 km</span></div>
+      <div class="stop-row"><div class="stop-num">4</div><div style="flex:1"><div class="row-name">Condo Sherbrooke — 11:00</div><div class="row-sub">22 rue des Pins, Bromont</div></div><span style="font-size:10px;color:#6B7B74;">+14 km</span></div>
+      <div class="stop-row"><div class="stop-num">5</div><div style="flex:1"><div class="row-name">Résidence Beaumont — 13:30</div><div class="row-sub">310 chemin du Lac, Waterloo</div></div><span style="font-size:10px;color:#6B7B74;">+12 km</span></div>
+      <div class="stop-row"><div class="stop-num">6</div><div style="flex:1"><div class="row-name">Résidence Lacroix — 15:00</div><div class="row-sub">55 av. des Chênes, Granby</div></div><span style="font-size:10px;color:#6B7B74;">+11 km</span></div>
+    </div>
+  </div>
+
+  <!-- RÉSUMÉ MATIN -->
+  <div id="p-resumer" class="panel">
+    <div class="card">
+      <div style="background:#1B6B52;color:#fff;padding:12px 14px;border-radius:8px;margin:-12px -14px 14px;">
+        <div style="font-size:13px;font-weight:700;">Résumé matin — Paysagement Beausoleil</div>
+        <div style="font-size:11px;opacity:.7;margin-top:3px;">Jeudi 19 juin 2026 · 07:00 · Envoyé à direction@beausoleil.ca</div>
+      </div>
+      <div class="rsec">
+        <div class="rsec-title">&#x1F4C5; Agenda du jour <span class="bc">3</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div><div class="ritem-t">09:00 — Rencontre client Tremblay</div><div class="ritem-s">Terrasse + plantation · 188 rue des Érables, Granby</div></div></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div><div class="ritem-t">14:00 — Appel fournisseur Gazon Pro Québec</div><div class="ritem-s">Suivi commande gazon synthétique · dossier #2024-GQ</div></div></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div><div class="ritem-t">16:30 — Révision soumission Beaumont</div><div class="ritem-s">Gazon + bordures · 3 200 $</div></div></div>
+      </div>
+      <div class="rsec">
+        <div class="rsec-title">&#x2705; Tâches à faire <span class="bc">5</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Relancer Résidence Côté — soumission 8 200 $</div><div class="ritem-s">Aucune réponse depuis 3 jours · Priorité haute</div></div><span class="pill p-att">Urgent</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Relancer Condo Sherbrooke — soumission 4 750 $</div><div class="ritem-s">Aucune réponse depuis 5 jours</div></div><span class="pill p-att">Urgent</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Contacter 3 nouveaux leads Facebook</div><div class="ritem-s">Tremblay, Pelletier + 1 autre · Non contactés 24h+</div></div><span class="pill p-todo">À faire</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Finaliser contrat Lacroix — 9 600 $</div><div class="ritem-s">Soumission acceptée · Prêt à signer</div></div><span class="pill p-todo">À faire</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Commander engrais printemps — Sollio</div><div class="ritem-s">Stock bas · Commander avant vendredi</div></div><span class="pill p-todo">À faire</span></div>
+      </div>
+      <div class="rsec">
+        <div class="rsec-title">&#x1F6A9; Courriels flaggés <span class="bc">4</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Gazon Pro Québec — Confirmation livraison</div><div class="ritem-s">commandes@gazonpro.ca · hier 16:42 · Confirmer adresse livraison</div></div><span class="pill p-att">Action</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Ville de Granby — Permis travaux approuvé</div><div class="ritem-s">permis@granby.ca · hier 14:18 · Travaux peuvent commencer</div></div><span class="pill p-ok">Info</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Jean-François Côté — Questions soumission</div><div class="ritem-s">jfcote@hotmail.com · ce matin 06:12 · Détails matériaux</div></div><span class="pill p-att">Répondre</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Assurance Desjardins — Renouvellement flotte</div><div class="ritem-s">commercial@desjardins.com · Échéance 30 juin</div></div><span class="pill p-att">Urgent</span></div>
+      </div>
+      <div class="rsec">
+        <div class="rsec-title">&#x1F4D2; Contacts créés automatiquement <span class="bc">2</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Gazon Pro Québec</div><div class="ritem-s">Ajouté à Google Contacts · commandes@gazonpro.ca · 1-800-555-0147</div></div><span class="pill p-new">Nouveau</span></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Service des permis — Ville de Granby</div><div class="ritem-s">Ajouté à Google Contacts · permis@granby.ca</div></div><span class="pill p-new">Nouveau</span></div>
+      </div>
+      <div class="rsec">
+        <div class="rsec-title">&#x1F465; Leads &amp; pipeline</div>
+        <div class="ritem"><span class="dot">&#9679;</span><div><div class="ritem-t">23 leads actifs · 3 nouveaux cette nuit (Facebook)</div></div></div>
+        <div class="ritem"><span class="dot">&#9679;</span><div><div class="ritem-t">Pipeline total : 38 400 $ · 7 soumissions ouvertes</div></div></div>
+      </div>
+      <div class="rsec">
+        <div class="rsec-title">&#x1F4CD; Tournée du jour</div>
+        <div class="ritem"><span class="dot">&#9679;</span><div><div class="ritem-t">6 arrêts · 47 km · Départ 07:30 · Retour estimé 17:00</div><div class="ritem-s">Économie de 23 km vs ordre manuel</div></div></div>
+      </div>
+      <div class="rsec" style="border-bottom:none;">
+        <div class="rsec-title">&#x1F6E1; Système</div>
+        <div class="ritem"><span class="dot">&#9679;</span><div style="flex:1"><div class="ritem-t">Tous les systèmes opérationnels</div><div class="ritem-s">Dashboard · Import leads · Sauvegarde · API Claude · IMAP</div></div><span class="pill p-ok">Tout vert</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <!-- RAPPORT MENSUEL -->
+  <div id="p-rapport" class="panel">
+    <div class="card" style="padding:0;overflow:hidden;">
+
+      <!-- Mini header -->
+      <div style="background:#1B6B52;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="background:#fff;border-radius:6px;padding:5px 16px;">
+          <div style="font-size:11px;font-weight:700;color:#1B6B52;">prospect 2.0</div>
+          <div style="font-size:8px;color:#6B7B74;letter-spacing:1px;">AUTOMATISATION · PRODUCTIVITÉ</div>
+        </div>
+        <div style="background:rgba(255,255,255,.18);color:#fff;font-size:10px;font-weight:700;letter-spacing:2px;padding:6px 14px;border-radius:4px;">RAPPORT MENSUEL</div>
+      </div>
+
+      <!-- Title -->
+      <div style="padding:12px 18px 10px;border-bottom:2px solid #1B6B52;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:20px;font-weight:800;color:#1A1A1A;letter-spacing:-1px;">BILAN DE PERFORMANCE</div>
+        <div style="text-align:right;">
+          <div style="font-size:14px;font-weight:700;color:#1B6B52;">Juin 2026</div>
+          <div style="font-size:11px;color:#6B7B74;">Paysagement Beausoleil inc.</div>
+        </div>
+      </div>
+
+      <!-- Infos bar -->
+      <div style="background:#EBF5F1;padding:8px 18px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;border-bottom:1px solid #C8D8D0;">
+        <div><div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1B6B52;margin-bottom:2px;">Forfait</div><div style="font-size:11px;font-weight:500;">Croissance — 1 497 $/mois</div></div>
+        <div><div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1B6B52;margin-bottom:2px;">Mois de service</div><div style="font-size:11px;font-weight:500;">Mois 2 / 3</div></div>
+        <div><div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1B6B52;margin-bottom:2px;">Prochain Zoom</div><div style="font-size:11px;font-weight:500;">15 juillet 2026 à 10h00</div></div>
+        <div><div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1B6B52;margin-bottom:2px;">Préparé par</div><div style="font-size:11px;font-weight:500;">Benoît Dupuis</div></div>
+      </div>
+
+      <div style="padding:14px 18px;display:flex;flex-direction:column;gap:12px;">
+
+        <!-- KPIs -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+          <div style="border:1px solid #C8D8D0;border-radius:7px;padding:10px 12px;">
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#6B7B74;margin-bottom:4px;">Leads générés</div>
+            <div style="font-size:24px;font-weight:700;color:#1B6B52;">23</div>
+            <div style="font-size:10px;color:#6B7B74;margin-top:3px;">vs mois dernier : <span style="color:#1B6B52;font-weight:600;">+8</span></div>
+          </div>
+          <div style="border:1px solid #C8D8D0;border-radius:7px;padding:10px 12px;">
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#6B7B74;margin-bottom:4px;">Soumissions envoyées</div>
+            <div style="font-size:24px;font-weight:700;color:#1B6B52;">7</div>
+            <div style="font-size:10px;color:#6B7B74;margin-top:3px;">acceptées : <span style="color:#1B6B52;font-weight:600;">3</span></div>
+          </div>
+          <div style="border:1px solid #C8D8D0;border-radius:7px;padding:10px 12px;">
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#6B7B74;margin-bottom:4px;">Valeur pipeline</div>
+            <div style="font-size:24px;font-weight:700;color:#1B6B52;">38 400 $</div>
+            <div style="font-size:10px;color:#6B7B74;margin-top:3px;">vs objectif : <span style="color:#1B6B52;font-weight:600;">+12%</span></div>
+          </div>
+          <div style="border:1px solid #C8D8D0;border-radius:7px;padding:10px 12px;">
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#6B7B74;margin-bottom:4px;">Temps économisé</div>
+            <div style="font-size:24px;font-weight:700;color:#1B6B52;">6h/sem</div>
+            <div style="font-size:10px;color:#6B7B74;margin-top:3px;">soit : <span style="color:#1B6B52;font-weight:600;">~24h / mois</span></div>
+          </div>
+        </div>
+
+        <!-- Actions + Alertes -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="border:1px solid #C8D8D0;border-radius:7px;overflow:hidden;">
+            <div style="background:#1B6B52;color:#fff;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 12px;">✅ Actions réalisées ce mois</div>
+            <div style="padding:8px 12px;">
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;"><span style="color:#1B6B52;font-weight:600;min-width:70px;font-size:10px;">Action 1</span><span>Import leads automatisé — Facebook + Web</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;"><span style="color:#1B6B52;font-weight:600;min-width:70px;font-size:10px;">Action 2</span><span>Alertes soumissions configurées</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;"><span style="color:#1B6B52;font-weight:600;min-width:70px;font-size:10px;">Action 3</span><span>Tournée optimisée — 3 sorties terrain</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;"><span style="color:#1B6B52;font-weight:600;min-width:70px;font-size:10px;">Action 4</span><span>Résumé matin — 22 jours / 22</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;font-size:11px;"><span style="color:#1B6B52;font-weight:600;min-width:70px;font-size:10px;">Action 5</span><span>2 contacts fournisseurs créés automatiquement</span></div>
+            </div>
+          </div>
+          <div style="border:1px solid #C8D8D0;border-radius:7px;overflow:hidden;">
+            <div style="background:#1B6B52;color:#fff;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 12px;">🔔 Alertes & santé système</div>
+            <div style="padding:8px 12px;">
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;align-items:center;"><span>✅</span><span>Dashboard — opérationnel tout le mois</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;align-items:center;"><span>✅</span><span>Import leads — 22/22 jours réussis</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;align-items:center;"><span>✅</span><span>Sauvegardes automatiques — OK</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;align-items:center;"><span>⚠️</span><span>2 soumissions sans suivi — relancées</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;font-size:11px;align-items:center;"><span>✅</span><span>API Claude — aucune interruption</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan + Recommandations -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="border:1px solid #C8D8D0;border-radius:7px;overflow:hidden;">
+            <div style="background:#C8922A;color:#fff;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 12px;">📋 Plan mois suivant</div>
+            <div style="padding:8px 12px;">
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;"><span style="color:#C8922A;font-weight:600;min-width:70px;font-size:10px;">Priorité 1</span><span>Intégrer CRM — pipeline leads</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;"><span style="color:#C8922A;font-weight:600;min-width:70px;font-size:10px;">Priorité 2</span><span>Optimiser alertes soumissions +7j</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;"><span style="color:#C8922A;font-weight:600;min-width:70px;font-size:10px;">Priorité 3</span><span>Ajouter source leads — Google Ads</span></div>
+              <div style="display:flex;gap:8px;padding:5px 0;font-size:11px;"><span style="color:#C8922A;font-weight:600;min-width:70px;font-size:10px;">Zoom prévu</span><span>15 juillet 2026 à 10h00</span></div>
+            </div>
+          </div>
+          <div style="border:1px solid #C8D8D0;border-radius:7px;overflow:hidden;">
+            <div style="background:#FF6B35;color:#fff;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 12px;">💡 Recommandations</div>
+            <div style="padding:8px 12px;">
+              <div style="padding:5px 0;border-bottom:.5px solid #E0EDEA;font-size:11px;"><span style="color:#FF6B35;font-weight:600;font-size:10px;display:block;margin-bottom:2px;">Opportunité</span>Taux de conversion 34% — fort pour la saison. Envisager une campagne Facebook supplémentaire en juillet.</div>
+              <div style="padding:5px 0;font-size:11px;"><span style="color:#FF6B35;font-weight:600;font-size:10px;display:block;margin-bottom:2px;">Attention</span>2 soumissions dépassent 7 jours sans réponse. Relance systématique recommandée à J+3 et J+7.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signatures -->
+        <div style="border:1px solid #C8D8D0;border-radius:7px;overflow:hidden;">
+          <div style="background:#1B6B52;color:#fff;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 12px;">✍️ Validation & signatures</div>
+          <div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+            <div>
+              <div style="font-size:11px;font-weight:700;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #1A1A1A;">Prospect 2.0 — Benoît Dupuis</div>
+              <div style="height:36px;border-bottom:.75px solid #C8D8D0;margin-bottom:6px;"></div>
+              <div style="font-size:8px;color:#6B7B74;font-style:italic;margin-bottom:6px;">Signature</div>
+              <div style="border-bottom:.75px solid #C8D8D0;padding:4px 0;font-size:11px;display:flex;gap:8px;"><span style="font-size:9px;color:#6B7B74;font-style:italic;min-width:40px;">Date</span><span>30 juin 2026</span></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #1A1A1A;">Client — Martin Beausoleil</div>
+              <div style="height:36px;border-bottom:.75px solid #C8D8D0;margin-bottom:6px;"></div>
+              <div style="font-size:8px;color:#6B7B74;font-style:italic;margin-bottom:6px;">Signature</div>
+              <div style="border-bottom:.75px solid #C8D8D0;padding:4px 0;font-size:11px;display:flex;gap:8px;"><span style="font-size:9px;color:#6B7B74;font-style:italic;min-width:40px;">Date</span><span>30 juin 2026</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div style="background:#1B6B52;color:rgba(255,255,255,.7);font-size:9px;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;padding:7px 18px;">
+        <span>Prospect 2.0 · bdprospect2.0@gmail.com · Granby, Québec · Confidentiel</span>
+        <span>Bilan mensuel — usage client</span>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('p-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
