@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation — Prospect 2.0</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f6f9; color: #201C20;
+      min-height: 100vh; padding: 40px 48px;
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 36px;
+    }
+    .logo { display: flex; align-items: center; gap: 14px; }
+    .logo-icon {
+      width: 132px; height: 132px; border-radius: 10px;
+      overflow: hidden;
+    }
+    .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
+    h1 { font-size: 1.5rem; font-weight: 700; }
+    h1 span { color: #FF6B35; }
+    .subtitle { font-size: .85rem; color: #888; margin-top: 2px; }
+    .date-badge {
+      background: #fff; border-radius: 8px; padding: 8px 16px;
+      font-size: .8rem; color: #888;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    .date-badge strong { color: #1B6CA8; }
+
+    .stats {
+      display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap;
+    }
+    .stat {
+      background: #fff; border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      padding: 16px 24px; text-align: center; min-width: 110px;
+    }
+    .stat .n { font-size: 2rem; font-weight: 700; }
+    .stat .n.orange { color: #FF6B35; }
+    .stat .n.blue   { color: #1B6CA8; }
+    .stat .l { font-size: .75rem; color: #999; margin-top: 3px; text-transform: uppercase; letter-spacing: .04em; }
+
+    .section { margin-bottom: 28px; }
+    .section-title {
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: #aaa; margin-bottom: 12px;
+      padding-left: 4px;
+    }
+    .card {
+      background: #fff; border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.07); overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    thead tr { background: #fafafa; border-bottom: 2px solid #f0f0f0; }
+    th {
+      padding: 11px 16px; text-align: left; font-size: .73rem;
+      font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: .04em;
+    }
+    tbody tr { border-bottom: 1px solid #f5f5f5; transition: background .15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fff8f4; }
+    td { padding: 11px 16px; vertical-align: middle; }
+    td.name { font-weight: 600; font-family: "SF Mono", "Menlo", monospace; font-size: .83rem; color: #1B6CA8; }
+    td.role { color: #555; }
+    td.loc  { font-size: .8rem; color: #999; font-family: "SF Mono", "Menlo", monospace; }
+
+    .tag {
+      display: inline-block; padding: 2px 9px;
+      border-radius: 20px; font-size: .72rem; font-weight: 600;
+    }
+    .tag-app    { background: #fff0e8; color: #FF6B35; }
+    .tag-python { background: #e8f0ff; color: #1B6CA8; }
+    .tag-shell  { background: #f0f8f0; color: #2E9E5B; }
+    .tag-html   { background: #fff8e0; color: #b07800; }
+    .tag-pdf    { background: #fde8e8; color: #c0392b; }
+    .tag-data   { background: #f0e8ff; color: #7B3FB8; }
+    .tag-img    { background: #f0f0f0; color: #555; }
+    .tag-master { background: #e8f4fd; color: #0e6da8; }
+    .tag-config { background: #f0fff4; color: #1a7a40; }
+    .tag-folder { background: #f5f0ff; color: #6a3fad; }
+    .tag-green  { background: #e6f9f0; color: #1a7a40; }
+    .tag-red    { background: #fde8e8; color: #c0392b; }
+    .tag-yellow { background: #fffbe0; color: #b07800; }
+
+    .info-box {
+      background: #fff; border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.07);
+      padding: 20px 24px;
+    }
+    .info-box p { font-size: .88rem; color: #555; line-height: 1.7; margin-bottom: 6px; }
+    .info-box p:last-child { margin-bottom: 0; }
+    .info-box a { color: #1B6CA8; text-decoration: none; font-family: "SF Mono","Menlo",monospace; font-size: .82rem; }
+    .info-box a:hover { text-decoration: underline; }
+
+    .tree {
+      background: #fff; border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.07);
+      padding: 20px 24px; font-size: .86rem;
+    }
+    .tree-item { padding: 4px 0; color: #333; line-height: 1.6; }
+    .tree-item .path { font-family: "SF Mono","Menlo",monospace; color: #1B6CA8; font-weight: 600; }
+    .tree-item .desc { color: #888; font-size: .82rem; }
+    .tree-indent1 { padding-left: 22px; }
+    .tree-indent2 { padding-left: 44px; }
+
+    .alert-row-red    { border-left: 4px solid #e74c3c; background: #fff5f5; }
+    .alert-row-yellow { border-left: 4px solid #f39c12; background: #fffbf0; }
+    .alert-row-red td, .alert-row-yellow td { padding: 10px 16px; }
+
+    .github-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #1B6CA8; color: #fff; padding: 8px 18px;
+      border-radius: 8px; font-size: .83rem; font-weight: 600;
+      text-decoration: none; margin-bottom: 16px;
+    }
+    .github-link:hover { background: #155a8a; }
+
+    footer {
+      margin-top: 40px; text-align: center;
+      font-size: .78rem; color: #bbb;
+    }
+    footer span { color: #FF6B35; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon"><img src="logo_prospect.jpg" alt="Prospect 2.0"></div>
+    <div>
+      <h1>Prospect <span>2.0</span></h1>
+      <div class="subtitle">Documentation complète du projet</div>
+    </div>
+  </div>
+  <div class="date-badge">Mis à jour le <strong>19 juin 2026</strong></div>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="n orange">3</div><div class="l">Apps</div></div>
+  <div class="stat"><div class="n blue">11</div><div class="l">Scripts Python</div></div>
+  <div class="stat"><div class="n orange">4</div><div class="l">Scripts Shell</div></div>
+  <div class="stat"><div class="n blue">5</div><div class="l">Fichiers HTML</div></div>
+  <div class="stat"><div class="n orange">3</div><div class="l">PDF</div></div>
+  <div class="stat"><div class="n blue">1</div><div class="l">Données</div></div>
+  <div class="stat"><div class="n orange">1</div><div class="l">Master repo</div></div>
+</div>
+
+<!-- APPS -->
+<div class="section">
+  <div class="section-title">Apps</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>App</th><th>Type</th><th>Rôle</th><th>Emplacement</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">Pipeline Prospects.app</td>
+          <td><span class="tag tag-app">App</span></td>
+          <td class="role">Ouvre le pipeline de prospects (Flask)</td>
+          <td class="loc">~/Desktop/Prospect 2,0/ · /Applications/</td>
+        </tr>
+        <tr>
+          <td class="name">Envoyer Invitation.app</td>
+          <td><span class="tag tag-app">App</span></td>
+          <td class="role">Lance l'interface d'envoi d'invitation</td>
+          <td class="loc">~/Desktop/Prospect 2,0/</td>
+        </tr>
+        <tr>
+          <td class="name">Documentation.app</td>
+          <td><span class="tag tag-app">App</span></td>
+          <td class="role">Ouvre cette page de documentation</td>
+          <td class="loc">~/Desktop/Prospect 2,0/</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SCRIPTS PYTHON -->
+<div class="section">
+  <div class="section-title">Scripts Python</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td class="name">generer_pipeline.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Serveur Flask — pipeline de prospects (app principale)</td></tr>
+        <tr><td class="name">send_invitation_app.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Interface Flask — envoi d'invitations</td></tr>
+        <tr><td class="name">send_invitation.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Envoi d'invitation en ligne de commande</td></tr>
+        <tr><td class="name">generate_courriel.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Génération de courriels</td></tr>
+        <tr><td class="name">invitation_diagnostic.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Gestion des invitations au diagnostic</td></tr>
+        <tr><td class="name">rapport_diagnostic.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Génération du rapport de diagnostic</td></tr>
+        <tr><td class="name">rapport_diagnostic_BACKUP_20260610.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Backup du rapport diagnostic (10 juin 2026)</td></tr>
+        <tr><td class="name">creer_diagnostic_forms.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Création des formulaires de diagnostic</td></tr>
+        <tr><td class="name">setup_diagnostic.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Setup du module diagnostic</td></tr>
+        <tr><td class="name">setup.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Setup général du projet</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SCRIPTS SHELL -->
+<div class="section">
+  <div class="section-title">Scripts Shell</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td class="name">open_pipeline.sh</td><td><span class="tag tag-shell">Shell</span></td><td class="role">Lance generer_pipeline.py via bash (appelé par Pipeline Prospects.app)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- HTML -->
+<div class="section">
+  <div class="section-title">Fichiers HTML</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td class="name">prospects_pipeline.html</td><td><span class="tag tag-html">HTML</span></td><td class="role">Interface pipeline de prospects</td></tr>
+        <tr><td class="name">formulaire_invitation.html</td><td><span class="tag tag-html">HTML</span></td><td class="role">Formulaire d'invitation</td></tr>
+        <tr><td class="name">invitation_courriel.html</td><td><span class="tag tag-html">HTML</span></td><td class="role">Template courriel d'invitation</td></tr>
+        <tr><td class="name">invitation_diagnostic.html</td><td><span class="tag tag-html">HTML</span></td><td class="role">Page d'invitation au diagnostic</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PDF -->
+<div class="section">
+  <div class="section-title">Documents PDF</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td class="name">invitation_diagnostic.pdf</td><td><span class="tag tag-pdf">PDF</span></td><td class="role">PDF d'invitation au diagnostic</td></tr>
+        <tr><td class="name">rapport_diagnostic_TEST.pdf</td><td><span class="tag tag-pdf">PDF</span></td><td class="role">PDF de test du rapport diagnostic</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- DONNÉES -->
+<div class="section">
+  <div class="section-title">Fichiers de données</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td class="name">prospects.csv</td><td><span class="tag tag-data">CSV</span></td><td class="role">Base de données prospects</td></tr>
+        <tr><td class="name">credentials/</td><td><span class="tag tag-data">Dossier</span></td><td class="role">Identifiants API (Gmail, Google)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- RESSOURCES -->
+<div class="section">
+  <div class="section-title">Ressources visuelles</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td class="name">logo_prospect.jpg</td><td><span class="tag tag-img">Image</span></td><td class="role">Logo Prospect (JPG)</td></tr>
+        <tr><td class="name">logo_prospect2.png</td><td><span class="tag tag-img">Image</span></td><td class="role">Logo Prospect 2.0 (PNG)</td></tr>
+        <tr><td class="name">logo_transparent.png</td><td><span class="tag tag-img">Image</span></td><td class="role">Logo fond transparent</td></tr>
+        <tr><td class="name">couverture.jpg</td><td><span class="tag tag-img">Image</span></td><td class="role">Image de couverture</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MASTER TEMPLATE -->
+<div class="section">
+  <div class="section-title">Master Template v1.0 — 2026-06-18</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td class="name">config.json</td><td><span class="tag tag-config">Config</span></td><td class="role">Paramètres client génériques</td></tr>
+        <tr><td class="name">dashboard/dashboard_server.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Serveur dashboard — générique</td></tr>
+        <tr><td class="name">dashboard/generer_dashboard.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Génération dashboard — générique</td></tr>
+        <tr><td class="name">dashboard/import_leads_v4.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Import leads — générique</td></tr>
+        <tr><td class="name">dashboard/scanner_soumissions.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Scanner soumissions — générique</td></tr>
+        <tr><td class="name">resume-matin/resume_matin.py</td><td><span class="tag tag-python">Python</span></td><td class="role">Résumé matin automatisé — générique</td></tr>
+        <tr><td class="name">monitoring/test_sante_systeme.sh</td><td><span class="tag tag-shell">Shell</span></td><td class="role">Test santé système — générique</td></tr>
+        <tr><td class="name">tournee/tournee.html</td><td><span class="tag tag-html">HTML</span></td><td class="role">Outil tournée optimisée — générique</td></tr>
+        <tr><td class="name">deploy/deployer.sh</td><td><span class="tag tag-shell">Shell</span></td><td class="role">Déploiement nouveau client</td></tr>
+        <tr><td class="name">deploy/install.sh</td><td><span class="tag tag-shell">Shell</span></td><td class="role">Installation en une commande</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:12px">
+    <a class="github-link" href="https://github.com/88c47pwp5k-hub/prospect2-master" target="_blank">
+      ⬡ prospect2-master sur GitHub
+    </a>
+    <p style="font-size:.8rem;color:#aaa;margin-top:4px">Dépôt source : https://github.com/88c47pwp5k-hub/prospect2-master</p>
+  </div>
+</div>
+
+<!-- CONTRAT PROSPECT 2.0 -->
+<div class="section">
+  <div class="section-title">Contrat Prospect 2.0</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">Contrat_Prospect2_Final.pdf</td>
+          <td><span class="tag tag-pdf">PDF</span></td>
+          <td class="role">4 pages, champs à remplir, cases à cocher forfait</td>
+        </tr>
+        <tr>
+          <td class="name">Contrat_Prospect2_Final.html</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Contrat remplissable v6 — ~/prospect2/ + SOLICITATION/</td>
+        </tr>
+        <tr>
+          <td class="name">demo_beausoleil.html</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Page démo client Beausoleil — ~/prospect2/ + SOLICITATION/</td>
+        </tr>
+        <tr>
+          <td class="name">contrat_final.py</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Script de génération du contrat PDF (Claude) — ~/Desktop/</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="info-box" style="margin-top:12px">
+    <p>📁 Copie du contrat : <span style="font-family:monospace;color:#1B6CA8">~/Desktop/Prospect 2,0/SOLICITATION — Clients futurs/</span></p>
+  </div>
+</div>
+
+<!-- STRUCTURE BUREAU -->
+<div class="section">
+  <div class="section-title">Structure Bureau</div>
+  <div class="tree">
+    <div class="tree-item"><span class="path">~/Desktop/Prospect 2,0/</span></div>
+    <div class="tree-item tree-indent1"><span class="path">SOLICITATION — Clients futurs/</span> <span class="desc">— documents de vente &amp; contrats</span></div>
+    <div class="tree-item" style="padding-left:44px"><span style="font-family:monospace;font-size:.82rem">Contrat_Prospect2_Final.html</span> <span class="desc">— contrat remplissable v6</span></div>
+    <div class="tree-item" style="padding-left:44px"><span style="font-family:monospace;font-size:.82rem">Contrat_Prospect2_Template.pdf</span> <span class="desc">— contrat PDF 6 pages</span></div>
+    <div class="tree-item" style="padding-left:44px"><span style="font-family:monospace;font-size:.82rem">demo_beausoleil.html</span> <span class="desc">— page démo client</span></div>
+    <div class="tree-item tree-indent1"><span class="path">CLIENTS ACTIFS/</span></div>
+    <div class="tree-item tree-indent2"><span class="path">_TEMPLATE NomClient — AAAA-MM-JJ/</span> <span class="desc">— template à dupliquer pour chaque client</span></div>
+    <div class="tree-item tree-indent2" style="padding-left:66px"><span class="path">BASE/</span></div>
+    <div class="tree-item" style="padding-left:88px"><span style="font-family:monospace;font-size:.82rem">Notes_client.txt</span> <span class="desc">— fiche client + accès</span></div>
+    <div class="tree-item" style="padding-left:88px"><span style="font-family:monospace;font-size:.82rem">Acces_TeamViewer.txt</span> <span class="desc">— identifiants TeamViewer</span></div>
+    <div class="tree-item" style="padding-left:88px"><span style="font-family:monospace;font-size:.82rem">Contrat_signe.txt</span> <span class="desc">— remplacer par PDF signé</span></div>
+    <div class="tree-item" style="padding-left:88px"><span style="font-family:monospace;font-size:.82rem">Tournee_Optimisee.html</span> <span class="desc">— copié de prospect2-master</span></div>
+    <div class="tree-item tree-indent2" style="padding-left:66px"><span class="path">PERSONNALISE/</span></div>
+    <div class="tree-item" style="padding-left:88px"><span style="font-family:monospace;font-size:.82rem">Notes_personnalisation.txt</span> <span class="desc">— modules custom &amp; facturation</span></div>
+    <div class="tree-item" style="padding-left:88px;color:#bbb;font-size:.82rem">+ fichiers custom par client</div>
+  </div>
+</div>
+
+<!-- ALERTES RENOUVELLEMENT -->
+<div class="section">
+  <div class="section-title">Alertes Renouvellement</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Délai</th><th>Niveau</th><th>Comportement dans le résumé matin</th></tr></thead>
+      <tbody>
+        <tr class="alert-row-red">
+          <td><strong>≤ 30 jours</strong></td>
+          <td><span class="tag tag-red">🔴 Rouge</span></td>
+          <td class="role">Alerte urgente — fond rose, bordure rouge</td>
+        </tr>
+        <tr class="alert-row-yellow">
+          <td><strong>31 – 60 jours</strong></td>
+          <td><span class="tag tag-yellow">🟡 Jaune</span></td>
+          <td class="role">Avertissement — fond crème, bordure orange</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="info-box" style="margin-top:12px">
+    <p>⚙️ Détection automatique dans <span style="font-family:monospace;color:#1B6CA8">resume_matin.py</span> → fonction <span style="font-family:monospace;color:#FF6B35">get_renouvellements()</span></p>
+    <p>📄 Format attendu dans <span style="font-family:monospace">Notes_client.txt</span> : <span style="font-family:monospace;color:#1B6CA8">Date fin contrat : AAAA-MM-JJ</span></p>
+    <p>📂 Dossiers scannés : <span style="font-family:monospace;color:#1B6CA8">~/Desktop/Prospect 2,0/CLIENTS ACTIFS/</span> (dossiers sans <code>_</code> ignorent le template)</p>
+  </div>
+</div>
+
+<!-- TOURNÉE OPTIMISÉE -->
+<div class="section">
+  <div class="section-title">Tournée Optimisée</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">tournee_solarium.html</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Tournée Solarium Pro — <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/Solarium-Pro-PDFs/</span></td>
+        </tr>
+        <tr>
+          <td class="name">tournee/tournee.html</td>
+          <td><span class="tag tag-master">Master</span></td>
+          <td class="role">Tournée générique prospect2-master — <span style="font-family:monospace;font-size:.8rem;color:#888">~/prospect2-master/</span></td>
+        </tr>
+        <tr>
+          <td class="name">Tournée Solarium.app</td>
+          <td><span class="tag tag-app">App</span></td>
+          <td class="role">Icône bureau → ouvre tournee_solarium.html — <span style="font-family:monospace;font-size:.8rem;color:#888">~/Desktop/</span></td>
+        </tr>
+        <tr>
+          <td class="name">Tournee_Prospect2.app</td>
+          <td><span class="tag tag-app">App</span></td>
+          <td class="role">Icône bureau → ouvre tournee_solarium.html — <span style="font-family:monospace;font-size:.8rem;color:#888">~/Desktop/</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<footer>
+  Prospect <span>2.0</span> · Tous droits réservés · 2026
+</footer>
+
+</body>
+</html>
