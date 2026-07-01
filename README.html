@@ -446,6 +446,24 @@
   </div>
 </div>
 
+<!-- CHECKLIST FIN DE SESSION -->
+<div class="section">
+  <div class="section-title">Checklist fin de session</div>
+  <div class="info-box">
+    <p>☐ &nbsp;<strong>README.html</strong> mis à jour avec tous les changements</p>
+    <p>☐ &nbsp;<strong>Git push</strong> : <span style="font-family:monospace;color:#1B6CA8">cd ~/prospect2-master &amp;&amp; git push</span></p>
+    <p>☐ &nbsp;<strong>Backup</strong> : <span style="font-family:monospace;color:#1B6CA8">cp fichiers modifiés ~/Documents/backup-production/</span></p>
+    <p>☐ &nbsp;<strong>Config Railway</strong> synchronisée si changements Suivi Production :<br>
+      <span style="font-family:monospace;color:#1B6CA8;font-size:.8rem">
+        curl -s -X POST https://energetic-elegance-production-2aa7.up.railway.app/api/config<br>
+        &nbsp;&nbsp;-H "Content-Type: application/json"<br>
+        &nbsp;&nbsp;-d @~/Documents/Suivi-Production/data/config.json
+      </span>
+    </p>
+    <p>☐ &nbsp;<strong>PROCEDURE_APPS_DOCK.md</strong> à jour si nouveaux apps ou procédures</p>
+  </div>
+</div>
+
 <footer>
   Prospect <span>2.0</span> · Tous droits réservés · 2026
 </footer>
