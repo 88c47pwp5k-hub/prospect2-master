@@ -161,6 +161,21 @@
           <td><span class="tag tag-config">Config</span></td>
           <td class="role">Mécanisme de bascule environnement pour SV (Suivi Client) — changer ce fichier suffit pour passer de local à Railway sans toucher à l'app · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/Suivi-Production/url_courante.txt</span></td>
         </tr>
+        <tr>
+          <td class="name">app.py — backup_dossiers() + bouton ✕</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Backup automatique avant chaque POST/PUT/PATCH/DELETE dans /app/data/backups/ (max 48). Bouton ✕ rouge en première colonne pour supprimer une ligne · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/Suivi-Production/app.py + templates/index.html</span></td>
+        </tr>
+        <tr>
+          <td class="name">solarium_production.py — backup save_soumissions()</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Copie automatique vers ~/Documents/backup-production/soumissions_SP_YYYY-MM-DD_HHhMM.json à chaque modification · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/Solarium-Pro-PDFs/solarium_production.py</span></td>
+        </tr>
+        <tr>
+          <td class="name">backup_soumissions.sh + plist launchd</td>
+          <td><span class="tag tag-shell">Shell</span></td>
+          <td class="role">Backup horaire automatique de ~/Library/SolariumDashboard/soumissions.json → backup-production/soumissions_dashboard_YYYY-MM-DD_HH.json via launchd · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/backup-production/backup_soumissions.sh · ~/Library/LaunchAgents/com.solariumpro.backup-soumissions.plist</span></td>
+        </tr>
       </tbody>
     </table>
   </div>
