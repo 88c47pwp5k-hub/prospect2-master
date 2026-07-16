@@ -136,8 +136,65 @@
       <div class="subtitle">Documentation complète du projet</div>
     </div>
   </div>
-  <div class="date-badge">Mis à jour le <strong>1er juillet 2026</strong></div>
+  <div class="date-badge">Mis à jour le <strong>16 juillet 2026</strong></div>
 </header>
+
+<!-- MISES À JOUR 16 JUILLET 2026 — SOLARIUM-SM -->
+<div class="section">
+  <div class="section-title">Mises à jour — 16 juillet 2026 — Solarium SM (soumissions)</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">garanties.py — prefixes_code fallback</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">3e niveau de matching dans <code>get_garanties_applicables()</code> : si ni <code>ligne</code> ni <code>mots_cles</code> ne matchent, vérifie le préfixe du code article (ex: <code>solp-aika-</code>, <code>solp-neo-</code>, <code>solp-cove-</code>). Garantit l'affichage des blocs garantie sur les dossiers existants créés avant le fix <code>ligne</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">signature.html — mode paiement interactif</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Mode de paiement déplacé du formulaire vers la page de signature client. Select interactif pour le client (Chèque / Comptant / Carte de crédit / Virement bancaire / Virement Interac). Aperçu interne montre un placeholder grisé neutre (plus de «&nbsp;Virement bancaire&nbsp;» pré-sélectionné). Conformité PCI : seulement les 4 derniers chiffres de la carte en base.</td>
+        </tr>
+        <tr>
+          <td class="name">signature.html — cases à cocher aperçu</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Cases «&nbsp;J'ai lu les garanties&nbsp;» et «&nbsp;J'ai lu les termes&nbsp;» désormais visibles (grisées) en mode aperçu interne. En mode client : cases interactives obligatoires avant d'activer le bouton Signer.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py — bug statut Envoyée</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><strong>Bug critique corrigé :</strong> le statut passait à «&nbsp;Envoyée&nbsp;» même quand l'email échouait. Désormais : email d'abord → statut mis à jour seulement en cas de succès → HTTP 500 retourné si échec Resend.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py — migrate_ligne_items()</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Migration de démarrage : backfille le champ <code>ligne</code> sur les items existants des dossiers en les croisant avec le catalogue par code article. Garantit que les dossiers anciens retrouvent leurs garanties sans recréation manuelle.</td>
+        </tr>
+        <tr>
+          <td class="name">TERMES_CONDITIONS — 5 clauses</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">2 clauses retirées (mesures client + prix matériaux). Clause permis municipal reformulée : responsabilité transférée entièrement au client. Total : 5 clauses finales.</td>
+        </tr>
+        <tr>
+          <td class="name">Resend — domaine solariumpro.ca</td>
+          <td><span class="tag tag-config">Config</span></td>
+          <td class="role">Domaine <code>solariumpro.ca</code> vérifié dans Resend. Variable <code>MAIL_FROM</code> configurée sur Railway pour les deux services (solarium-sm + suivi-production) : <code>Solarium Pro &lt;notifications@solariumpro.ca&gt;</code>. Emails livrés à des adresses réelles.</td>
+        </tr>
+        <tr>
+          <td class="name">dossier_form.html — statut Brouillon/Complet</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Statut de préparation sur le formulaire dossier : <code>appel_recu</code>→Brouillon / <code>en_attente</code>→En attente / <code>pret_soumission</code>→Complet. Conditionne l'activation du bouton «&nbsp;Envoyer la soumission&nbsp;».</td>
+        </tr>
+        <tr>
+          <td class="name">dossier_form.html — QTÉ + champ ligne sauvegardé</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Largeur colonne QTÉ : 72→90px. Les deux <code>arr.push()</code> (ajout catalogue + panel dimensions) incluent désormais <code>ligne: item.ligne</code> pour persistance correcte du champ ligne à chaque sauvegarde.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- MISES À JOUR 1er JUILLET 2026 -->
 <div class="section">
