@@ -177,7 +177,36 @@ Dossier : `~/Documents/Pastilles/`
 - À faire en fin de session si fichiers modifiés
 
 
-## 10. Checklist fin de session
+## 10. Module Solarium SM (soumissions)
+
+**URL production :** `https://solarium-pro-sm-production.up.railway.app`
+**Repo :** `~/solarium-sm` → GitHub `88c47pwp5k-hub/solarium-sm` → Railway auto-deploy sur `main`
+
+### Déployer les changements SM
+```bash
+cd ~/solarium-sm
+git add <fichiers>
+git commit -m "message"
+git push origin main   # Railway redéploie automatiquement (~2 min)
+```
+
+### Scanner IMAP (`scanner_soumissions.py`)
+- **Automatique :** launchd chaque jour à 7h05 via `~/Library/LaunchAgents/com.benoitdupuis.scansoumissions.plist`
+- **Manuel (test) :**
+  ```bash
+  python ~/Library/SolariumDashboard/scanner_soumissions.py
+  ```
+- Scanne INBOX pour sujets contenant `alerte nouveau dossier`
+- Résultat dans `~/Library/SolariumDashboard/soumissions.json`
+- Log : `~/Library/SolariumDashboard/scan_soumissions.log`
+
+### Comportements conditionnels (depuis 18 juillet 2026)
+- **Clause délai** : `_build_termes(dossier)` dans `app.py` → si installation par tiers (`installateur_accredit` / `client`), clause délai ne mentionne pas Solarium Pro pour l'installation
+- **QTÉ** : colonne non visible côté client dans le PDF soumission
+- **Bloc coordonnées** : séparateur vertical uniquement si adresse des travaux ≠ adresse client
+
+
+## 11. Checklist fin de session
 
 - [ ] README.html mis à jour avec tous les changements
 - [ ] Git push : `cd ~/prospect2-master && git push`
