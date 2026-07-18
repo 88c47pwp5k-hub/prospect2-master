@@ -205,6 +205,11 @@ git push origin main   # Railway redéploie automatiquement (~2 min)
 - **QTÉ** : colonne non visible côté client dans le PDF soumission
 - **Bloc coordonnées** : séparateur vertical uniquement si adresse des travaux ≠ adresse client
 
+### Guide interne
+- **URL :** `https://solarium-pro-sm-production.up.railway.app/guide`
+- Accessible à Benoit, Cathy, Cédric, Kevin (login requis)
+- Couvre : créer soumission, envoi client, signature, contrat, facture, photos, sondage, distributeurs, questionnaire interne
+
 
 ## 11. Checklist fin de session
 
