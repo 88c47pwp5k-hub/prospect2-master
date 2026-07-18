@@ -136,8 +136,60 @@
       <div class="subtitle">Documentation complète du projet</div>
     </div>
   </div>
-  <div class="date-badge">Mis à jour le <strong>16 juillet 2026</strong></div>
+  <div class="date-badge">Mis à jour le <strong>18 juillet 2026</strong></div>
 </header>
+
+<!-- MISES À JOUR 18 JUILLET 2026 — CORRECTIFS SM -->
+<div class="section">
+  <div class="section-title">Correctifs — 18 juillet 2026 — Solarium SM</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">app.py — redirect /dossiers/ legacy</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Redirect 301 <code>/dossiers/&lt;numero&gt;</code> → <code>/soumissions/&lt;numero&gt;</code> pour éviter 404 sur liens anciens. Ajout du lien dossier dans le courriel admin post-signature (était absent).</td>
+        </tr>
+        <tr>
+          <td class="name">scanner_soumissions.py — fallback HTML</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><code>get_body_text()</code> : si aucune partie <code>text/plain</code> trouvée dans le message IMAP, bascule automatiquement sur <code>text/html</code> avec extraction du texte brut (strip tags). Évite un retour vide si Resend envoie le corps en HTML uniquement. Scanner tourne à 7h05 via launchd — pour tester manuellement : <code>python ~/Library/SolariumDashboard/scanner_soumissions.py</code></td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — colonne QTÉ retirée</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Colonnes Qté supprimées des tableaux Services et Produits côté client. Le total affiché reste calculé à partir de <code>prix × quantite</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — modalités à côté du total</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Remplacement du <code>display:grid</code> par un <code>&lt;table&gt;</code> natif pour la mise en page côte à côte Modalités + Récapitulatif. Garantit le rendu correct sous WeasyPrint (support grid partiel).</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — bloc coordonnées</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Bloc «&nbsp;Soumis à&nbsp;» conditionnel : séparateur vertical et 2e colonne affichés seulement si adresse des travaux différente. Grille compacte 2 colonnes pour Nom/Contact. Paddings réduits sur ensemble du bloc infos.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py — clause Responsabilité municipale</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Doublon supprimé : clause permis municipal retirée de <code>TERMES_CONDITIONS</code> (index 3). La section dédiée «&nbsp;Responsabilité municipale&nbsp;» dans le document reste seule. Total : 4 termes.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py — _build_termes() clause délai conditionnelle</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Nouvelle fonction <code>_build_termes(dossier)</code> : si <code>installation == installateur_accredit</code> ou <code>client</code>, la clause délai mentionne uniquement la fabrication (5–6 semaines) sans Solarium Pro pour l'installation. Utilisée sur PDF, page signature et aperçu.</td>
+        </tr>
+        <tr>
+          <td class="name">Questionnaire Cathy — TYPE DE PROJET</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Ajout de l'option «&nbsp;Estetika motorisé&nbsp;». Réordonnancement à 14 options : Néoscenica · Estetika manuel · Estetika motorisé · Moustiquaire fixe · Cover sur muret · Cover pleine hauteur · Aika muret · Aika pleine hauteur · Rampe sur plancher · Rampe murale · Cadre fixe · Trapèze · Appel de service · Réparation. Modifié dans <code>dossier_detail.html</code> et <code>nouvel_appel.html</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- MISES À JOUR 16 JUILLET 2026 — SOLARIUM-SM -->
 <div class="section">
