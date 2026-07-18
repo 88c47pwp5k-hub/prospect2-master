@@ -139,9 +139,71 @@
   <div class="date-badge">Mis à jour le <strong>18 juillet 2026</strong></div>
 </header>
 
-<!-- MISES À JOUR 18 JUILLET 2026 — CORRECTIFS SM -->
+<!-- MISES À JOUR 18 JUILLET 2026 — FIN DE JOURNÉE -->
 <div class="section">
-  <div class="section-title">Correctifs — 18 juillet 2026 — Solarium SM</div>
+  <div class="section-title">Mises à jour — 18 juillet 2026 — Solarium SM · Fin de journée</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">app.py — Bug MAIL_FROM Resend</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><strong>Bug critique corrigé :</strong> <code>MAIL_FROM = 'Solarium Pro'</code> (sans adresse courriel) causait une erreur 422 Resend sur TOUS les envois. Corrigé via Railway : <code>MAIL_FROM=Solarium Pro &lt;notifications@solariumpro.ca&gt;</code>. Variable Railway mise à jour via <code>--stdin</code> (les chevrons <code>&lt;&gt;</code> exigent ce contournement shell).</td>
+        </tr>
+        <tr>
+          <td class="name">app.py — ProxyFix + APP_BASE_URL + _external_url()</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><strong>Bug URLs localhost dans les emails :</strong> les liens de signature pointaient vers <code>http://127.0.0.1:5555/signer/...</code>. Fix en 3 parties : (1) <code>ProxyFix(x_for=1, x_proto=1, x_host=1)</code> pour lire les en-têtes Railway, (2) helper <code>_external_url()</code> utilisant <code>APP_BASE_URL</code> env var, (3) <code>APP_BASE_URL=https://solarium-pro-sm-production.up.railway.app</code> sur Railway. Tous les <code>url_for(_external=True)</code> remplacés.</td>
+        </tr>
+        <tr>
+          <td class="name">signature.html — Note carte de crédit conditionnelle</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Le message d'avertissement CC et le bloc 4 chiffres s'affichent désormais <strong>uniquement</strong> quand "Carte de crédit" est sélectionné. Avant : toujours visible. Correction JS : <code>cartePendante = mode === 'Carte de crédit' && cbCarte && !cbCarte.checked</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">Questionnaire Cathy — Dimensions multi-murs + Options</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Deux nouveaux blocs dans le questionnaire (nouvel_appel.html + dossier_detail.html) : <strong>Dimensions</strong> (Largeur/Hauteur par mur, ajout/suppression dynamique jusqu'à N murs) et <strong>Options</strong> (5 pills multi-sélection : Rail encastré, Rail incliné, Serrure à clé hors cadre, Teinté bronze, Teinté gris). Données sauvegardées dans <code>interne.questionnaire.murs</code> et <code>interne.questionnaire.options</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">Suivi ouverture courriel — enrichi</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Pixel de tracking 1×1 déjà en place. <strong>Nouveautés :</strong> (1) Date ET heure d'ouverture (ex: "Ouverte le 2026-07-18 à 14:32"), (2) Badge <strong>📩 Non ouvert</strong> (gris, remplace "✉ Envoyée") quand envoyé mais jamais ouvert, (3) Bloc <strong>Suivi courriel</strong> dans l'onglet Info interne : date envoi + date/heure ouverture. Visible dans liste soumissions, en-tête fiche et onglet Info interne.</td>
+        </tr>
+        <tr>
+          <td class="name">Traçabilité variantes / duplicatas</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Nouveau champ <code>duplique_de</code> ajouté à toute nouvelle duplication. Nouveau statut <code>non_retenu</code> (bouton "Non retenu" sur dossiers brouillon/envoyée). Badge <strong>✅ SIGNÉE — SP…</strong> en vert foncé (fond sombre, numéro visible). Panneau <strong>⚠ Variantes</strong> en jaune ambre sur chaque fiche liée. Bandeau vert <strong>DOSSIER SIGNÉ</strong> en haut de l'onglet Feuilles de production (orange si non signé). But : éliminer le risque que Cédric travaille sur la mauvaise variante.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Section Garanties</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Section <strong>Conditions d'utilisation, d'entretien et de garantie</strong> ajoutée au PDF (avant Termes). Chaque bloc garantie listé avec mention "Voir document joint". Si dossier signé : "✓ Conditions lues et comprises par le client le [date] à [heure]". La variable <code>garanties</code> est maintenant passée par <code>generer_pdf_bytes()</code> via <code>get_garanties_applicables(dossier)</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Retrait Responsabilité municipale des Modalités</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Doublon supprimé : la clause "Responsabilité municipale" apparaissait 2× dans les Modalités (avec et sans prix) en plus du point 5 des Termes. Retirée des deux blocs Modalités — reste uniquement au <strong>point 5</strong> des Termes via <code>TERMES_CONDITIONS</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">Correctifs visuels en-tête, PO, adresse travaux</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Appliqués aux <strong>deux templates</strong> (signature.html + pdf_soumission.html) : (1) En-tête aéré — padding augmenté, <code>line-height 1.9–2.0</code> (vs 1.3), classe <code>header-right</code> avec padding latéral, (2) Label <strong>Réf. PO / Distributeur</strong> (vs "N° PO"/"Numéro de PO"), (3) Note discrète "Adresse des travaux identique à la facturation" quand <code>adresse_travaux_differente = False</code>, (4) <code>adresse_travaux_differente</code> ajouté dans <code>_contexte_signature()</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">guide.html — Sections 10 et 11</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Guide interne enrichi de 2 nouvelles sections : <strong>10 — Suivi d'ouverture du courriel</strong> (explication pixel, 3 emplacements, exemples badges, note limite Outlook) et <strong>11 — Page de signature et mode de paiement</strong> (5 modes, comportement CC, 5 étapes post-signature : statut signée, archivage IP/date, PDF, hash garanties SHA-256, lien invalidé).</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MISES À JOUR 18 JUILLET 2026 — CORRECTIFS SM (MATIN) -->
+<div class="section">
+  <div class="section-title">Mises à jour — 18 juillet 2026 — Solarium SM · Matin</div>
   <div class="card">
     <table>
       <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
