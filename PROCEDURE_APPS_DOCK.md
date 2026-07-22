@@ -211,7 +211,33 @@ git push origin main   # Railway redéploie automatiquement (~2 min)
 - Couvre : créer soumission, envoi client, signature, contrat, facture, photos, sondage, distributeurs, questionnaire interne
 
 
-## 11. Checklist fin de session
+## 11. Prospect 2.0 — Scripts de diagnostic (2026-07-22)
+
+### send_invitation_app.py — Envoyer Invitation
+- **Converti de Tkinter vers Flask** (port 5959) — ouvre automatiquement dans le navigateur au lancement
+- App Dock : `~/Desktop/"Prospect 2,0"/"SOLICITATION — Clients futurs"/"Envoyer Invitation.app"`
+- Launcher : `python3 ~/Documents/prospect2/send_invitation_app.py`
+- Logue chaque envoi dans `prospects.csv`
+
+### generer_rapport_auto.py — Rapport automatique
+- Lit les réponses du Google Forms ID `1cMJLbieugSF8QbpS9TU8Tl47kranoYoQarQBeR8w91Y`
+- Calcule 6 scores /20 (Organisation, Outils, Ventes, Finances, Équipe, Vision)
+- Règle de score : échelle → `(val−low)/(high−low)×20` ; choix multiple → première option = 20/20
+- Appelle `rapport_diagnostic_2026-07-01.py` pour générer le PDF final
+- Credentials : `~/Documents/prospect2/credentials/token_forms.pickle`
+- Usage : `python3 ~/Documents/prospect2/generer_rapport_auto.py`
+
+### test_simulation.py — Simulation sans répondant réel
+- Simule Marc Bergeron / Toitures Bergeron & Fils (profil moyen-faible 57/100)
+- Valide le pipeline complet sans toucher au vrai formulaire
+- Usage : `python3 ~/Documents/prospect2/test_simulation.py`
+
+### Section "Outils & Automatisation" ajoutée au Forms (2026-07-22)
+- Insérée entre "Organisation & Processus" (index 8) et "Ventes & Soumissions" (index 22)
+- 5 questions : texte libre, 3 choix multiples, 1 échelle 1–5
+
+
+## 12. Checklist fin de session
 
 - [ ] README.html mis à jour avec tous les changements
 - [ ] Git push : `cd ~/prospect2-master && git push`
