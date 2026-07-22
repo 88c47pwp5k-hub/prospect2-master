@@ -11,14 +11,14 @@ Profil simulé : Marc Bergeron — Toitures Bergeron & Fils
   Score global attendu : ~57/100 (En développement)
 """
 
-import os, sys, subprocess, warnings
+import os, sys, warnings
 warnings.filterwarnings("ignore")
 
 # ─── Import des utilitaires du script principal ───────────────────────────────
 sys.path.insert(0, os.path.expanduser("~/Documents/prospect2"))
 from generer_rapport_auto import (
     _load_creds, _build_form_index, _compute_scores, _section_key,
-    RAPPORT_SCRIPT,
+    _patch_and_generate, RAPPORT_SCRIPT,
 )
 from googleapiclient.discovery import build
 
@@ -230,27 +230,8 @@ def main():
             print(f"    Q : {q_short}")
             print(f"    R : {r_short}")
 
-    # Génération du PDF
-    cmd = [
-        sys.executable, RAPPORT_SCRIPT,
-        "--client",       nom,
-        "--entreprise",   entreprise,
-        "--secteur",      secteur,
-        "--organisation", str(scores.get("organisation", 10)),
-        "--ventes",       str(scores.get("ventes",       10)),
-        "--equipe",       str(scores.get("equipe",       10)),
-        "--finances",     str(scores.get("finances",     10)),
-        "--outils",       str(scores.get("outils",       10)),
-        "--vision",       str(scores.get("vision",       10)),
-    ]
-
-    print("\n" + "=" * 62)
-    print("  → Génération du PDF…")
-    print("=" * 62 + "\n")
-    subprocess.run(cmd, check=True)
-    print("\n" + "=" * 62)
-    print(f"  PDF : ~/Documents/prospect2/rapport_diagnostic_TEST.pdf")
-    print("=" * 62)
+    # Génération du PDF avec actions personnalisées via Claude API
+    _patch_and_generate(nom, entreprise, secteur, scores, textes)
 
 
 if __name__ == "__main__":
