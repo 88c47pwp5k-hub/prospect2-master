@@ -2,12 +2,14 @@
 """
 generer_rapport_auto.py — Prospect 2.0
 Lit les réponses Google Forms, calcule les scores par section, génère le PDF diagnostic.
+Les 'Actions recommandées' des 3 sections prioritaires sont générées par Claude (Anthropic API)
+à partir des réponses texte libre du client.
 
 Usage :
   python3 generer_rapport_auto.py
 """
 
-import os, sys, pickle, warnings, subprocess
+import os, sys, pickle, warnings, importlib.util
 warnings.filterwarnings("ignore")
 
 FORM_ID      = "1cMJLbieugSF8QbpS9TU8Tl47kranoYoQarQBeR8w91Y"
@@ -15,6 +17,16 @@ CREDS_PATH   = os.path.expanduser("~/Documents/prospect2/credentials/token_forms
 RAPPORT_SCRIPT = os.path.expanduser(
     "~/Documents/backup-production/rapport_diagnostic_2026-07-01.py"
 )
+
+# Mapping clé interne (lowercase) → label affiché dans le rapport (capitalisé)
+SECTION_KEY_TO_LABEL = {
+    'organisation': 'Organisation',
+    'outils':       'Outils',
+    'ventes':       'Ventes',
+    'finances':     'Finances',
+    'equipe':       'Équipe',
+    'vision':       'Vision',
+}
 
 # Mots-clés pour identifier chaque section → clé CLI du rapport
 SECTION_MAP = [
@@ -202,6 +214,144 @@ def _compute_scores(sections, id_to_section, response):
     return scores, section_texts
 
 
+# ─── Génération d'actions personnalisées via Claude API ──────────────────────
+
+_ENV_PATH = os.path.expanduser("~/Documents/resume-matin/.env")
+
+def _load_anthropic_key():
+    """Lit ANTHROPIC_API_KEY depuis l'environnement ou ~/Documents/resume-matin/.env."""
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if key:
+        return key
+    if os.path.exists(_ENV_PATH):
+        with open(_ENV_PATH) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("ANTHROPIC_API_KEY="):
+                    return line.split("=", 1)[1].strip()
+    return ""
+
+
+def _generer_actions_claude(section_label, nom, secteur, score, textes_libres):
+    """
+    Appelle claude-sonnet-4-6 pour générer 3 actions concrètes et personnalisées
+    basées sur les réponses texte libre du client pour une section donnée.
+
+    Args:
+        section_label  : nom affiché de la section (ex: 'Organisation')
+        nom            : prénom/nom du client
+        secteur        : secteur d'activité
+        score          : score obtenu /20
+        textes_libres  : liste de {"question": ..., "reponse": ...}
+
+    Retourne une liste de 3 chaînes (actions à l'infinitif).
+    """
+    import anthropic
+    api_key = _load_anthropic_key()
+
+    contexte_qr = ""
+    for item in textes_libres:
+        q_short = item["question"][:100]
+        r_short = item["reponse"][:300]
+        contexte_qr += f"Q : {q_short}\nR : {r_short}\n\n"
+
+    if not contexte_qr.strip():
+        contexte_qr = "(Aucune réponse texte libre pour cette section.)"
+
+    prompt = f"""Tu es consultant en développement de PME saisonnières au Québec (Prospect 2.0).
+Tu dois générer 3 actions concrètes et personnalisées pour un client diagnostiqué.
+
+Client : {nom}
+Secteur : {secteur}
+Section diagnostiquée : {section_label}
+Score obtenu : {score}/20
+
+Réponses du client dans cette section :
+{contexte_qr}
+Génère exactement 3 actions recommandées pour cette section, directement basées sur ce que le client a dit.
+Les actions doivent :
+- Commencer par un verbe à l'infinitif (Documenter, Automatiser, Créer, Mettre en place, Identifier, Calculer…)
+- Être spécifiques à la réalité du client (mentionner ses outils, sa situation, son secteur si pertinent)
+- Être courtes (max 15 mots chacune)
+- Être classées du plus urgent au moins urgent
+
+Réponds uniquement avec les 3 actions, une par ligne, sans numérotation ni tiret. Rien d'autre."""
+
+    client_api = anthropic.Anthropic(api_key=api_key)
+    message = client_api.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=256,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    raw     = message.content[0].text.strip()
+    actions = [line.strip() for line in raw.split("\n") if line.strip()][:3]
+
+    while len(actions) < 3:
+        actions.append(f"Améliorer {section_label.lower()} avec l'aide de Prospect 2.0")
+
+    return actions
+
+
+# ─── Import du module rapport + patch SECTION_INFO + génération PDF ──────────
+
+def _charger_module_rapport():
+    """Importe rapport_diagnostic_2026-07-01.py comme module Python."""
+    spec = importlib.util.spec_from_file_location("rapport_diagnostic", RAPPORT_SCRIPT)
+    mod  = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _patch_and_generate(nom, entreprise, secteur, scores, textes, date_rapport=None):
+    """
+    Pour les 3 sections les plus faibles, génère des actions personnalisées via Claude API,
+    patche SECTION_INFO du module rapport, puis appelle generate() directement.
+
+    Args:
+        nom, entreprise, secteur : infos client
+        scores   : {section_key_lowercase: int}  ex: {'organisation': 8, 'ventes': 14, ...}
+        textes   : {section_key_lowercase: [{question, reponse}]}
+        date_rapport : str optionnel
+    """
+    # 3 sections les plus faibles
+    top3_keys = [sk for sk, _ in sorted(scores.items(), key=lambda x: x[1])[:3]]
+
+    print("\n  → Génération des actions personnalisées via Claude API…")
+    actions_claude = {}
+    for sk in top3_keys:
+        label = SECTION_KEY_TO_LABEL.get(sk, sk.capitalize())
+        score = scores[sk]
+        tx    = textes.get(sk, [])
+        print(f"     [{label}] score={score}/20 — {len(tx)} réponse(s) texte libre…",
+              end=" ", flush=True)
+        acts = _generer_actions_claude(label, nom, secteur, score, tx)
+        actions_claude[label] = acts
+        print("✓")
+
+    # Charger le module rapport et patcher SECTION_INFO
+    rapport = _charger_module_rapport()
+
+    for label, acts in actions_claude.items():
+        if label in rapport.SECTION_INFO:
+            rapport.SECTION_INFO[label]['actions_low'] = acts
+            rapport.SECTION_INFO[label]['actions_med'] = acts
+
+    # Convertir clés lowercase → labels capitalisés pour le rapport
+    scores_rapport = {
+        SECTION_KEY_TO_LABEL.get(sk, sk.capitalize()): v
+        for sk, v in scores.items()
+    }
+
+    print("\n" + "=" * 62)
+    print("  → Génération du PDF…")
+    print("=" * 62 + "\n")
+    rapport.generate(nom, entreprise, secteur, scores_rapport, date_rapport)
+    print("\n" + "=" * 62)
+    print(f"  PDF : ~/Documents/prospect2/rapport_diagnostic_TEST.pdf")
+    print("=" * 62)
+
+
 # ─── Affichage helper ─────────────────────────────────────────────────────────
 
 def _get_field(response, qid):
@@ -244,10 +394,10 @@ def main():
     # Liste des répondants
     print(f"\n  {len(responses)} réponse(s) :\n")
     for i, r in enumerate(responses):
-        nom       = _get_field(r, id_champs["nom"])
-        entreprise = _get_field(r, id_champs["entreprise"])
-        date      = r.get("createTime", "")[:10]
-        print(f"    [{i + 1}] {nom}  —  {entreprise}  ({date})")
+        nom_r       = _get_field(r, id_champs["nom"])
+        entreprise_r = _get_field(r, id_champs["entreprise"])
+        date_r      = r.get("createTime", "")[:10]
+        print(f"    [{i + 1}] {nom_r}  —  {entreprise_r}  ({date_r})")
 
     # Sélection
     print()
@@ -301,25 +451,8 @@ def main():
                 print(f"    Q : {q_short}")
                 print(f"    R : {r_lines}")
 
-    # Appel du script rapport
-    cmd = [
-        sys.executable, RAPPORT_SCRIPT,
-        "--client",       nom,
-        "--entreprise",   entreprise,
-        "--secteur",      secteur,
-        "--organisation", str(scores.get("organisation", 10)),
-        "--ventes",       str(scores.get("ventes",       10)),
-        "--equipe",       str(scores.get("equipe",       10)),
-        "--finances",     str(scores.get("finances",     10)),
-        "--outils",       str(scores.get("outils",       10)),
-        "--vision",       str(scores.get("vision",       10)),
-    ]
-
-    print("\n" + "=" * 62)
-    print("  → Génération du PDF…")
-    print("=" * 62 + "\n")
-    subprocess.run(cmd, check=True)
-    print("\n" + "=" * 62)
+    # Génération PDF avec actions Claude
+    _patch_and_generate(nom, entreprise, secteur, scores, textes)
 
 
 if __name__ == "__main__":
