@@ -213,6 +213,8 @@ git push origin main   # Railway redéploie automatiquement (~2 min)
 
 ## 11. Prospect 2.0 — Scripts de diagnostic (2026-07-22)
 
+**Mode d'emploi complet (7 étapes) :** `~/Documents/prospect2/MODE_EMPLOI_DIAGNOSTIC.md`
+
 ### send_invitation_app.py — Envoyer Invitation
 - **Converti de Tkinter vers Flask** (port 5959) — ouvre automatiquement dans le navigateur au lancement
 - App Dock : `~/Desktop/"Prospect 2,0"/"SOLICITATION — Clients futurs"/"Envoyer Invitation.app"`
