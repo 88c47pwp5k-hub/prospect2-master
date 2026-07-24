@@ -4,6 +4,8 @@ from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from flask import Flask, request
+from dotenv import load_dotenv
+load_dotenv(os.path.expanduser("~/Documents/prospect2/.env"))
 
 EXPEDITEUR   = "bdprospect2.0@gmail.com"
 APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "")
