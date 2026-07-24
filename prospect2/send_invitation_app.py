@@ -6,7 +6,7 @@ from email.mime.text import MIMEText
 from flask import Flask, request
 
 EXPEDITEUR   = "bdprospect2.0@gmail.com"
-APP_PASSWORD = "GMAIL_APP_PASSWORD_REMOVED"
+APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "")
 SUJET        = "Votre diagnostic confidentiel — Prospect 2.0"
 HTML_PATH    = os.path.expanduser("~/Documents/prospect2/invitation_courriel.html")
 CSV_PATH     = os.path.expanduser("~/Documents/prospect2/prospects.csv")
