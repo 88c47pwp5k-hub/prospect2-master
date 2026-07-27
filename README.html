@@ -136,8 +136,137 @@
       <div class="subtitle">Documentation complète du projet</div>
     </div>
   </div>
-  <div class="date-badge">Mis à jour le <strong>18 juillet 2026</strong></div>
+  <div class="date-badge">Mis à jour le <strong>27 juillet 2026</strong></div>
 </header>
+
+<!-- MISES À JOUR 27 JUILLET 2026 — STACK SOLARIUM PRO · INFRA + ACCÈS DISTANT -->
+<div class="section">
+  <div class="section-title">Mises à jour — 27 juillet 2026 — Stack Solarium Pro · Infrastructure &amp; accès distant</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">Apps Dock — Icônes (SM, SC, SD, SP, SU)</td>
+          <td><span class="tag tag-html">Icônes</span></td>
+          <td class="role">Uniformisation des icônes des 5 apps Dock Solarium Pro avec pastilles amber cohérentes. Backup complet effectué avant modification dans <code>~/Documents/backup-production/apps-dock-avant-icones-2026-07-27/</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">Suivi Production.app — Bug URL corrigé</td>
+          <td><span class="tag tag-html">Bug</span></td>
+          <td class="role">L'app Dock pointait vers l'ancienne URL Railway (<code>energetic-elegance…</code>) au lieu de <code>localhost:5757</code>. Corrigé dans le script shell de l'app bundle.</td>
+        </tr>
+        <tr>
+          <td class="name">solarium_production.py — host='0.0.0.0'</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Flask écoutait par défaut sur <code>127.0.0.1</code> uniquement. Changé pour <code>host='0.0.0.0'</code> afin d'accepter les connexions Tailscale depuis les Macs des employés. LaunchAgent redémarré. Testé : <code>localhost:5757</code> répond toujours correctement (HTTP 401 Basic Auth attendu).</td>
+        </tr>
+        <tr>
+          <td class="name">HTTP Basic Auth — Suivi Production</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Protection par mot de passe ajoutée via <code>@app.before_request</code> dans <code>solarium_production.py</code>. Mot de passe lu depuis variable d'environnement <code>SP_PASSWORD</code> dans le LaunchAgent plist.</td>
+        </tr>
+        <tr>
+          <td class="name">Tailscale — Accès distant Cédric</td>
+          <td><span class="tag tag-html">Infra</span></td>
+          <td class="role">Mise en place de l'accès distant via Tailscale VPN. Tailscale installé sur Mac Benoît (<code>tailscaled</code> daemon). Procédure documentée dans PROCEDURE_APPS_DOCK.md §15. Cédric se connectera avec <code>cedrick.rainville@gmail.com</code> — compte séparé, aucun accès au compte Google de Benoît.</td>
+        </tr>
+        <tr>
+          <td class="name">SM Railway — Mots de passe Cédric &amp; Cathy</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Route <code>/utilisateurs/&lt;code&gt;/changer-mdp</code> ajoutée à <code>app.py</code> (admin only). Déployée sur Railway via git push. Mots de passe de Cédric et Cathy mis à jour sur Railway production via cette route.</td>
+        </tr>
+        <tr>
+          <td class="name">PROCEDURE_APPS_DOCK.md — §15, §16, §17</td>
+          <td><span class="tag tag-html">Doc</span></td>
+          <td class="role">Ajout de trois nouvelles sections : procédure Tailscale complète (§15), checklist 5 étapes avant livraison (§16), tableau des comptes avec accès distant (§17).</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MISES À JOUR 19 JUILLET 2026 — SOLARIUM SM · CORRECTIFS LOTS 1 + 2 -->
+<div class="section">
+  <div class="section-title">Mises à jour — 19 juillet 2026 — Solarium SM · Correctifs lots 1 + 2 (14 fixes)</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">dossier_form.html — Auto-génération lignes murs (Lot 1 #1)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Pour les produits Aika/Cover, le clic sur "Ajouter" génère automatiquement une ligne produit par mur défini dans le questionnaire Cathy (<code>DOSSIER.interne.questionnaire.murs</code>). Noms préremplis "Murs #N … L×H" et éditables inline. Si aucun mur défini : bascule sur le panneau manuel habituel.</td>
+        </tr>
+        <tr>
+          <td class="name">dossier_form.html — Bettio moustiquaire · ajout multiple (Lot 1 #2)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Après calcul Bettio, le bouton "Confirmer" disparaissait sans revenir lors d'ajouts supplémentaires. Corrigé : <code>confirmEl.style.display = 'block'</code> (au lieu de <code>''</code>) pour forcer l'affichage explicite indépendamment du CSS parent.</td>
+        </tr>
+        <tr>
+          <td class="name">dossier_form.html — Colonne QTÉ tronquée (Lot 1 #3)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">La colonne QTÉ était trop étroite pour les nombres à 4+ chiffres. Largeur augmentée : <code>.col-qty { width: 90px }</code> → <code>120px</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">signature.html + pdf_soumission.html — Tél/Cell/Courriel sur lignes séparées (Lot 1 #4)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Tél, Cell et Courriel s'affichaient sur la même ligne dans l'en-tête client. Corrigés en <code>flex-direction:column; gap:4px</code> (signature.html) et en divs empilés individuels (pdf_soumission.html).</td>
+        </tr>
+        <tr>
+          <td class="name">signature.html + pdf_soumission.html — Dépôts sur lignes distinctes (Lot 1 #5)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Les conditions de paiement avec plusieurs versements s'affichaient groupées sur une seule ligne. Séparateur changé de <code>'. '</code> → <code>'.\n'</code> côté JS + <code>white-space:pre-line</code> CSS dans les deux templates pour forcer le retour à la ligne entre chaque versement.</td>
+        </tr>
+        <tr>
+          <td class="name">signature.html + pdf_soumission.html — Note client masquée si vide (Lot 1 #6)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">La section "Note client" s'affichait même quand le champ était vide ou contenant uniquement des espaces. Corrigé : <code>{% if dossier.note %}</code> → <code>{% if dossier.note | trim %}</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py — Fix 404 bouton Retour après aperçu (Lot 1 #7)</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Le bouton Retour du navigateur après "Voir aperçu" renvoyait 404 sur <code>/soumissions/</code> (avec slash final). Corrigé : <code>@app.route('/soumissions', strict_slashes=False)</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py — Options questionnaire : Serrure à clé / Hors cadre séparées (Lot 2 #1)</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">"Serrure à clé hors cadre" était une seule option difficile à sélectionner partiellement. Scindée en deux options distinctes dans <code>OPTIONS_QUESTIONNAIRE</code> : <code>'Serrure à clé'</code> et <code>'Hors cadre'</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — En-tête SOUMISSION/DATE/VALIDE sans chevauchement (Lot 2 #2)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Les valeurs de l'en-tête PDF (numéro de soumission, date, valide jusqu'au) se chevauchaient visuellement. Corrigé via <code>.doc-infos</code> : <code>gap:0</code>, chaque item en <code>flex:0 0 auto; min-width:90pt</code> avec séparateur <code>border-right:1pt solid #EBEBEB</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Colonne PO toujours présente (Lot 2 #3)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">La colonne PO n'apparaissait que si <code>numero_po</code> était renseigné. Rendue permanente : conditionnel supprimé, affiche <code>dossier.numero_po or '—'</code> en tout temps.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Bloc "Soumis à" en 2 colonnes (Lot 2 #4)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Le bloc "Soumis à" gaspillait l'espace horizontal. Restructuré en grille 2 colonnes (<code>grid-template-columns:1fr 1fr</code>) : gauche = nom/contact/adresse, droite = tél/cell/courriel.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Saut de page évité sur bloc Totaux (Lot 2 #5)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Le bloc Totaux se coupait entre deux pages. Corrigé : <code>page-break-inside:avoid; break-inside:avoid</code> ajouté sur <code>.totaux-box</code>, le <code>&lt;table&gt;</code> et chaque <code>&lt;tr&gt;</code> du bloc.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Bloc signature compact (Lot 2 #6)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Le bloc de signature client prenait trop de hauteur. Réduit : <code>.sig-line margin-top</code> 28pt → 16pt, lignes de signature 40pt → 18pt (principale) et 20pt → 8pt (date/initiales).</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Colonne QTÉ interne seulement (Lot 2 #7)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">La colonne QTÉ dans les tableaux Services et Produits est désormais visible uniquement sur le PDF interne (quand <code>_sans_prix</code> est vrai). Sur le PDF client, la colonne QTÉ est masquée.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- MISES À JOUR 18 JUILLET 2026 — FIN DE JOURNÉE -->
 <div class="section">
