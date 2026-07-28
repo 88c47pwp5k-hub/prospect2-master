@@ -136,8 +136,182 @@
       <div class="subtitle">Documentation complète du projet</div>
     </div>
   </div>
-  <div class="date-badge">Mis à jour le <strong>18 juillet 2026</strong></div>
+  <div class="date-badge">Mis à jour le <strong>27 juillet 2026</strong></div>
 </header>
+
+<!-- MISES À JOUR 27 JUILLET 2026 — STACK SOLARIUM PRO · INFRA + ACCÈS DISTANT -->
+<div class="section">
+  <div class="section-title">Mises à jour — 27 juillet 2026 — Stack Solarium Pro · Infrastructure &amp; accès distant</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">Apps Dock — Icônes (SM, SC, SD, SP, SU)</td>
+          <td><span class="tag tag-html">Icônes</span></td>
+          <td class="role">Uniformisation des icônes des 5 apps Dock Solarium Pro avec pastilles amber cohérentes. Backup complet effectué avant modification dans <code>~/Documents/backup-production/apps-dock-avant-icones-2026-07-27/</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">Suivi Production.app — Bug URL corrigé</td>
+          <td><span class="tag tag-html">Bug</span></td>
+          <td class="role">L'app Dock pointait vers l'ancienne URL Railway (<code>energetic-elegance…</code>) au lieu de <code>localhost:5757</code>. Corrigé dans le script shell de l'app bundle.</td>
+        </tr>
+        <tr>
+          <td class="name">solarium_production.py — host='0.0.0.0'</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Flask écoutait par défaut sur <code>127.0.0.1</code> uniquement. Changé pour <code>host='0.0.0.0'</code> afin d'accepter les connexions Tailscale depuis les Macs des employés. LaunchAgent redémarré. Testé : <code>localhost:5757</code> répond toujours correctement (HTTP 401 Basic Auth attendu).</td>
+        </tr>
+        <tr>
+          <td class="name">HTTP Basic Auth — Suivi Production</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Protection par mot de passe ajoutée via <code>@app.before_request</code> dans <code>solarium_production.py</code>. Mot de passe lu depuis variable d'environnement <code>SP_PASSWORD</code> dans le LaunchAgent plist.</td>
+        </tr>
+        <tr>
+          <td class="name">Tailscale — Accès distant Cédric</td>
+          <td><span class="tag tag-html">Infra</span></td>
+          <td class="role">Mise en place de l'accès distant via Tailscale VPN. Tailscale installé sur Mac Benoît (<code>tailscaled</code> daemon). Procédure documentée dans PROCEDURE_APPS_DOCK.md §15. Cédric se connectera avec <code>cedrick.rainville@gmail.com</code> — compte séparé, aucun accès au compte Google de Benoît.</td>
+        </tr>
+        <tr>
+          <td class="name">SM Railway — Mots de passe Cédric &amp; Cathy</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Route <code>/utilisateurs/&lt;code&gt;/changer-mdp</code> ajoutée à <code>app.py</code> (admin only). Déployée sur Railway via git push. Mots de passe de Cédric et Cathy mis à jour sur Railway production via cette route.</td>
+        </tr>
+        <tr>
+          <td class="name">PROCEDURE_APPS_DOCK.md — §15, §16, §17</td>
+          <td><span class="tag tag-html">Doc</span></td>
+          <td class="role">Ajout de trois nouvelles sections : procédure Tailscale complète (§15), checklist 5 étapes avant livraison (§16), tableau des comptes avec accès distant (§17).</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MISES À JOUR 27 JUILLET 2026 SOIR — SOLARIUM PRO · PDFs + DESSIN MONTAGE + TRAPÈZE -->
+<div class="section">
+  <div class="section-title">Mises à jour — 27 juillet 2026 (soir) — Solarium Pro · PDFs, formulaire Trapèze &amp; dessin de montage</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">solarium_production.py — Options couleur RAL (6 produits)</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Ajout du champ "Couleur du cadre" avec 3 options sur les 6 formulaires produits : <strong>Noir RAL 9005</strong>, <strong>Blanc RAL 9016</strong>, <strong>Autre (préciser)</strong>. Apparaît dans les PDFs de commande et documents d'approbation.</td>
+        </tr>
+        <tr>
+          <td class="name">Modules PDF (6) — Bugs caractères / débordement / fond crème</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Corrections multi-modules : caractères spéciaux (apostrophes, accents) mal encodés corrigés ; débordement de texte hors des cellules résolu (truncation + wrapping) ; fond crème (#FFFDF5) uniformisé sur toutes les étiquettes de cotation des 6 documents PDF (cadre_module.py, neoscenica_module.py, esthetika_module.py, aika_6mm_module.py, cover_10mm_module.py, cadre_approbation_v2.py).</td>
+        </tr>
+        <tr>
+          <td class="name">cover_10mm_module.py — Bug Cover encastré/non-encastré</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">La hauteur d'un Cover non-encastré n'incluait pas le jeu de <strong>+1-1/4"</strong> requis pour l'installation. Corrigé : la hauteur de coupe est maintenant calculée comme <code>H_brut + 1.25"</code> pour les Cover non-encastrés, valeur affichée dans la liste de coupe et les cotations.</td>
+        </tr>
+        <tr>
+          <td class="name">solarium_production.py — Formulaire Trapèze (section 3)</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Ajout du sélecteur <strong>"Type de mur"</strong> (Cadre rectangulaire / Trapèze) dans <code>cadreMurBlock(n)</code>. En mode Trapèze, les champs Hauteur gauche (V.G.) et Hauteur droite (V.D.) remplacent la hauteur unique. Labels enrichis : "👁 vue depuis l'extérieur" pour clarifier l'orientation. Bug de serveur corrigé : <code>use_reloader=False</code> exigeait un redémarrage manuel après chaque modification — redémarrage effectué.</td>
+        </tr>
+        <tr>
+          <td class="name">cadre_montage_v1.py — Refonte dessin de montage Cadre &amp; Trapèze</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Refonte complète du module de dessin technique :<br>
+            • <strong>Tubes en contour</strong> : montants dessinés en parallélogramme biseauté (trapèze) avec fond blanc + contour sombre, comme un vrai tube aluminium.<br>
+            • <strong>Hypoténuse tube</strong> : rendue comme un tube (double ligne parallèle), pas une simple ligne.<br>
+            • <strong>Spigots repositionnés</strong> : haut = jonction montant/traverse, bas = extrémités segments traverse.<br>
+            • <strong>Cotations "point le plus long"</strong> : V.G. → <code>_yt(0)</code>, V.D. → <code>_yt(1)</code>, HYP → coin extérieur à coin extérieur = √(L²+(VG-VD)²).<br>
+            • <strong>Cotation hypoténuse avec lignes d'attache</strong> : même style que V.G./V.D. — ligne décalée parallèle + lignes d'attache perpendiculaires + flèches aux bouts. Texte plus affiché sur le tube.<br>
+            • <strong>Taille texte augmentée pour usage usine</strong> : titre 10pt, valeurs en-tête 10pt, cotations 8.5pt/7.5pt, légende 11pt/10pt. Règle documentée dans docstring (min 8pt partout).<br>
+            • <strong>En-tête colonnes</strong> : 4 colonnes pour trapèze (L/VG/VD/TYPE), 3 pour rectangulaire (L/H/TYPE).<br>
+            • <strong>Angle hypoténuse</strong> : encadré séparé en bas du dessin (or), valeur en degrés.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MISES À JOUR 19 JUILLET 2026 — SOLARIUM SM · CORRECTIFS LOTS 1 + 2 -->
+<div class="section">
+  <div class="section-title">Mises à jour — 19 juillet 2026 — Solarium SM · Correctifs lots 1 + 2 (14 fixes)</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">dossier_form.html — Auto-génération lignes murs (Lot 1 #1)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Pour les produits Aika/Cover, le clic sur "Ajouter" génère automatiquement une ligne produit par mur défini dans le questionnaire Cathy (<code>DOSSIER.interne.questionnaire.murs</code>). Noms préremplis "Murs #N … L×H" et éditables inline. Si aucun mur défini : bascule sur le panneau manuel habituel.</td>
+        </tr>
+        <tr>
+          <td class="name">dossier_form.html — Bettio moustiquaire · ajout multiple (Lot 1 #2)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Après calcul Bettio, le bouton "Confirmer" disparaissait sans revenir lors d'ajouts supplémentaires. Corrigé : <code>confirmEl.style.display = 'block'</code> (au lieu de <code>''</code>) pour forcer l'affichage explicite indépendamment du CSS parent.</td>
+        </tr>
+        <tr>
+          <td class="name">dossier_form.html — Colonne QTÉ tronquée (Lot 1 #3)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">La colonne QTÉ était trop étroite pour les nombres à 4+ chiffres. Largeur augmentée : <code>.col-qty { width: 90px }</code> → <code>120px</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">signature.html + pdf_soumission.html — Tél/Cell/Courriel sur lignes séparées (Lot 1 #4)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Tél, Cell et Courriel s'affichaient sur la même ligne dans l'en-tête client. Corrigés en <code>flex-direction:column; gap:4px</code> (signature.html) et en divs empilés individuels (pdf_soumission.html).</td>
+        </tr>
+        <tr>
+          <td class="name">signature.html + pdf_soumission.html — Dépôts sur lignes distinctes (Lot 1 #5)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Les conditions de paiement avec plusieurs versements s'affichaient groupées sur une seule ligne. Séparateur changé de <code>'. '</code> → <code>'.\n'</code> côté JS + <code>white-space:pre-line</code> CSS dans les deux templates pour forcer le retour à la ligne entre chaque versement.</td>
+        </tr>
+        <tr>
+          <td class="name">signature.html + pdf_soumission.html — Note client masquée si vide (Lot 1 #6)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">La section "Note client" s'affichait même quand le champ était vide ou contenant uniquement des espaces. Corrigé : <code>{% if dossier.note %}</code> → <code>{% if dossier.note | trim %}</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py — Fix 404 bouton Retour après aperçu (Lot 1 #7)</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">Le bouton Retour du navigateur après "Voir aperçu" renvoyait 404 sur <code>/soumissions/</code> (avec slash final). Corrigé : <code>@app.route('/soumissions', strict_slashes=False)</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py — Options questionnaire : Serrure à clé / Hors cadre séparées (Lot 2 #1)</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role">"Serrure à clé hors cadre" était une seule option difficile à sélectionner partiellement. Scindée en deux options distinctes dans <code>OPTIONS_QUESTIONNAIRE</code> : <code>'Serrure à clé'</code> et <code>'Hors cadre'</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — En-tête SOUMISSION/DATE/VALIDE sans chevauchement (Lot 2 #2)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Les valeurs de l'en-tête PDF (numéro de soumission, date, valide jusqu'au) se chevauchaient visuellement. Corrigé via <code>.doc-infos</code> : <code>gap:0</code>, chaque item en <code>flex:0 0 auto; min-width:90pt</code> avec séparateur <code>border-right:1pt solid #EBEBEB</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Colonne PO toujours présente (Lot 2 #3)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">La colonne PO n'apparaissait que si <code>numero_po</code> était renseigné. Rendue permanente : conditionnel supprimé, affiche <code>dossier.numero_po or '—'</code> en tout temps.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Bloc "Soumis à" en 2 colonnes (Lot 2 #4)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Le bloc "Soumis à" gaspillait l'espace horizontal. Restructuré en grille 2 colonnes (<code>grid-template-columns:1fr 1fr</code>) : gauche = nom/contact/adresse, droite = tél/cell/courriel.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Saut de page évité sur bloc Totaux (Lot 2 #5)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Le bloc Totaux se coupait entre deux pages. Corrigé : <code>page-break-inside:avoid; break-inside:avoid</code> ajouté sur <code>.totaux-box</code>, le <code>&lt;table&gt;</code> et chaque <code>&lt;tr&gt;</code> du bloc.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Bloc signature compact (Lot 2 #6)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">Le bloc de signature client prenait trop de hauteur. Réduit : <code>.sig-line margin-top</code> 28pt → 16pt, lignes de signature 40pt → 18pt (principale) et 20pt → 8pt (date/initiales).</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Colonne QTÉ interne seulement (Lot 2 #7)</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role">La colonne QTÉ dans les tableaux Services et Produits est désormais visible uniquement sur le PDF interne (quand <code>_sans_prix</code> est vrai). Sur le PDF client, la colonne QTÉ est masquée.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- MISES À JOUR 18 JUILLET 2026 — FIN DE JOURNÉE -->
 <div class="section">
