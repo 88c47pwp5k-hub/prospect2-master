@@ -229,7 +229,7 @@ def _draw_qr(c, no_proj, w, h, inch):
         pass
 
 # ─── GÉNÉRATION PDF ───────────────────────────────────────────────────────────
-def generer_pdf_neoscenica(params, fichier):
+def generer_pdf_neoscenica(params, fichier, mode=None):
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.units    import inch
     from reportlab.pdfgen       import canvas
@@ -288,19 +288,31 @@ def generer_pdf_neoscenica(params, fichier):
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     def entete(titre_doc):
-        c.setFillColor(BLEU)
-        c.rect(0, h-1.1*inch, w, 1.1*inch, fill=True, stroke=False)
-        c.setFillColor(OR); c.setFont("Helvetica-Bold", 13)
-        c.drawString(0.4*inch, h-0.38*inch, "SOLARIUM PRO — NÉOSCENICA")
-        c.setFillColor(colors.white); c.setFont("Helvetica", 9)
-        c.drawString(0.4*inch, h-0.58*inch, titre_doc)
-        c.drawString(0.4*inch, h-0.76*inch,
-                     f"No: {no_proj}  |  Client: {client}  |  Couleur: {couleur}")
-        c.drawRightString(w-0.4*inch, h-0.76*inch, str(_date.today()))
+        NOIR_HDR = colors.HexColor("#111111")
+        c.setFillColor(NOIR_HDR)
+        c.rect(0, h - 1.10*inch, w, 1.10*inch, fill=True, stroke=False)
+        # Titre produit centré, grand, or
+        c.setFillColor(OR); c.setFont("Helvetica-Bold", 16)
+        c.drawCentredString(w/2, h - 0.38*inch, "SOLARIUM PRO")
+        # Sous-titre produit en petit
+        c.setFillColor(colors.white); c.setFont("Helvetica", 8)
+        c.drawCentredString(w/2, h - 0.56*inch, "NÉOSCENICA  ·  CONCEPTION  ·  FABRICATION")
+        # Titre document
+        c.setFont("Helvetica-Bold", 9)
+        c.drawCentredString(w/2, h - 0.74*inch, titre_doc)
+        # Info projet à gauche, date à droite
+        c.setFont("Helvetica", 7.5)
+        info = f"No: {no_proj}  |  Client: {client}  |  Couleur: {couleur}"
+        c.drawString(0.35*inch, h - 0.90*inch, info)
+        c.drawRightString(w - 0.35*inch, h - 0.90*inch, str(_date.today()))
+        # Filet or en bas de l'en-tête
         c.setFillColor(OR)
-        c.rect(0, 0.3*inch, w, 0.25*inch, fill=True, stroke=False)
-        c.setFillColor(BLEU); c.setFont("Helvetica", 7)
-        c.drawCentredString(w/2, 0.4*inch,
+        c.rect(0, h - 1.12*inch, w, 0.05*inch, fill=True, stroke=False)
+        # Pied de page or
+        c.setFillColor(OR)
+        c.rect(0, 0.28*inch, w, 0.22*inch, fill=True, stroke=False)
+        c.setFillColor(NOIR_HDR); c.setFont("Helvetica", 7)
+        c.drawCentredString(w/2, 0.37*inch,
                             f"Solarium Pro  ·  {no_proj}  ·  {client}  ·  {_date.today()}")
 
     def titre_section(y, texte):
@@ -381,219 +393,247 @@ def generer_pdf_neoscenica(params, fichier):
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE 1 : APPROBATION CLIENT
     # ══════════════════════════════════════════════════════════════════════════
-    entete("APPROBATION CLIENT — Néoscenica (Moustiquaire)")
-    y = h - 1.3*inch
-    for mc in murs_calc:
-        mcd = {
-            'nom':          mc['nom'],
-            'largeur_po':   mc['largeur_po'],   'hauteur_po':   mc['hauteur_po'],
-            'largeur_mm':   mc['largeur_mm'],   'hauteur_mm':   mc['hauteur_mm'],
-            'type':         mc['type'],          'sens':         mc['sens'],
-            'couleur_alu':  mc['couleur_alu'],
-            'nb_mont_cent': mc['nb_mont_cent'],
-            'panneaux':     mc.get('panneaux', []),
-        }
-        y = bandeau_mur(y, mc)
-        y = _dessin.dessiner_mur_neoscenica(c, y, mcd, w, h, inch, colors, BLEU, OR)
-        y -= 0.10*inch
-    _dessin.bloc_approbation(c, y, w, inch, colors, BLEU)
-    c.showPage()
+    if mode in (None, 'all', 'approbation'):
+        entete("APPROBATION CLIENT — Néoscenica (Moustiquaire)")
+        y = h - 1.3*inch
+        for mc in murs_calc:
+            mcd = {
+                'nom':          mc['nom'],
+                'largeur_po':   mc['largeur_po'],   'hauteur_po':   mc['hauteur_po'],
+                'largeur_mm':   mc['largeur_mm'],   'hauteur_mm':   mc['hauteur_mm'],
+                'type':         mc['type'],          'sens':         mc['sens'],
+                'couleur_alu':  mc['couleur_alu'],
+                'nb_mont_cent': mc['nb_mont_cent'],
+                'panneaux':     mc.get('panneaux', []),
+            }
+            y = bandeau_mur(y, mc)
+            y = _dessin.dessiner_mur_neoscenica(c, y, mcd, w, h, inch, colors, BLEU, OR)
+            y -= 0.10*inch
+        _dessin.bloc_approbation(c, y, w, inch, colors, BLEU)
+        c.showPage()
+        if mode == 'approbation':
+            c.save()
+            print(f"✓ Néoscenica PDF (approbation) généré : {fichier}")
+            return
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE 2 : SCHÉMA TECHNIQUE (dimensions mm + pouces)
     # ══════════════════════════════════════════════════════════════════════════
-    entete("SCHÉMA TECHNIQUE — Néoscenica (dimensions mm + pouces)")
-    y = h - 1.3*inch
-    for mc in murs_calc:
-        mcd = {
-            'nom':          mc['nom'],
-            'largeur_po':   mc['largeur_po'],   'hauteur_po':   mc['hauteur_po'],
-            'largeur_mm':   mc['largeur_mm'],   'hauteur_mm':   mc['hauteur_mm'],
-            'type':         mc['type'],          'sens':         mc['sens'],
-            'couleur_alu':  mc['couleur_alu'],
-            'nb_mont_cent': mc['nb_mont_cent'],
-            'panneaux':     mc.get('panneaux', []),
-        }
-        y = bandeau_mur(y, mc)
-        y = _dessin.dessiner_mur_neoscenica(c, y, mcd, w, h, inch, colors, BLEU, OR)
-        y -= 0.15*inch
-    c.showPage()
+    if mode in (None, 'all'):
+        entete("SCHÉMA TECHNIQUE — Néoscenica (dimensions mm + pouces)")
+        y = h - 1.3*inch
+        for mc in murs_calc:
+            mcd = {
+                'nom':          mc['nom'],
+                'largeur_po':   mc['largeur_po'],   'hauteur_po':   mc['hauteur_po'],
+                'largeur_mm':   mc['largeur_mm'],   'hauteur_mm':   mc['hauteur_mm'],
+                'type':         mc['type'],          'sens':         mc['sens'],
+                'couleur_alu':  mc['couleur_alu'],
+                'nb_mont_cent': mc['nb_mont_cent'],
+                'panneaux':     mc.get('panneaux', []),
+            }
+            y = bandeau_mur(y, mc)
+            y = _dessin.dessiner_mur_neoscenica(c, y, mcd, w, h, inch, colors, BLEU, OR)
+            y -= 0.15*inch
+        c.showPage()
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE 3 : RÉCAPITULATIF DES PIÈCES
     # ══════════════════════════════════════════════════════════════════════════
-    entete("RÉCAPITULATIF DES PIÈCES — Néoscenica")
-    y = h - 1.3*inch
-    for mc in murs_calc:
-        y = bandeau_mur(y, mc)
-        y = titre_section(y, f"KIT BETTIO — {mc['nom']}")
-        data = [["Kit", "Désignation", "Longueur (pouces)", "Longueur (mm)", "Qté"]]
-        for p in mc['pieces']:
-            data.append([
-                p['kit'],
-                p['nom'],
-                _dvf(p['long']),
-                str(round(p['long'] * 25.4)),
-                str(p['qte']),
-            ])
-        y = tableau(y, data, [0.9*inch, 2.5*inch, 1.5*inch, 1.4*inch, 0.9*inch])
-    if notes.strip():
-        c.setFillColor(colors.HexColor("#FFF3CD"))
-        c.rect(0.4*inch, y-0.55*inch, w-0.8*inch, 0.55*inch, fill=True, stroke=False)
-        c.setFillColor(colors.HexColor("#856404")); c.setFont("Helvetica-Bold", 9)
-        c.drawString(0.5*inch, y-0.16*inch, "NOTES :")
-        c.setFont("Helvetica", 9)
-        c.drawString(0.5*inch, y-0.38*inch, notes[:130])
-    c.showPage()
+    if mode in (None, 'all'):
+        entete("RÉCAPITULATIF DES PIÈCES — Néoscenica")
+        y = h - 1.3*inch
+        for mc in murs_calc:
+            y = bandeau_mur(y, mc)
+            y = titre_section(y, f"KIT BETTIO — {mc['nom']}")
+            data = [["Kit", "Désignation", "Longueur (pouces)", "Longueur (mm)", "Qté"]]
+            for p in mc['pieces']:
+                data.append([
+                    p['kit'],
+                    p['nom'],
+                    _dvf(p['long']),
+                    str(round(p['long'] * 25.4)),
+                    str(p['qte']),
+                ])
+            y = tableau(y, data, [0.9*inch, 2.5*inch, 1.5*inch, 1.4*inch, 0.9*inch])
+        if notes.strip():
+            c.setFillColor(colors.HexColor("#FFF3CD"))
+            c.rect(0.4*inch, y-0.55*inch, w-0.8*inch, 0.55*inch, fill=True, stroke=False)
+            c.setFillColor(colors.HexColor("#856404")); c.setFont("Helvetica-Bold", 9)
+            c.drawString(0.5*inch, y-0.16*inch, "NOTES :")
+            c.setFont("Helvetica", 9)
+            c.drawString(0.5*inch, y-0.38*inch, notes[:130])
+        c.showPage()
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGES 4 : COUPES & QUINCAILLERIE — flux continu
     # ══════════════════════════════════════════════════════════════════════════
-    entete("COUPES & QUINCAILLERIE — Néoscenica")
-    _draw_qr(c, no_proj, w, h, inch)
-    y = h - 1.4*inch
+    if mode in (None, 'all'):
+        entete("COUPES & QUINCAILLERIE — Néoscenica")
+        _draw_qr(c, no_proj, w, h, inch)
+        y = h - 1.4*inch
 
-    # ── Tableau de coupe consolidé (un seul tableau, toutes kits) ─────────────
-    y = titre_section(y, f"LISTES DE COUPE — {couleur}")
-    data_c = [["Kit", "Désignation", "Barre", "#", "Découpes (pouces)", "Utilisé", "Reste"]]
-    for kc, kd in kits_ffd.items():
-        for b in kd['barres']:
-            dec  = "  +  ".join(_dvf(p["long"]) for p in b["pieces"])
-            rest = _dvf(b["reste"]) if b["reste"] >= SEUIL_RESTE_PO else f'{_dvf(b["reste"])} (!)'
-            data_c.append([
-                f"KIT {kc}", kd['kit_nom'], f"{kd['barre_mm']} mm",
-                f"#{b['num']}", dec, _dvf(b["utilise"]), rest
-            ])
-    y = tableau(y, data_c, [0.65*inch, 1.6*inch, 0.75*inch, 0.3*inch, 2.8*inch, 0.75*inch, 0.75*inch])
-    # Légende (!)
-    c.setFont("Helvetica-Oblique", 7.5)
-    c.setFillColor(colors.HexColor("#666666"))
-    c.drawString(0.4*inch, y + 0.18*inch,
-                 f"(!) Reste < {SEUIL_RESTE_PO:.0f}\" — ne pas ranger, mettre en dechet.")
+        # ── Tableau de coupe consolidé (un seul tableau, toutes kits) ─────────────
+        y = titre_section(y, f"LISTES DE COUPE — {couleur}")
+        data_c = [["Kit", "Désignation", "Barre", "#", "Découpes (pouces)", "Utilisé", "Reste"]]
+        for kc, kd in kits_ffd.items():
+            for b in kd['barres']:
+                dec  = "  +  ".join(_dvf(p["long"]) for p in b["pieces"])
+                rest = _dvf(b["reste"]) if b["reste"] >= SEUIL_RESTE_PO else f'{_dvf(b["reste"])} (!)'
+                data_c.append([
+                    f"KIT {kc}", kd['kit_nom'], f"{kd['barre_mm']} mm",
+                    f"#{b['num']}", dec, _dvf(b["utilise"]), rest
+                ])
+        y = tableau(y, data_c, [0.65*inch, 1.6*inch, 0.75*inch, 0.3*inch, 2.8*inch, 0.75*inch, 0.75*inch])
+        # Légende (!)
+        c.setFont("Helvetica-Oblique", 7.5)
+        c.setFillColor(colors.HexColor("#666666"))
+        c.drawString(0.4*inch, y + 0.18*inch,
+                     f"(!) Reste < {SEUIL_RESTE_PO:.0f}\" — ne pas ranger, mettre en dechet.")
 
-    # ── Métrages projet ────────────────────────────────────────────────────────
-    total_H_m = sum(mc['hauteur_mm'] / 1000 * len(mc['panneaux']) for mc in murs_calc)
-    total_L_m = sum(pan['largeur_mm'] / 1000 for mc in murs_calc for pan in mc['panneaux'])
-    total_panels = sum(len(mc['panneaux']) for mc in murs_calc)
+        # ── Métrages projet ────────────────────────────────────────────────────────
+        total_H_m = sum(mc['hauteur_mm'] / 1000 * len(mc['panneaux']) for mc in murs_calc)
+        total_L_m = sum(pan['largeur_mm'] / 1000 for mc in murs_calc for pan in mc['panneaux'])
+        total_panels = sum(len(mc['panneaux']) for mc in murs_calc)
 
-    if y < 1.8*inch:
-        c.showPage(); entete("QUINCAILLERIE — Néoscenica (suite)"); y = h - 1.4*inch
-    y -= 0.15*inch
+        if y < 1.8*inch:
+            c.showPage(); entete("QUINCAILLERIE — Néoscenica (suite)"); y = h - 1.4*inch
+        y -= 0.15*inch
 
-    # ── Quincaillerie principale ───────────────────────────────────────────────
-    y = titre_section(y, f"QUINCAILLERIE & ACCESSOIRES — {total_panels} moustiquaire{'s' if total_panels > 1 else ''}")
-    data_q = [["Code KIT", "Description", "Quantité", "Unité", "Note"]]
-    for item in QUINCAILLERIE_NEO:
-        qte = item['qte']
-        if qte == 'H':
-            qte_str = f"{total_H_m:.2f}"; unite_str = "ml"
-        elif qte == 'L':
-            qte_str = f"{total_L_m:.2f}"; unite_str = "ml"
-        else:
-            qte_str = str(qte * total_panels); unite_str = item['unite']
-        data_q.append([item['code'], item['desc'], qte_str, unite_str, item.get('note', '')])
-    y = tableau(y, data_q, [1.0*inch, 3.1*inch, 1.1*inch, 0.7*inch, 1.3*inch])
+        # ── Quincaillerie principale ───────────────────────────────────────────────
+        y = titre_section(y, f"QUINCAILLERIE & ACCESSOIRES — {total_panels} moustiquaire{'s' if total_panels > 1 else ''}")
+        data_q = [["Code KIT", "Description", "Quantité", "Unité", "Note"]]
+        for item in QUINCAILLERIE_NEO:
+            qte = item['qte']
+            if qte == 'H':
+                qte_str = f"{total_H_m:.2f}"; unite_str = "ml"
+            elif qte == 'L':
+                qte_str = f"{total_L_m:.2f}"; unite_str = "ml"
+            else:
+                qte_str = str(qte * total_panels); unite_str = item['unite']
+            data_q.append([item['code'], item['desc'], qte_str, unite_str, item.get('note', '')])
+        y = tableau(y, data_q, [1.0*inch, 3.1*inch, 1.1*inch, 0.7*inch, 1.3*inch])
 
-    c.showPage()
+        # ── Kit installation V1 — 2 Battenti ────────────────────────────────────
+        if y < 1.8*inch:
+            c.showPage(); entete("KIT INSTALLATION — Néoscenica (suite)"); y = h - 1.4*inch
+        y -= 0.15*inch
+        y = titre_section(y, "KIT INSTALLATION — V1 (2 Battenti)")
+        kit_items = [
+            ('KIT3738', 'Ressort de pression',                  2),
+            ('KIT3889', 'Groupe de pression',                   2),
+            ('KIT3895', 'Support coffre avec double adhésif',   2),
+        ]
+        data_inst = [["Code KIT", "Description", "Qté / moustiquaire", "Total projet"]]
+        for code, desc, qte_par in kit_items:
+            data_inst.append([code, desc, str(qte_par), str(qte_par * total_panels)])
+        y = tableau(y, data_inst, [1.1*inch, 3.0*inch, 1.5*inch, 1.1*inch])
+
+        c.showPage()
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE 5 : FICHE PEINTURE
     # ══════════════════════════════════════════════════════════════════════════
-    from solarium_utils import est_couleur_stock
-    from reportlab.platypus import Image as RLImage
+    if mode in (None, 'all', 'peinture'):
+        from solarium_utils import est_couleur_stock
+        from reportlab.platypus import Image as RLImage
 
-    # Profils exclus : aluminium brut ou non peints
-    KITS_NON_PEINTS = {'1758', '3214', '3707'}
+        # Profils exclus : aluminium brut ou non peints
+        KITS_NON_PEINTS = {'1758', '3214', '3707'}
 
-    _IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images_pieces')
-    IMAGES_PROFILS = {
-        '3699': os.path.join(_IMG_DIR, 'profil_3699.png'),
-        '3703': os.path.join(_IMG_DIR, 'profil_3703.png'),
-        '3702': os.path.join(_IMG_DIR, 'profil_3702.png'),
-        '3704': os.path.join(_IMG_DIR, 'profil_3704.png'),
-        '3859': os.path.join(_IMG_DIR, 'profil_tube_25x100.jpeg'),
-    }
+        _IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images_pieces')
+        IMAGES_PROFILS = {
+            '3699': os.path.join(_IMG_DIR, 'profil_3699.png'),
+            '3703': os.path.join(_IMG_DIR, 'profil_3703.png'),
+            '3702': os.path.join(_IMG_DIR, 'profil_3702.png'),
+            '3704': os.path.join(_IMG_DIR, 'profil_3704.png'),
+            '3859': os.path.join(_IMG_DIR, 'profil_tube_25x100.jpeg'),
+        }
 
-    def _img_cell(kit_code):
-        path = IMAGES_PROFILS.get(kit_code)
-        if path and os.path.exists(path):
-            return RLImage(path, width=0.52*inch, height=0.38*inch)
-        return ""
+        def _img_cell(kit_code):
+            path = IMAGES_PROFILS.get(kit_code)
+            if path and os.path.exists(path):
+                return RLImage(path, width=0.52*inch, height=0.38*inch)
+            return ""
 
-    # Agréger pièces à peindre par (kit, nom, long_mm)
-    pieces_peinture = {}
-    for p in toutes_pieces:
-        if p['kit'] in KITS_NON_PEINTS:
-            continue
-        key = (p['kit'], p['kit_nom'], round(p['long'] * 25.4))
-        pieces_peinture[key] = pieces_peinture.get(key, 0) + p['qte']
+        # Agréger pièces à peindre par (kit, nom, long_mm)
+        pieces_peinture = {}
+        for p in toutes_pieces:
+            if p['kit'] in KITS_NON_PEINTS:
+                continue
+            key = (p['kit'], p['kit_nom'], round(p['long'] * 25.4))
+            pieces_peinture[key] = pieces_peinture.get(key, 0) + p['qte']
 
-    entete("FICHE PEINTURE — Neoscenica")
-    y = h - 1.4*inch
-    stock = est_couleur_stock(couleur)
-    cas_label = "STOCK — barres completes" if stock else "SUR MESURE — longueurs precisees"
-    y = titre_section(y, f"Neoscenica.  Couleur : {couleur}  [{cas_label}]")
+        entete("FICHE PEINTURE — Neoscenica")
+        y = h - 1.4*inch
+        stock = est_couleur_stock(couleur)
+        cas_label = "STOCK — barres completes" if stock else "SUR MESURE — longueurs precisees"
+        y = titre_section(y, f"Neoscenica.  Couleur : {couleur}  [{cas_label}]")
 
-    if stock:
-        # CAS 1 — Couleur stock : envoyer barres COMPLÈTES
-        # FFD avec utile = barre_mm - 50mm pour compter le nombre de barres nécessaires
-        par_code = {}
-        for (kc, kit_nom, long_mm), qte in pieces_peinture.items():
-            if kc not in par_code:
-                _, barre_mm = KITS_NEOSCENICA[kc]
-                par_code[kc] = {'kit_nom': kit_nom, 'barre_mm': barre_mm, 'pieces': []}
-            par_code[kc]['pieces'].append({'nom': f'{long_mm}mm', 'long': long_mm / 25.4, 'qte': qte})
+        if stock:
+            # CAS 1 — Couleur stock : envoyer barres COMPLÈTES
+            # FFD avec utile = barre_mm - 50mm pour compter le nombre de barres nécessaires
+            par_code = {}
+            for (kc, kit_nom, long_mm), qte in pieces_peinture.items():
+                if kc not in par_code:
+                    _, barre_mm = KITS_NEOSCENICA[kc]
+                    par_code[kc] = {'kit_nom': kit_nom, 'barre_mm': barre_mm, 'pieces': []}
+                par_code[kc]['pieces'].append({'nom': f'{long_mm}mm', 'long': long_mm / 25.4, 'qte': qte})
 
-        data_p = [["Profil", "Code", "Designation", "Barre complete", "Nb barres", "Note"]]
-        for kc in sorted(par_code):
-            kd = par_code[kc]
-            barre_mm = kd['barre_mm']
-            utile_po = (barre_mm - 50) / 25.4
-            barres = _ffd(kd['pieces'], utile_po)
-            nb = len(barres)
-            # Signaler si une pièce seule dépasse l'utile (impossible à loger)
-            max_piece_mm = max(p['long'] * 25.4 for b in barres for p in b['pieces'])
-            note = "(!) piece > barre-50mm" if max_piece_mm > (barre_mm - 50) else ""
-            data_p.append([_img_cell(kc), kc, kd['kit_nom'],
-                           f"{barre_mm} mm ({_dvf(barre_mm/25.4)})", str(nb), note])
-        y = tableau(y, data_p, [0.62*inch, 0.65*inch, 1.65*inch, 1.85*inch, 0.7*inch, 1.15*inch])
-    else:
-        # CAS 2 — Couleur sur mesure : longueur précise + 50mm par pièce
-        data_p = [["Profil", "Code", "Designation", "Grandeur (+50mm)", "Nombre", "Coupe"]]
-        for (kc, kit_nom, long_mm), qte in sorted(pieces_peinture.items()):
-            long_p = long_mm + 50
-            grandeur = f"{_dvf(long_p / 25.4)}  ({long_p} mm)"
-            data_p.append([_img_cell(kc), kc, kit_nom, grandeur, str(qte), ""])
-        y = tableau(y, data_p, [0.62*inch, 0.65*inch, 1.7*inch, 2.05*inch, 0.65*inch, 0.95*inch])
-    y -= 0.3*inch
+            data_p = [["Profil", "Code", "Designation", "Barre complete", "Nb barres", "Note"]]
+            for kc in sorted(par_code):
+                kd = par_code[kc]
+                barre_mm = kd['barre_mm']
+                utile_po = (barre_mm - 50) / 25.4
+                barres = _ffd(kd['pieces'], utile_po)
+                nb = len(barres)
+                # Signaler si une pièce seule dépasse l'utile (impossible à loger)
+                max_piece_mm = max(p['long'] * 25.4 for b in barres for p in b['pieces'])
+                note = "(!) piece > barre-50mm" if max_piece_mm > (barre_mm - 50) else ""
+                data_p.append([_img_cell(kc), kc, kd['kit_nom'],
+                               f"{barre_mm} mm ({_dvf(barre_mm/25.4)})", str(nb), note])
+            y = tableau(y, data_p, [0.62*inch, 0.65*inch, 1.65*inch, 1.85*inch, 0.7*inch, 1.15*inch])
+        else:
+            # CAS 2 — Couleur sur mesure : longueur précise + 50mm par pièce
+            data_p = [["Profil", "Code", "Designation", "Grandeur (+50mm)", "Nombre", "Coupe"]]
+            for (kc, kit_nom, long_mm), qte in sorted(pieces_peinture.items()):
+                long_p = long_mm + 50
+                grandeur = f"{_dvf(long_p / 25.4)}  ({long_p} mm)"
+                data_p.append([_img_cell(kc), kc, kit_nom, grandeur, str(qte), ""])
+            y = tableau(y, data_p, [0.62*inch, 0.65*inch, 1.7*inch, 2.05*inch, 0.65*inch, 0.95*inch])
+        y -= 0.3*inch
 
-    # Note Keven
-    note_h = 0.40*inch
-    c.setFillColor(colors.HexColor("#FFF3CD"))
-    c.rect(0.4*inch, y - note_h, w - 0.8*inch, note_h, fill=True, stroke=False)
-    c.setFillColor(colors.HexColor("#856404")); c.setFont("Helvetica-Bold", 9)
-    c.drawString(0.55*inch, y - 0.17*inch, "Note :")
-    c.setFont("Helvetica", 9)
-    c.drawString(1.1*inch, y - 0.17*inch,
-                 "Keven — cocher chaque profil apres la coupe avant d'envoyer a la peinture")
-    y -= note_h + 0.45*inch
+        # Note Keven
+        note_h = 0.40*inch
+        c.setFillColor(colors.HexColor("#FFF3CD"))
+        c.rect(0.4*inch, y - note_h, w - 0.8*inch, note_h, fill=True, stroke=False)
+        c.setFillColor(colors.HexColor("#856404")); c.setFont("Helvetica-Bold", 9)
+        c.drawString(0.55*inch, y - 0.17*inch, "Note :")
+        c.setFont("Helvetica", 9)
+        c.drawString(1.1*inch, y - 0.17*inch,
+                     "Keven — cocher chaque profil apres la coupe avant d'envoyer a la peinture")
+        y -= note_h + 0.45*inch
 
-    # Signatures — 3 champs
-    sig_y = max(y, 1.8*inch)
-    c.setStrokeColor(BLEU); c.setLineWidth(0.5)
-    c.line(0.4*inch, sig_y, 2.8*inch, sig_y)
-    c.line(3.1*inch, sig_y, 5.3*inch, sig_y)
-    c.line(5.6*inch, sig_y, 7.7*inch, sig_y)
-    c.setFillColor(BLEU); c.setFont("Helvetica", 7)
-    c.drawString(0.4*inch,  sig_y - 0.14*inch, "Recu par le peintre — Nom + Signature")
-    c.drawString(3.1*inch,  sig_y - 0.14*inch, "Date de reception")
-    c.drawString(5.6*inch,  sig_y - 0.14*inch, "Date de retour prevue")
-    c.showPage()
+        # Signatures — 3 champs
+        sig_y = max(y, 1.8*inch)
+        c.setStrokeColor(BLEU); c.setLineWidth(0.5)
+        c.line(0.4*inch, sig_y, 2.8*inch, sig_y)
+        c.line(3.1*inch, sig_y, 5.3*inch, sig_y)
+        c.line(5.6*inch, sig_y, 7.7*inch, sig_y)
+        c.setFillColor(BLEU); c.setFont("Helvetica", 7)
+        c.drawString(0.4*inch,  sig_y - 0.14*inch, "Recu par le peintre — Nom + Signature")
+        c.drawString(3.1*inch,  sig_y - 0.14*inch, "Date de reception")
+        c.drawString(5.6*inch,  sig_y - 0.14*inch, "Date de retour prevue")
+        c.showPage()
+        if mode == 'peinture':
+            c.save()
+            print(f"✓ Néoscenica PDF (peinture) généré : {fichier}")
+            return
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE 6 : RESTES À ENREGISTRER
     # ══════════════════════════════════════════════════════════════════════════
-    if restes:
+    if mode in (None, 'all') and restes:
         entete("RESTES À ENREGISTRER — Néoscenica")
         y = h - 1.3*inch
         y = titre_section(y, "NOUVEAUX RESTES GÉNÉRÉS PAR CETTE PRODUCTION")

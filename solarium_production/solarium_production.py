@@ -7,7 +7,7 @@ import os, sys, threading, webbrowser, time, imaplib, email, json, re, shutil
 from datetime import date, timedelta, datetime
 from fractions import Fraction
 from email.header import decode_header
-from flask import Flask, render_template_string, request, jsonify, Response
+from flask import Flask, render_template_string, request, jsonify, Response, send_file
 
 DOSSIER_PDFS = os.path.expanduser("~/Documents/Solarium-Pro-PDFs")
 os.makedirs(DOSSIER_PDFS, exist_ok=True)
@@ -841,12 +841,12 @@ function choisirModele(modele, btn) {
   document.getElementById('btn-appro').style.display = 'none';
   document.getElementById('btn-peinture').style.display = 'none';
   document.getElementById('btn-verres').style.display = 'none';
-  if (modele === 'Néoscenica')        { renderNeoForm();    return; }
-  if (modele === 'Cadre / Trapèze')   { renderCadreForm();  return; }
+  if (modele === 'Néoscenica')        { renderNeoForm();    document.getElementById('btn-appro').style.display='block'; document.getElementById('btn-peinture').style.display='block'; return; }
+  if (modele === 'Cadre / Trapèze')   { renderCadreForm();  document.getElementById('btn-appro').style.display='block'; document.getElementById('btn-peinture').style.display='block'; document.getElementById('btn-verres').style.display='block'; return; }
   if (modele === 'Cover 10mm')        { renderCoverForm();  document.getElementById('btn-verres').style.display='block'; return; }
   if (modele === 'Aika 6mm')          { renderAikaForm();   document.getElementById('btn-appro').style.display='block'; document.getElementById('btn-peinture').style.display='block'; document.getElementById('btn-verres').style.display='block'; return; }
-  if (modele === 'Estétika Motorisée'){ renderEstMotForm(); return; }
-  if (modele === 'Estétika Manuelle') { renderEstManForm(); return; }
+  if (modele === 'Estétika Motorisée'){ renderEstMotForm(); document.getElementById('btn-appro').style.display='block'; document.getElementById('btn-peinture').style.display='block'; return; }
+  if (modele === 'Estétika Manuelle') { renderEstManForm(); document.getElementById('btn-appro').style.display='block'; document.getElementById('btn-peinture').style.display='block'; return; }
 }
 
 function poucesVersDecimal(s) {
@@ -901,15 +901,28 @@ async function genererAikaAppro() {
   if (!no_projet || !client) {
     afficherStatut('⚠ Veuillez remplir le numéro de projet et le nom du client.', 'error'); return;
   }
-  const params = { modele: 'Aika 6mm', no_projet, client, couleur, notes: valeur('notes') };
-  params.murs = collectAikaParams();
+  const APPRO_ROUTES = {
+    'Aika 6mm':           ['/generer_aika_appro',          collectAikaParams,  'Aika 6mm'],
+    'Cadre / Trapèze':    ['/generer_cadre_approbation',   collectCadreParams, 'Cadre / Trapèze'],
+    'Néoscenica':         ['/generer_neo_approbation',     collectNeoParams,   'Néoscenica'],
+    'Estétika Motorisée': ['/generer_est_mot_approbation', collectEstMotParams,'Estétika Motorisée'],
+    'Estétika Manuelle':  ['/generer_est_man_approbation', collectEstManParams,'Estétika Manuelle'],
+  };
+  const info = APPRO_ROUTES[modeleActif];
+  if (!info) { afficherStatut('⚠ Approbation non disponible pour ce modèle.', 'error'); return; }
+  const [route, collectFn, label] = info;
+  const params = { modele: modeleActif, no_projet, client, couleur, notes: valeur('notes') };
+  params.murs = collectFn();
   if (!params.murs.length) { afficherStatut('⚠ Aucun mur configuré.', 'error'); return; }
-  btn.disabled = true; afficherStatut('Génération approbation Aika…', 'info');
+  btn.disabled = true; afficherStatut(`Génération approbation ${label}…`, 'info');
   try {
-    const resp = await fetch('/generer_aika_appro', { method:'POST',
+    const resp = await fetch(route, { method:'POST',
       headers:{'Content-Type':'application/json'}, body: JSON.stringify(params) });
     const data = await resp.json();
-    if (data.ok) afficherStatut('✓ PDF approbation : ' + data.fichier, 'ok');
+    if (data.ok) {
+      afficherStatut('✓ PDF : ' + data.fichier, 'ok');
+      window.location.href = '/telecharger/' + encodeURIComponent(data.fichier);
+    }
     else afficherStatut('✗ Erreur : ' + data.erreur, 'error');
   } catch(e) { afficherStatut('✗ Erreur réseau : ' + e, 'error'); }
   finally { btn.disabled = false; }
@@ -925,15 +938,28 @@ async function genererAikaPeinture() {
   if (!no_projet || !client) {
     afficherStatut('⚠ Veuillez remplir le numéro de projet et le nom du client.', 'error'); return;
   }
-  const params = { modele: 'Aika 6mm', no_projet, client, couleur, notes: valeur('notes') };
-  params.murs = collectAikaParams();
+  const PEINTURE_ROUTES = {
+    'Aika 6mm':           ['/generer_aika_peinture',   collectAikaParams,  'Aika 6mm'],
+    'Cadre / Trapèze':    ['/generer_cadre_peinture',  collectCadreParams, 'Cadre / Trapèze'],
+    'Néoscenica':         ['/generer_neo_peinture',    collectNeoParams,   'Néoscenica'],
+    'Estétika Motorisée': ['/generer_est_mot_peinture',collectEstMotParams,'Estétika Motorisée'],
+    'Estétika Manuelle':  ['/generer_est_man_peinture',collectEstManParams,'Estétika Manuelle'],
+  };
+  const info = PEINTURE_ROUTES[modeleActif];
+  if (!info) { afficherStatut('⚠ Fiche peinture non disponible pour ce modèle.', 'error'); return; }
+  const [route, collectFn, label] = info;
+  const params = { modele: modeleActif, no_projet, client, couleur, notes: valeur('notes') };
+  params.murs = collectFn();
   if (!params.murs.length) { afficherStatut('⚠ Aucun mur configuré.', 'error'); return; }
-  btn.disabled = true; afficherStatut('Génération fiche peinture Aika…', 'info');
+  btn.disabled = true; afficherStatut(`Génération fiche peinture ${label}…`, 'info');
   try {
-    const resp = await fetch('/generer_aika_peinture', { method:'POST',
+    const resp = await fetch(route, { method:'POST',
       headers:{'Content-Type':'application/json'}, body: JSON.stringify(params) });
     const data = await resp.json();
-    if (data.ok) afficherStatut('✓ PDF peinture : ' + data.fichier, 'ok');
+    if (data.ok) {
+      afficherStatut('✓ PDF : ' + data.fichier, 'ok');
+      window.location.href = '/telecharger/' + encodeURIComponent(data.fichier);
+    }
     else afficherStatut('✗ Erreur : ' + data.erreur, 'error');
   } catch(e) { afficherStatut('✗ Erreur réseau : ' + e, 'error'); }
   finally { btn.disabled = false; }
@@ -949,32 +975,29 @@ async function genererVerresCommande() {
   }
   const _couleurSel = valeur('couleur');
   const couleur = _couleurSel === 'Autre' ? (valeur('couleur_autre') || 'Autre') : _couleurSel;
+  const VERRE_ROUTES = {
+    'Cover 10mm':      ['/generer_verres_cover',   collectCoverParams,  'Cover'],
+    'Aika 6mm':        ['/generer_verres_aika',    collectAikaParams,   'Aika'],
+    'Cadre / Trapèze': ['/generer_cadre_verres',   collectCadreParams,  'Cadre / Trapèze'],
+  };
+  const info = VERRE_ROUTES[modeleActif];
+  if (!info) { afficherStatut('⚠ Commande verre non disponible pour ce modèle.', 'error'); return; }
+  const [route, collectFn, label] = info;
   const params = { modele: modeleActif, no_projet, client, couleur, notes: valeur('notes') };
-  if (modeleActif === 'Cover 10mm') {
-    params.murs = collectCoverParams();
-    if (!params.murs.length) { afficherStatut('⚠ Aucun mur configuré.', 'error'); return; }
-    btn.disabled = true; afficherStatut('Génération bon de commande verre Cover…', 'info');
-    try {
-      const resp = await fetch('/generer_verres_cover', { method:'POST',
-        headers:{'Content-Type':'application/json'}, body: JSON.stringify(params) });
-      const data = await resp.json();
-      if (data.ok) afficherStatut('✓ Bon de commande verre : ' + data.fichier, 'ok');
-      else afficherStatut('✗ Erreur : ' + data.erreur, 'error');
-    } catch(e) { afficherStatut('✗ Erreur réseau : ' + e, 'error'); }
-    finally { btn.disabled = false; }
-  } else if (modeleActif === 'Aika 6mm') {
-    params.murs = collectAikaParams();
-    if (!params.murs.length) { afficherStatut('⚠ Aucun mur configuré.', 'error'); return; }
-    btn.disabled = true; afficherStatut('Génération bon de commande verre Aika…', 'info');
-    try {
-      const resp = await fetch('/generer_verres_aika', { method:'POST',
-        headers:{'Content-Type':'application/json'}, body: JSON.stringify(params) });
-      const data = await resp.json();
-      if (data.ok) afficherStatut('✓ Bon de commande verre : ' + data.fichier, 'ok');
-      else afficherStatut('✗ Erreur : ' + data.erreur, 'error');
-    } catch(e) { afficherStatut('✗ Erreur réseau : ' + e, 'error'); }
-    finally { btn.disabled = false; }
-  }
+  params.murs = collectFn();
+  if (!params.murs.length) { afficherStatut('⚠ Aucun mur configuré.', 'error'); return; }
+  btn.disabled = true; afficherStatut(`Génération bon de commande verre ${label}…`, 'info');
+  try {
+    const resp = await fetch(route, { method:'POST',
+      headers:{'Content-Type':'application/json'}, body: JSON.stringify(params) });
+    const data = await resp.json();
+    if (data.ok) {
+      afficherStatut('✓ PDF : ' + data.fichier, 'ok');
+      window.location.href = '/telecharger/' + encodeURIComponent(data.fichier);
+    }
+    else afficherStatut('✗ Erreur : ' + data.erreur, 'error');
+  } catch(e) { afficherStatut('✗ Erreur réseau : ' + e, 'error'); }
+  finally { btn.disabled = false; }
 }
 
 async function generer() {
@@ -1006,7 +1029,10 @@ async function generer() {
     const resp = await fetch(route, { method:'POST',
       headers:{'Content-Type':'application/json'}, body: JSON.stringify(params) });
     const data = await resp.json();
-    if (data.ok) afficherStatut('✓ PDF créé : ' + data.fichier, 'ok');
+    if (data.ok) {
+      afficherStatut('✓ PDF : ' + data.fichier, 'ok');
+      window.location.href = '/telecharger/' + encodeURIComponent(data.fichier);
+    }
     else afficherStatut('✗ Erreur : ' + data.erreur, 'error');
   } catch(e) { afficherStatut('✗ Erreur réseau : ' + e, 'error'); }
   finally { btn.disabled = false; }
@@ -1431,6 +1457,17 @@ function aikaMurBlock(n) {
         <input type="hidden" value="${sr.id}">
       </div>`).join('')}
     </div><div class="sep"></div>
+    <div class="sub-lbl">Poignée</div>
+    <div class="row3">
+      <div><label>Type de poignée</label>
+        <select id="am${n}_poignee">
+          <option value="920_1">920 mm — 1 côté</option>
+          <option value="920_2">920 mm — 2 côtés</option>
+          <option value="250_1">250 mm — 1 côté</option>
+          <option value="250_2">250 mm — 2 côtés</option>
+        </select></div>
+    </div>
+    <div class="sep"></div>
     <div class="sub-lbl">Finition</div>
     <div class="row3">
       <div><label>Couleur extrusions</label><select id="am${n}_couleur_alu">${s(COULEURS_ALU_A)}</select></div>
@@ -1473,6 +1510,7 @@ function collectAikaParams() {
       couleur_alu:   document.getElementById('am' + i + '_couleur_alu')?.value || 'Blanc (RAL 9016)',
       couleur_verre: document.getElementById('am' + i + '_couleur_verre')?.value || 'Clair',
       serrures,
+      poignee:       document.getElementById('am' + i + '_poignee')?.value || '920_1',
     });
   }
   return murs;
@@ -1678,9 +1716,48 @@ def generer_cadre_route():
         params = request.get_json(force=True)
         nom    = _nom_fichier("Cadre-Trapeze", params.get("no_projet",""), params.get("client",""))
         chemin = os.path.join(DOSSIER_PDFS, nom)
-        generer_pdf_cadre_multi(params, chemin)
+        cadre_new_mod.generer_pdf_cadre(params, chemin)
         shutil.copy2(chemin, os.path.join(BUREAU, nom))
         os.system(f'open "{chemin}"')
+        return jsonify({"ok": True, "fichier": nom})
+    except Exception as ex:
+        import traceback
+        return jsonify({"ok": False, "erreur": str(ex), "trace": traceback.format_exc()})
+
+@app.route("/generer_cadre_approbation", methods=["POST"])
+def generer_cadre_approbation():
+    try:
+        params = request.get_json(force=True)
+        nom    = _nom_fichier("Cadre-Approbation", params.get("no_projet",""), params.get("client",""))
+        chemin = os.path.join(DOSSIER_PDFS, nom)
+        cadre_new_mod.generer_pdf_cadre(params, chemin, mode='approbation')
+        shutil.copy2(chemin, os.path.join(BUREAU, nom))
+        return jsonify({"ok": True, "fichier": nom})
+    except Exception as ex:
+        import traceback
+        return jsonify({"ok": False, "erreur": str(ex), "trace": traceback.format_exc()})
+
+@app.route("/generer_cadre_peinture", methods=["POST"])
+def generer_cadre_peinture():
+    try:
+        params = request.get_json(force=True)
+        nom    = _nom_fichier("Cadre-Peinture", params.get("no_projet",""), params.get("client",""))
+        chemin = os.path.join(DOSSIER_PDFS, nom)
+        cadre_new_mod.generer_pdf_cadre(params, chemin, mode='peinture')
+        shutil.copy2(chemin, os.path.join(BUREAU, nom))
+        return jsonify({"ok": True, "fichier": nom})
+    except Exception as ex:
+        import traceback
+        return jsonify({"ok": False, "erreur": str(ex), "trace": traceback.format_exc()})
+
+@app.route("/generer_cadre_verres", methods=["POST"])
+def generer_cadre_verres():
+    try:
+        params = request.get_json(force=True)
+        nom    = _nom_fichier("Cadre-Verres-IGP", params.get("no_projet",""), params.get("client",""))
+        chemin = os.path.join(DOSSIER_PDFS, nom)
+        cadre_new_mod.generer_pdf_cadre(params, chemin, mode='commande_verre')
+        shutil.copy2(chemin, os.path.join(BUREAU, nom))
         return jsonify({"ok": True, "fichier": nom})
     except Exception as ex:
         import traceback
@@ -1752,7 +1829,6 @@ def generer_aika_appro():
         chemin  = os.path.join(DOSSIER_PDFS, nom)
         aika_mod.generer_pdf_aika(params, chemin, mode='approbation')
         shutil.copy2(chemin, os.path.join(BUREAU, nom))
-        os.system(f'open "{chemin}"')
         return jsonify({"ok": True, "fichier": nom})
     except Exception as ex:
         import traceback
@@ -1766,7 +1842,6 @@ def generer_aika_peinture():
         chemin  = os.path.join(DOSSIER_PDFS, nom)
         aika_mod.generer_pdf_aika(params, chemin, mode='peinture')
         shutil.copy2(chemin, os.path.join(BUREAU, nom))
-        os.system(f'open "{chemin}"')
         return jsonify({"ok": True, "fichier": nom})
     except Exception as ex:
         import traceback
@@ -1780,7 +1855,6 @@ def generer_verres_cover():
         chemin  = os.path.join(DOSSIER_PDFS, nom)
         verres_mod.generer_pdf_verres(params, chemin, produit='cover')
         shutil.copy2(chemin, os.path.join(BUREAU, nom))
-        os.system(f'open "{chemin}"')
         return jsonify({"ok": True, "fichier": nom})
     except Exception as ex:
         import traceback
@@ -1794,7 +1868,96 @@ def generer_verres_aika():
         chemin  = os.path.join(DOSSIER_PDFS, nom)
         verres_mod.generer_pdf_verres(params, chemin, produit='aika')
         shutil.copy2(chemin, os.path.join(BUREAU, nom))
-        os.system(f'open "{chemin}"')
+        return jsonify({"ok": True, "fichier": nom})
+    except Exception as ex:
+        import traceback
+        return jsonify({"ok": False, "erreur": str(ex), "trace": traceback.format_exc()})
+
+@app.route("/telecharger/<nom>")
+def telecharger_pdf(nom):
+    import re
+    if re.search(r'[/\\]', nom): return jsonify({"ok": False}), 400
+    chemin = os.path.join(DOSSIER_PDFS, nom)
+    return send_file(chemin, as_attachment=True, download_name=nom)
+
+# ─── ROUTES FLASK NEO / ESTÉTIKA (appro + peinture) ─────────────────────────
+@app.route("/generer_neo_approbation", methods=["POST"])
+def generer_neo_approbation():
+    try:
+        params = request.get_json(force=True)
+        nom = _nom_fichier("Neoscenica-Appro", params.get("no_projet",""), params.get("client",""))
+        chemin = os.path.join(DOSSIER_PDFS, nom)
+        neo_mod.generer_pdf_neoscenica(params, chemin, mode='approbation')
+        shutil.copy2(chemin, os.path.join(BUREAU, nom))
+        return jsonify({"ok": True, "fichier": nom})
+    except Exception as ex:
+        import traceback
+        return jsonify({"ok": False, "erreur": str(ex), "trace": traceback.format_exc()})
+
+@app.route("/generer_neo_peinture", methods=["POST"])
+def generer_neo_peinture():
+    try:
+        params = request.get_json(force=True)
+        nom = _nom_fichier("Neoscenica-Peinture", params.get("no_projet",""), params.get("client",""))
+        chemin = os.path.join(DOSSIER_PDFS, nom)
+        neo_mod.generer_pdf_neoscenica(params, chemin, mode='peinture')
+        shutil.copy2(chemin, os.path.join(BUREAU, nom))
+        return jsonify({"ok": True, "fichier": nom})
+    except Exception as ex:
+        import traceback
+        return jsonify({"ok": False, "erreur": str(ex), "trace": traceback.format_exc()})
+
+@app.route("/generer_est_mot_approbation", methods=["POST"])
+def generer_est_mot_approbation():
+    try:
+        params = request.get_json(force=True)
+        params['variante'] = 'motorisee'
+        nom = _nom_fichier("Esthetika-Mot-Appro", params.get("no_projet",""), params.get("client",""))
+        chemin = os.path.join(DOSSIER_PDFS, nom)
+        esthetika_mod.generer_pdf_esthetika(params, chemin, mode='approbation')
+        shutil.copy2(chemin, os.path.join(BUREAU, nom))
+        return jsonify({"ok": True, "fichier": nom})
+    except Exception as ex:
+        import traceback
+        return jsonify({"ok": False, "erreur": str(ex), "trace": traceback.format_exc()})
+
+@app.route("/generer_est_mot_peinture", methods=["POST"])
+def generer_est_mot_peinture():
+    try:
+        params = request.get_json(force=True)
+        params['variante'] = 'motorisee'
+        nom = _nom_fichier("Esthetika-Mot-Peinture", params.get("no_projet",""), params.get("client",""))
+        chemin = os.path.join(DOSSIER_PDFS, nom)
+        esthetika_mod.generer_pdf_esthetika(params, chemin, mode='peinture')
+        shutil.copy2(chemin, os.path.join(BUREAU, nom))
+        return jsonify({"ok": True, "fichier": nom})
+    except Exception as ex:
+        import traceback
+        return jsonify({"ok": False, "erreur": str(ex), "trace": traceback.format_exc()})
+
+@app.route("/generer_est_man_approbation", methods=["POST"])
+def generer_est_man_approbation():
+    try:
+        params = request.get_json(force=True)
+        params['variante'] = 'manuelle'
+        nom = _nom_fichier("Esthetika-Man-Appro", params.get("no_projet",""), params.get("client",""))
+        chemin = os.path.join(DOSSIER_PDFS, nom)
+        esthetika_mod.generer_pdf_esthetika(params, chemin, mode='approbation')
+        shutil.copy2(chemin, os.path.join(BUREAU, nom))
+        return jsonify({"ok": True, "fichier": nom})
+    except Exception as ex:
+        import traceback
+        return jsonify({"ok": False, "erreur": str(ex), "trace": traceback.format_exc()})
+
+@app.route("/generer_est_man_peinture", methods=["POST"])
+def generer_est_man_peinture():
+    try:
+        params = request.get_json(force=True)
+        params['variante'] = 'manuelle'
+        nom = _nom_fichier("Esthetika-Man-Peinture", params.get("no_projet",""), params.get("client",""))
+        chemin = os.path.join(DOSSIER_PDFS, nom)
+        esthetika_mod.generer_pdf_esthetika(params, chemin, mode='peinture')
+        shutil.copy2(chemin, os.path.join(BUREAU, nom))
         return jsonify({"ok": True, "fichier": nom})
     except Exception as ex:
         import traceback

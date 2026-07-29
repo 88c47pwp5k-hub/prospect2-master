@@ -21,6 +21,11 @@ import cadre_montage_v1    as _montage
 PROFILS_CADRE  = ['Tube alu 2-1/2"', 'Plaque pression', 'Couvercle']
 SEUIL_RESTE_PO = 6.0
 
+_CADRE_IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images_pieces')
+CADRE_IMAGES = {
+    'Tube alu 2-1/2"': os.path.join(_CADRE_IMG_DIR, 'profil_tube_25x100.jpeg'),
+}
+
 # Constantes trapèze
 TUBE_EXT_PO = 2.5625   # 65 mm — dimension extérieure réelle (traverse bas)
 TUBE_NOM_PO = 2.5      # 2-1/2" nominal — coupes angulaires G/D
@@ -114,7 +119,13 @@ def calculer_mur_cadre(mur):
 
 
 # ─── GÉNÉRATION PDF ───────────────────────────────────────────────────────────
-def generer_pdf_cadre(params, fichier):
+def generer_pdf_cadre(params, fichier, mode=None):
+    """
+    mode=None ou 'all'         → dossier complet (approbation + production + peinture + verre)
+    mode='approbation'         → seulement page(s) approbation client
+    mode='peinture'            → seulement fiche peinture
+    mode='commande_verre'      → seulement bon de commande verre IGP
+    """
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.units    import inch
     from reportlab.pdfgen       import canvas
@@ -155,48 +166,58 @@ def generer_pdf_cadre(params, fichier):
                 str(mc['largeur_po']), str(mc['hauteur_po']), mc['nb_montants']
             )
 
-    # ── Phase 2 : FFD combiné — TOUTES les pièces de TOUS les murs ensemble ──
-    # Un seul appel optimiser_coupes par profil+couleur (pas un par mur)
-    combined_contenants = {}   # {profil: contenants_list}
-    tous_nr = []
-    tous_rc = []
-    for profil in PROFILS_CADRE:
-        all_pieces_p = []
-        for mc in murs_calc:
-            for p in mc['pieces_calc']:
-                all_pieces_p.append({
-                    'nom':         f"{p['nom']} [{mc['nom']}]",
-                    'longueur_dec': p['longueur_dec'],
-                    'qte':         p['qte'],
-                })
-        cont, rc, nr = _calc.optimiser_coupes(all_pieces_p, profil, couleur, verbose=False)
-        combined_contenants[profil] = cont
-        tous_rc.extend(rc)
-        tous_nr.extend(nr)
-
-    if tous_rc:
-        _calc.marquer_restes_utilises(tous_rc, no_proj)
-    if tous_nr:
-        _calc.ajouter_nouveaux_restes(tous_nr, no_proj, client, couleur)
+    # ── Phase 2 : FFD combiné — seulement si nécessaire pour le mode ─────────
+    need_ffd = mode in (None, 'all', 'peinture') or mode is None
+    combined_contenants = {}
+    tous_nr = []; tous_rc = []
+    if need_ffd:
+        for profil in PROFILS_CADRE:
+            all_pieces_p = []
+            for mc in murs_calc:
+                for p in mc['pieces_calc']:
+                    all_pieces_p.append({
+                        'nom':          f"{p['nom']} [{mc['nom']}]",
+                        'longueur_dec': p['longueur_dec'],
+                        'qte':          p['qte'],
+                    })
+            cont, rc, nr = _calc.optimiser_coupes(all_pieces_p, profil, couleur, verbose=False)
+            combined_contenants[profil] = cont
+            tous_rc.extend(rc); tous_nr.extend(nr)
+        if tous_rc:
+            _calc.marquer_restes_utilises(tous_rc, no_proj)
+        if tous_nr:
+            _calc.ajouter_nouveaux_restes(tous_nr, no_proj, client, couleur)
 
     w, h = letter
     c = canvas.Canvas(fichier, pagesize=letter)
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     def entete(titre_doc):
-        c.setFillColor(BLEU)
-        c.rect(0, h-1.1*inch, w, 1.1*inch, fill=True, stroke=False)
-        c.setFillColor(OR); c.setFont("Helvetica-Bold", 13)
-        c.drawString(0.4*inch, h-0.38*inch, "SOLARIUM PRO — CADRE / TRAPÈZE")
+        NOIR_HDR = colors.HexColor("#111111")
+        c.setFillColor(NOIR_HDR)
+        c.rect(0, h - 1.10*inch, w, 1.10*inch, fill=True, stroke=False)
+        # Titre produit centré, grand, or
+        c.setFillColor(OR); c.setFont("Helvetica-Bold", 16)
+        c.drawCentredString(w/2, h - 0.38*inch, "SOLARIUM PRO")
+        # Sous-titre produit en petit
         c.setFillColor(colors.white); c.setFont("Helvetica", 8)
-        c.drawString(0.4*inch, h-0.58*inch, titre_doc)
-        c.drawString(0.4*inch, h-0.76*inch,
-                     f"No: {no_proj}  |  Client: {client}  |  Couleur: {couleur}")
-        c.drawRightString(w-0.4*inch, h-0.76*inch, str(_date.today()))
+        c.drawCentredString(w/2, h - 0.56*inch, "CADRE / TRAPÈZE  ·  CONCEPTION  ·  FABRICATION")
+        # Titre document
+        c.setFont("Helvetica-Bold", 9)
+        c.drawCentredString(w/2, h - 0.74*inch, titre_doc)
+        # Info projet à gauche, date à droite
+        c.setFont("Helvetica", 7.5)
+        info = f"No: {no_proj}  |  Client: {client}  |  Couleur: {couleur}"
+        c.drawString(0.35*inch, h - 0.90*inch, info)
+        c.drawRightString(w - 0.35*inch, h - 0.90*inch, str(_date.today()))
+        # Filet or en bas de l'en-tête
         c.setFillColor(OR)
-        c.rect(0, 0.3*inch, w, 0.25*inch, fill=True, stroke=False)
-        c.setFillColor(BLEU); c.setFont("Helvetica", 7)
-        c.drawCentredString(w/2, 0.4*inch,
+        c.rect(0, h - 1.12*inch, w, 0.05*inch, fill=True, stroke=False)
+        # Pied de page or
+        c.setFillColor(OR)
+        c.rect(0, 0.28*inch, w, 0.22*inch, fill=True, stroke=False)
+        c.setFillColor(NOIR_HDR); c.setFont("Helvetica", 7)
+        c.drawCentredString(w/2, 0.37*inch,
                             f"Solarium Pro  ·  {no_proj}  ·  {client}  ·  {_date.today()}")
 
     def titre_section(y, texte):
@@ -242,6 +263,13 @@ def generer_pdf_cadre(params, fichier):
         t.drawOn(c, 0.4*inch, y-th)
         return y - th - 0.2*inch
 
+    def _img_cadre(profil):
+        from reportlab.platypus import Image as RLImage
+        p = CADRE_IMAGES.get(profil)
+        if p and os.path.exists(p):
+            return RLImage(p, width=0.52*inch, height=0.38*inch)
+        return ""
+
     def contenants_to_barres(contenants):
         barres = []
         for i, cont in enumerate(contenants):
@@ -262,11 +290,9 @@ def generer_pdf_cadre(params, fichier):
             data.append([f"#{b['num']}", dec, _dvf(b["utilise"]), rest])
         return tableau(y, data, [0.4*inch, 4.9*inch, 1.2*inch, 1.2*inch])
 
-    # ══════════════════════════════════════════════════════════════════════════
-    # PAGE 1+ : APPROBATION CLIENT
-    # ══════════════════════════════════════════════════════════════════════════
-    for mc in murs_calc:
-        mcd = {
+    def _mcd(mc):
+        """Construit le dict mur_calc enrichi pour les modules de dessin."""
+        return {
             'nom':         mc['nom'],
             'largeur_po':  mc['largeur_po'],  'hauteur_po':  mc['hauteur_po'],
             'largeur_mm':  mc['largeur_mm'],  'hauteur_mm':  mc['hauteur_mm'],
@@ -277,37 +303,304 @@ def generer_pdf_cadre(params, fichier):
             'vg_mm':       mc.get('vg_mm', mc['hauteur_mm']),
             'vd_mm':       mc.get('vd_mm', mc['hauteur_mm']),
         }
-        _appro.page_approbation_cadre(
-            c, mcd, w, h, inch, colors,
-            no_proj, client, couleur, str(_date.today())
-        )
-        c.showPage()
+
+    date_str = str(_date.today())
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # PAGE 1+ : APPROBATION CLIENT
+    # ══════════════════════════════════════════════════════════════════════════
+    if mode in (None, 'all', 'approbation'):
+        trap_list  = [mc for mc in murs_calc if mc.get('est_trapeze')]
+        rect_list  = [mc for mc in murs_calc if not mc.get('est_trapeze')]
+
+        # 2 trapèzes → page miroir côte à côte
+        if len(trap_list) == 2:
+            _appro.page_approbation_2_trapezes(
+                c, _mcd(trap_list[0]), _mcd(trap_list[1]),
+                w, h, inch, colors,
+                no_proj, client, couleur, date_str
+            )
+            c.showPage()
+        else:
+            for mc in trap_list:
+                _appro.page_approbation_cadre(
+                    c, _mcd(mc), w, h, inch, colors,
+                    no_proj, client, couleur, date_str
+                )
+                c.showPage()
+
+        # Cadres rectangulaires — une page par mur
+        for mc in rect_list:
+            _appro.page_approbation_cadre(
+                c, _mcd(mc), w, h, inch, colors,
+                no_proj, client, couleur, date_str
+            )
+            c.showPage()
+
+        if mode == 'approbation':
+            c.save(); return
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE : DESSIN DE MONTAGE
     # ══════════════════════════════════════════════════════════════════════════
-    entete("DESSIN DE MONTAGE — Cadre / Trapèze")
-    y = h - 1.3*inch
-    for mc in murs_calc:
-        mcd = {
-            'nom':         mc['nom'],
-            'largeur_po':  mc['largeur_po'],  'hauteur_po':  mc['hauteur_po'],
-            'largeur_mm':  mc['largeur_mm'],  'hauteur_mm':  mc['hauteur_mm'],
-            'nb_montants': mc['nb_montants'],
-            'est_trapeze': mc.get('est_trapeze', False),
-            'vg_po':       mc.get('vg_po', mc['hauteur_po']),
-            'vd_po':       mc.get('vd_po', mc['hauteur_po']),
-            'vg_mm':       mc.get('vg_mm', mc['hauteur_mm']),
-            'vd_mm':       mc.get('vd_mm', mc['hauteur_mm']),
-        }
-        y = bandeau_mur(y, mc)
-        y = _montage.dessiner_cadre_montage(c, y, mcd, w, h, inch, colors)
-        y -= 0.15*inch
-    c.showPage()
+    if mode in (None, 'all'):
+        trap_list_m = [mc for mc in murs_calc if mc.get('est_trapeze')]
+        rect_list_m = [mc for mc in murs_calc if not mc.get('est_trapeze')]
+
+        if len(trap_list_m) == 2:
+            # 2 trapèzes → dessin côte à côte sur une seule page
+            entete("DESSIN DE MONTAGE — Cadre Trapèze (2 pignons)")
+            _montage.dessiner_2_trapezes_cote_a_cote(
+                c, _mcd(trap_list_m[0]), _mcd(trap_list_m[1]), w, h, inch, colors
+            )
+            c.showPage()
+        elif trap_list_m:
+            entete("DESSIN DE MONTAGE — Cadre / Trapèze")
+            y = h - 1.3*inch
+            for mc in trap_list_m:
+                y = bandeau_mur(y, mc)
+                y = _montage.dessiner_cadre_montage(c, y, _mcd(mc), w, h, inch, colors)
+                y -= 0.15*inch
+            c.showPage()
+
+        if rect_list_m:
+            entete("DESSIN DE MONTAGE — Cadre / Trapèze")
+            y = h - 1.3*inch
+            for mc in rect_list_m:
+                y = bandeau_mur(y, mc)
+                y = _montage.dessiner_cadre_montage(c, y, _mcd(mc), w, h, inch, colors)
+                y -= 0.15*inch
+            c.showPage()
+
+    # ── Palette couleurs par mur (utilisée dans listes de coupe) ────────────
+    MUR_PALETTE = ["#C8640A","#1565C0","#2E7D32","#B71C1C","#6A1B9A","#00695C"]
+    mur_noms = [mc['nom'] for mc in murs_calc]
+    mur_color_map = {nom: MUR_PALETTE[i % len(MUR_PALETTE)] for i, nom in enumerate(mur_noms)}
 
     # ══════════════════════════════════════════════════════════════════════════
-    # PAGE : RÉCAPITULATIF DES PIÈCES
+    # MODE 'commande_verre' — Bon de commande verre IGP (Cadre / Trapèze)
+    # Format : en-tête + grille de dessins sur UNE SEULE PAGE (max 3/rangée)
     # ══════════════════════════════════════════════════════════════════════════
+    if mode == 'commande_verre':
+        from reportlab.lib import colors as cl
+        from math import sqrt as _sq_v
+        NOIR   = cl.HexColor("#000000")
+        BLEU_L = cl.HexColor("#0070C0")
+        MAUVE  = cl.HexColor("#C299D4")
+        JAUNE  = cl.HexColor("#F5E642")
+        LOGO_P = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Logo_Pro_Horizontal.png")
+
+        # ── Helpers flèches ───────────────────────────────────────────────────
+        def _arh(x1v, x2v, ya, lbl, fs=7):
+            sz = 3.5
+            c.setLineWidth(0.4); c.setFillColor(NOIR); c.setStrokeColor(NOIR)
+            c.line(x1v, ya, x2v, ya)
+            for xp, d in [(x1v, 1), (x2v, -1)]:
+                c.line(xp, ya, xp+d*sz, ya+sz*0.45)
+                c.line(xp, ya, xp+d*sz, ya-sz*0.45)
+            c.setFont("Helvetica", fs)
+            c.drawCentredString((x1v+x2v)/2, ya - fs - 1.5, lbl)
+
+        def _arv(xa, y1v, y2v, lbl, fs=7):
+            sz = 3.5
+            c.setLineWidth(0.4); c.setFillColor(NOIR); c.setStrokeColor(NOIR)
+            c.line(xa, y1v, xa, y2v)
+            for yp, d in [(y1v, 1), (y2v, -1)]:
+                c.line(xa, yp, xa+sz*0.45, yp+d*sz)
+                c.line(xa, yp, xa-sz*0.45, yp+d*sz)
+            c.saveState(); c.translate(xa+13, (y1v+y2v)/2); c.rotate(90)
+            c.setFont("Helvetica", fs); c.drawCentredString(0, 0, lbl); c.restoreState()
+
+        # ── Construire liste de panneaux ──────────────────────────────────────
+        panneaux = []
+        for mc in murs_calc:
+            nom_m = mc['nom']
+            if mc.get('est_trapeze'):
+                panneaux.append({
+                    'nom': f"{nom_m} #1", 'type': 'trap',
+                    'L_mm': mc['largeur_mm'],
+                    'VG_mm': mc.get('vg_mm', mc['hauteur_mm']),
+                    'VD_mm': mc.get('vd_mm', mc['hauteur_mm']),
+                })
+            else:
+                nb_sec = mc['nb_sections']
+                trav_bas_po = next(
+                    (pp['longueur_dec'] for pp in mc['pieces_calc'] if 'bas' in pp['nom'].lower()),
+                    mc['largeur_po'] / max(nb_sec, 1)
+                )
+                for s in range(nb_sec):
+                    panneaux.append({
+                        'nom': f"{nom_m} #{s+1}", 'type': 'rect',
+                        'L_mm': round(trav_bas_po * 25.4),
+                        'H_mm': mc['hauteur_mm'],
+                    })
+
+        total_pan = len(panneaux)
+
+        # ── EN-TÊTE PAGE ─────────────────────────────────────────────────────
+        HDR_Y = h - 1.20*inch
+        if os.path.exists(LOGO_P):
+            c.drawImage(LOGO_P, 0.45*inch, HDR_Y + 0.10*inch, width=2.20*inch,
+                        preserveAspectRatio=True, mask='auto')
+        c.setFont("Helvetica", 8.5); c.setFillColor(NOIR)
+        c.drawRightString(w - 0.45*inch, HDR_Y + 0.66*inch, "450-956-4330")
+        c.setFillColor(BLEU_L)
+        c.drawRightString(w - 0.45*inch, HDR_Y + 0.46*inch, "crainville@solariumpro.ca")
+        c.setFillColor(NOIR)
+        c.drawRightString(w - 0.45*inch, HDR_Y + 0.26*inch, "Bureau : 433, rue Boivin Granby")
+        c.drawRightString(w - 0.45*inch, HDR_Y + 0.06*inch, "Usine : 495, rue Edouard, Granby")
+
+        c.setFont("Helvetica-Bold", 14)
+        c.drawCentredString(w/2, h - 1.52*inch, "Bon de commande — Verre Cadre / Trapèze")
+
+        y_hdr = h - 1.88*inch
+        c.setFont("Helvetica", 9.5)
+        c.drawString(0.45*inch, y_hdr, f"Job :  {no_proj}   |   Client :  {client}")
+        c.drawRightString(w - 0.45*inch, y_hdr, f"Date :  {_date.today().strftime('%d %B %Y')}")
+        c.setLineWidth(0.5); c.line(0.45*inch, y_hdr - 3, w - 0.45*inch, y_hdr - 3)
+
+        y_hdr -= 0.32*inch
+        # Descriptif surlignage jaune
+        desc = f"Commande de {total_pan} verre(s) 6mm trempé, poli contour 4 faces — sans perçage"
+        tw_d = c.stringWidth(desc, "Helvetica-Bold", 9)
+        c.setFillColor(cl.HexColor("#FFF3CD"))
+        c.rect(0.45*inch - 3, y_hdr - 3, tw_d + 6, 15, fill=True, stroke=False)
+        c.setFillColor(NOIR); c.setFont("Helvetica-Bold", 9)
+        c.drawString(0.45*inch, y_hdr, desc)
+        c.setLineWidth(0.4); c.line(0.45*inch, y_hdr - 5, w - 0.45*inch, y_hdr - 5)
+
+        # ── GRILLE DES DESSINS (sur la même page) ─────────────────────────────
+        GRID_TOP  = y_hdr - 0.20*inch
+        GRID_BOT  = 1.20*inch    # espace pour signatures en bas
+        GRID_H    = GRID_TOP - GRID_BOT
+        MAR_G     = 0.40*inch
+
+        nb_cols = min(3, total_pan) if total_pan > 0 else 1
+        nb_rows = (total_pan + nb_cols - 1) // nb_cols
+        cell_w  = (w - 2*MAR_G) / nb_cols
+        cell_h  = GRID_H / nb_rows
+
+        for idx, pan in enumerate(panneaux):
+            col = idx % nb_cols
+            row = idx // nb_cols
+            cx0 = MAR_G + col * cell_w
+            cy0 = GRID_TOP - (row + 1) * cell_h   # bas de la cellule
+            cy1 = cy0 + cell_h                      # haut de la cellule
+
+            # Marges internes de la cellule
+            PAD_T = 0.28*inch   # badge mur en haut
+            PAD_B = 0.30*inch   # badge qty + flèche largeur en bas
+            PAD_L = 0.55*inch   # flèche VG gauche
+            PAD_R = 0.55*inch   # flèche VD droite
+            draw_x0 = cx0 + PAD_L
+            draw_x1 = cx0 + cell_w - PAD_R
+            draw_y0 = cy0 + PAD_B
+            draw_y1 = cy1 - PAD_T
+            dw = draw_x1 - draw_x0
+            dh = draw_y1 - draw_y0
+
+            if pan['type'] == 'trap':
+                L_mm  = pan['L_mm']
+                VG_mm = pan['VG_mm']
+                VD_mm = pan['VD_mm']
+                H_mm  = max(VG_mm, VD_mm)
+                if L_mm <= 0 or H_mm <= 0:
+                    continue
+                sc = min(dw / L_mm, dh / H_mm) * 0.88
+                gw = L_mm * sc; gh_vg = VG_mm * sc; gh_vd = VD_mm * sc
+                gx0 = draw_x0 + (dw - gw) / 2
+                gx1 = gx0 + gw
+                gy0 = draw_y0 + (dh - max(gh_vg, gh_vd)) / 2
+                gy_vg = gy0 + gh_vg; gy_vd = gy0 + gh_vd
+                c.setFillColor(colors.white); c.setStrokeColor(NOIR); c.setLineWidth(0.9)
+                p = c.beginPath()
+                p.moveTo(gx0, gy0); p.lineTo(gx1, gy0)
+                p.lineTo(gx1, gy_vd); p.lineTo(gx0, gy_vg); p.close()
+                c.drawPath(p, fill=True, stroke=True)
+                # Cotes
+                c.setFillColor(NOIR); c.setStrokeColor(NOIR)
+                _arh(gx0, gx1, gy0 - 0.20*inch, f"L±0.5   {L_mm}mm")
+                _arv(gx1 + 0.30*inch, gy0, gy_vg, f"VG±0.5  {VG_mm}mm")
+                if VD_mm != VG_mm:
+                    _arv(gx0 - 0.30*inch, gy0, gy_vd, f"VD±0.5  {VD_mm}mm")
+            else:
+                L_mm = pan['L_mm']; H_mm = pan['H_mm']
+                if L_mm <= 0 or H_mm <= 0:
+                    continue
+                sc = min(dw / L_mm, dh / H_mm) * 0.88
+                gw = L_mm * sc; gh = H_mm * sc
+                gx0 = draw_x0 + (dw - gw) / 2
+                gy0 = draw_y0 + (dh - gh) / 2
+                gx1 = gx0 + gw; gy1 = gy0 + gh
+                c.setFillColor(colors.white); c.setStrokeColor(NOIR); c.setLineWidth(0.9)
+                c.rect(gx0, gy0, gw, gh, fill=True, stroke=True)
+                c.setFillColor(NOIR); c.setStrokeColor(NOIR)
+                _arh(gx0, gx1, gy0 - 0.20*inch, f"L±0.5   {L_mm}mm")
+                _arv(gx1 + 0.30*inch, gy0, gy1, f"H±0.5   {H_mm}mm")
+
+            # Badge mur (mauve, en haut de cellule)
+            bw = max(0.95*inch, len(pan['nom']) * 0.072*inch); bh = 0.24*inch
+            bx = cx0 + (cell_w - bw) / 2; by = cy1 - bh - 0.04*inch
+            c.setFillColor(MAUVE); c.roundRect(bx, by, bw, bh, 3, fill=True, stroke=False)
+            c.setFillColor(NOIR); c.setFont("Helvetica-Bold", 8)
+            c.drawCentredString(bx + bw/2, by + 7, pan['nom'])
+
+            # Badge quantité (jaune, en bas de cellule)
+            qbw = 0.40*inch; qbh = 0.24*inch
+            qbx = cx0 + (cell_w - qbw) / 2; qby = cy0 + 0.04*inch
+            c.setFillColor(JAUNE); c.roundRect(qbx, qby, qbw, qbh, 3, fill=True, stroke=False)
+            c.setFillColor(NOIR); c.setFont("Helvetica-Bold", 8)
+            c.drawCentredString(qbx + qbw/2, qby + 7, "1x")
+
+            # Séparateur cellule (trait léger)
+            c.setStrokeColor(cl.HexColor("#DDDDDD")); c.setLineWidth(0.3)
+            c.rect(cx0 + 0.02*inch, cy0, cell_w - 0.04*inch, cell_h, fill=False, stroke=True)
+
+        # ── SIGNATURES EN BAS ─────────────────────────────────────────────────
+        c.setFont("Helvetica", 9); c.setFillColor(NOIR)
+        c.drawString(0.45*inch, 0.90*inch, "Date de livraison :  _______________________")
+        c.drawString(0.45*inch, 0.55*inch, "Signature :  _______________________")
+        c.setLineWidth(0.4); c.line(0.45*inch, GRID_BOT - 0.05*inch, w - 0.45*inch, GRID_BOT - 0.05*inch)
+
+        c.save()
+        print(f"✓ Cadre / Trapèze — Commande verre ({total_pan} panneaux) : {fichier}")
+        return
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # MODE 'peinture' — Fiche peinture seule
+    # ══════════════════════════════════════════════════════════════════════════
+    if mode == 'peinture':
+        entete(f"FICHE PEINTURE — Cadre / Trapèze")
+        y = h - 1.3*inch
+        y = titre_section(y, f"BARRES À ENVOYER EN PEINTURE — {couleur}")
+        pieces_peinture = {}
+        for profil in PROFILS_CADRE:
+            for cont in combined_contenants.get(profil, []):
+                if not cont.get('pieces'): continue
+                l_po = round(cont.get('longueur_dec', 240), 2)
+                key = (profil, l_po)
+                pieces_peinture[key] = pieces_peinture.get(key, 0) + 1
+        data_p = [["Profil", "Photo", "Longueur (pouces)", "Longueur (mm)", "Qté", "Couleur"]]
+        for (profil, l_po), qte in sorted(pieces_peinture.items()):
+            data_p.append([profil, _img_cadre(profil), _dvf(l_po), str(round(l_po*25.4)), str(qte), couleur])
+        y = tableau(y, data_p, [1.8*inch, 0.62*inch, 1.3*inch, 1.1*inch, 0.7*inch, 1.1*inch])
+        y -= 0.25*inch
+        c.setStrokeColor(BLEU); c.setLineWidth(0.5)
+        c.line(0.4*inch, 1.8*inch, 3.5*inch, 1.8*inch)
+        c.line(4.2*inch, 1.8*inch, 7.7*inch, 1.8*inch)
+        c.setFillColor(BLEU); c.setFont("Helvetica", 7)
+        c.drawString(0.4*inch, 1.65*inch, "Approuvé peinture — Signature")
+        c.drawString(4.2*inch, 1.65*inch, "Reçu par la peinture — Date")
+        c.showPage()
+        c.save()
+        print(f"✓ Cadre / Trapèze — Fiche peinture : {fichier}")
+        return
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # MODE all/None — Dossier complet
+    # ══════════════════════════════════════════════════════════════════════════
+
+    # PAGE : RÉCAPITULATIF DES PIÈCES
     entete("RÉCAPITULATIF DES PIÈCES — Cadre / Trapèze")
     y = h - 1.3*inch
     for mc in murs_calc:
@@ -326,23 +619,15 @@ def generer_pdf_cadre(params, fichier):
         c.drawString(0.5*inch, y-0.38*inch, notes[:130])
     c.showPage()
 
-    # ── Palette couleurs par mur ──────────────────────────────────────────────
-    MUR_PALETTE = ["#C8640A","#1565C0","#2E7D32","#B71C1C","#6A1B9A","#00695C"]
-    mur_noms = [mc['nom'] for mc in murs_calc]
-    mur_color_map = {nom: MUR_PALETTE[i % len(MUR_PALETTE)] for i, nom in enumerate(mur_noms)}
-
-    # ══════════════════════════════════════════════════════════════════════════
     # PAGES : LISTES DE COUPE
-    # ══════════════════════════════════════════════════════════════════════════
     from reportlab.platypus import Paragraph
     from reportlab.lib.styles import ParagraphStyle
     p_style = ParagraphStyle('dec', fontName='Helvetica', fontSize=9, leading=11)
-
     import re as _re
+
     def _wall_from_nom(nom):
-        """Extrait le nom du mur depuis 'Pièce [Nom Mur]'."""
-        m = _re.search(r'\[(.+)\]$', nom)
-        return m.group(1) if m else ''
+        m2 = _re.search(r'\[(.+)\]$', nom)
+        return m2.group(1) if m2 else ''
 
     def contenants_to_barres_color(contenants):
         barres = []
@@ -357,7 +642,6 @@ def generer_pdf_cadre(params, fichier):
         return barres
 
     def table_coupes_color(y, barres):
-        from reportlab.platypus import Paragraph
         data = [["#", "Découpes (pouces)", "Utilisé", "Reste"]]
         for b in barres:
             pieces_html = []
@@ -371,7 +655,6 @@ def generer_pdf_cadre(params, fichier):
             dec_cell = Paragraph(' + '.join(pieces_html), p_style)
             rest = _dvf(b["reste"]) if b["reste"] >= SEUIL_RESTE_PO else f'{_dvf(b["reste"])} (!)'
             data.append([f"#{b['num']}", dec_cell, _dvf(b["utilise"]), rest])
-
         t = Table(data, colWidths=[0.4*inch, 4.9*inch, 1.2*inch, 1.2*inch])
         t.setStyle(TableStyle([
             ("BACKGROUND",     (0,0),(-1,0),  BLEU),
@@ -393,15 +676,11 @@ def generer_pdf_cadre(params, fichier):
         return y - th - 0.2*inch
 
     for profil in PROFILS_CADRE:
-        all_barres = contenants_to_barres_color(combined_contenants[profil])
-        if not all_barres:
-            continue
-        for i, b in enumerate(all_barres):
-            b['num'] = i + 1
+        all_barres = contenants_to_barres_color(combined_contenants.get(profil, []))
+        if not all_barres: continue
+        for i, b in enumerate(all_barres): b['num'] = i + 1
         entete(f'LISTE DE COUPE — {profil}  (barres de 240")')
         y = h - 1.3*inch
-
-        # Légende couleurs → murs (si multi-murs)
         if len(mur_noms) > 1:
             c.setFont("Helvetica-Bold", 8); c.setFillColor(colors.HexColor("#333333"))
             c.drawString(0.45*inch, y, "Légende :")
@@ -414,40 +693,26 @@ def generer_pdf_cadre(params, fichier):
                 c.drawString(lx + 0.14*inch, y, nom)
                 lx += c.stringWidth(nom, "Helvetica", 7.5) + 0.30*inch
             y -= 0.22*inch
-
-        y = titre_section(y,
-            f'{profil}  —  {couleur}  —  '
-            f'{len(all_barres)} barre{"s" if len(all_barres) > 1 else ""}')
+        y = titre_section(y, f'{profil}  —  {couleur}  —  {len(all_barres)} barre{"s" if len(all_barres) > 1 else ""}')
         y = table_coupes_color(y, all_barres)
         c.showPage()
 
-    # ══════════════════════════════════════════════════════════════════════════
-    # PAGE : QUINCAILLERIE — DÉCAISSAGE INVENTAIRE
-    # ══════════════════════════════════════════════════════════════════════════
+    # PAGE : QUINCAILLERIE
     entete("QUINCAILLERIE — Cadre / Trapèze")
     y = h - 1.3*inch
     y = titre_section(y, "DÉCAISSAGE INVENTAIRE — QUINCAILLERIE")
-
-    # Spigots : 2 par montant extrémité, 3 par montant central
     total_spigots = 0
     for mc in murs_calc:
         nb = mc['nb_montants']
         total_spigots += 2 * 2 + 3 * max(0, nb - 2)
-
-    # VA10 et joint caoutchouc : calculés par pièce de coupe (tous profils)
-    # Chaque pièce est découpée dans les 3 profils (tube, plaque, couvercle)
-    total_va10    = 0
-    total_joint_m = 0.0
+    total_va10 = 0; total_joint_m = 0.0
     for mc in murs_calc:
         for p in mc['pieces_calc']:
             l = p['longueur_dec']
-            total_va10    += (ceil(l / 12) + 1) * p['qte'] * 3   # ×3 profils
-            total_joint_m += (l * 2 + 2) * p['qte'] * 3 / 12     # pi → m (*0.0254*12 = *pi)
-
-    # Nombre de barres utilisées par profil (depuis combined_contenants)
+            total_va10    += (ceil(l / 12) + 1) * p['qte'] * 3
+            total_joint_m += (l * 2 + 2) * p['qte'] * 3 / 12
     def n_barres(profil_key):
-        return sum(1 for cont in combined_contenants[profil_key] if cont.get('pieces'))
-
+        return sum(1 for cont in combined_contenants.get(profil_key, []) if cont.get('pieces'))
     data_q = [["Code", "Description", "Qté", "Unité"]]
     data_q.append(["SOLP-MEN350-L240", 'Tube aluminium 2-1/2"',  n_barres('Tube alu 2-1/2"'), "barres"])
     data_q.append(["SOLP-PPT250-L240", "Plaque pression 2-1/2\"", n_barres('Plaque pression'), "barres"])
@@ -459,64 +724,41 @@ def generer_pdf_cadre(params, fichier):
     y = tableau(y, data_q, [2.2*inch, 2.6*inch, 1.0*inch, 1.0*inch])
     c.showPage()
 
-    # ══════════════════════════════════════════════════════════════════════════
-    # PAGE : VITRAGE
-    # ══════════════════════════════════════════════════════════════════════════
+    # PAGE : LISTE DE VERRE
     entete("VITRAGE — Cadre / Trapèze")
     y = h - 1.3*inch
     y = titre_section(y, "LISTE DE VERRE — 6mm Trempé")
-    data_v = [["Mur", "Largeur verre (po)", "Hauteur (po)", "Largeur (mm)", "Hauteur (mm)", "Qté"]]
+    data_v = [["Mur", "Largeur (po)", "Hauteur (po)", "Largeur (mm)", "Hauteur (mm)", "Qté"]]
     for mc in murs_calc:
         if mc.get('est_trapeze'):
-            # Trapèze : 1 panneau L × VG / VD
-            data_v.append([
-                mc['nom'],
-                _dvf(mc['largeur_po']),
-                f"G:{_dvf(mc['vg_po'])} / D:{_dvf(mc['vd_po'])}",
-                str(mc['largeur_mm']),
-                f"G:{mc['vg_mm']} / D:{mc['vd_mm']}",
-                "1",
-            ])
+            data_v.append([mc['nom'], _dvf(mc['largeur_po']),
+                           f"G:{_dvf(mc['vg_po'])} / D:{_dvf(mc['vd_po'])}",
+                           str(mc['largeur_mm']),
+                           f"G:{mc['vg_mm']} / D:{mc['vd_mm']}", "1"])
         else:
-            # Cadre rectangulaire : nb_sections panneaux
             nb_sec = mc['nb_sections']
-            trav_bas = next(
-                (p['longueur_dec'] for p in mc['pieces_calc'] if 'bas' in p['nom'].lower()),
-                mc['largeur_po'] / max(nb_sec, 1)
-            )
-            data_v.append([
-                mc['nom'],
-                _dvf(trav_bas),
-                _dvf(mc['hauteur_po']),
-                str(round(trav_bas * 25.4)),
-                str(mc['hauteur_mm']),
-                str(nb_sec),
-            ])
+            trav_bas = next((p['longueur_dec'] for p in mc['pieces_calc']
+                             if 'bas' in p['nom'].lower()), mc['largeur_po'] / max(nb_sec, 1))
+            data_v.append([mc['nom'], _dvf(trav_bas), _dvf(mc['hauteur_po']),
+                           str(round(trav_bas*25.4)), str(mc['hauteur_mm']), str(nb_sec)])
     y = tableau(y, data_v, [1.0*inch, 1.3*inch, 1.5*inch, 1.2*inch, 1.5*inch, 0.7*inch])
     c.showPage()
 
-    # ══════════════════════════════════════════════════════════════════════════
     # PAGE : FICHE PEINTURE
-    # ══════════════════════════════════════════════════════════════════════════
     entete("FICHE PEINTURE — Cadre / Trapèze")
     y = h - 1.3*inch
     y = titre_section(y, f"BARRES À ENVOYER EN PEINTURE — {couleur}")
-
-    # Regrouper toutes les pièces à peindre par profil + longueur (depuis combined_contenants)
     pieces_peinture = {}
     for profil in PROFILS_CADRE:
-        for cont in combined_contenants[profil]:
-            if not cont.get('pieces'):
-                continue
+        for cont in combined_contenants.get(profil, []):
+            if not cont.get('pieces'): continue
             l_po = round(cont.get('longueur_dec', 240), 2)
             key = (profil, l_po)
             pieces_peinture[key] = pieces_peinture.get(key, 0) + 1
-
-    data_p = [["Profil", "Longueur (pouces)", "Longueur (mm)", "Qté", "Couleur"]]
+    data_p = [["Profil", "Photo", "Longueur (pouces)", "Longueur (mm)", "Qté", "Couleur"]]
     for (profil, l_po), qte in sorted(pieces_peinture.items()):
-        data_p.append([profil, _dvf(l_po), str(round(l_po * 25.4)), str(qte), couleur])
-    y = tableau(y, data_p, [2.2*inch, 1.4*inch, 1.4*inch, 0.8*inch, 1.4*inch])
-
+        data_p.append([profil, _img_cadre(profil), _dvf(l_po), str(round(l_po*25.4)), str(qte), couleur])
+    y = tableau(y, data_p, [1.8*inch, 0.62*inch, 1.3*inch, 1.1*inch, 0.7*inch, 1.1*inch])
     y -= 0.25*inch
     c.setStrokeColor(BLEU); c.setLineWidth(0.5)
     c.line(0.4*inch, 1.8*inch, 3.5*inch, 1.8*inch)
@@ -526,21 +768,15 @@ def generer_pdf_cadre(params, fichier):
     c.drawString(4.2*inch, 1.65*inch, "Reçu par la peinture — Date")
     c.showPage()
 
-    # ══════════════════════════════════════════════════════════════════════════
     # PAGE : RESTES À ENREGISTRER
-    # ══════════════════════════════════════════════════════════════════════════
     if tous_nr:
         entete("RESTES À ENREGISTRER — Cadre / Trapèze")
         y = h - 1.3*inch
         y = titre_section(y, "NOUVEAUX RESTES GÉNÉRÉS PAR CETTE PRODUCTION")
         data = [["Profil", "Longueur (pouces)", "Longueur (mm)", "Notes"]]
         for nr in tous_nr:
-            data.append([
-                nr['type_profil'],
-                _dvf(nr['longueur']),
-                str(round(nr['longueur'] * 25.4)),
-                nr.get('notes', ''),
-            ])
+            data.append([nr['type_profil'], _dvf(nr['longueur']),
+                         str(round(nr['longueur']*25.4)), nr.get('notes', '')])
         y = tableau(y, data, [2.0*inch, 1.5*inch, 1.5*inch, 2.8*inch])
         c.showPage()
 

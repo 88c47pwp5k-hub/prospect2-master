@@ -123,6 +123,9 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
     VERRE_B = cl.HexColor("#4A90D9")
     SPIG_C  = cl.HexColor("#FF6600")
     WHT     = cl.white
+    TRAV_H_C = cl.HexColor("#1F3864")   # traverse du haut
+    TRAV_B_C = cl.HexColor("#C68B00")   # traverses du bas
+    MONT_C   = cl.HexColor("#2D6A3F")   # montants
 
     # ── Données mur ───────────────────────────────────────────────────────────
     L_mm    = mur_calc['largeur_mm']
@@ -155,8 +158,8 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
     trav_bas_mm = round(trav_bas_po * 25.4)
 
     # ── Mise en page ──────────────────────────────────────────────────────────
-    mg_l      = 1.65*inch   # marge gauche (cotation V)
-    mg_r      = 1.40*inch if est_trap else 1.35*inch   # espace légende + VD (principe 7)
+    mg_l      = 1.10*inch   # marge gauche (cotation V)
+    mg_r      = 1.10*inch   # espace légende + VD
     TITLE_H   = 0.60*inch   # hauteur en-tête (2 lignes : nom + colonnes — lisibilité usine)
     TOP_COT   = 0.65*inch   # espace au-dessus dessin (cote largeur totale)
     BOT_COT   = 1.15*inch   # espace en dessous dessin (cotes sections)
@@ -256,20 +259,18 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
         return y_bot + (VG + frac * (VD - VG)) * px_v
 
     # ── HELPERS TUBES EN CONTOUR ──────────────────────────────────────────────
-    def tube_rect(x, y_r, w_r, h_r):
-        c.setFillColor(WHT)
+    def tube_rect(x, y_r, w_r, h_r, clr=None):
+        fc = clr if clr is not None else TRAV_B_C
+        c.setFillColor(fc)
         c.rect(x, y_r, w_r, h_r, fill=True, stroke=False)
-        c.setStrokeColor(PROF_C); c.setLineWidth(1.2)
-        c.rect(x, y_r, w_r, h_r, fill=False, stroke=True)
 
-    def tube_path(pts):
+    def tube_path(pts, clr=None):
+        fc = clr if clr is not None else MONT_C
         p = c.beginPath()
         p.moveTo(*pts[0])
         for pt in pts[1:]: p.lineTo(*pt)
         p.close()
-        c.setFillColor(WHT); c.drawPath(p, fill=1, stroke=0)
-        c.setStrokeColor(PROF_C); c.setLineWidth(1.2)
-        c.drawPath(p, fill=0, stroke=1)
+        c.setFillColor(fc); c.drawPath(p, fill=1, stroke=0)
 
     # ══════════════════════════════════════════════════════════════════════════
     # ORDRE DE DESSIN — voir RECETTE STANDARD
@@ -330,7 +331,7 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
     for s in range(nb_sec):
         bx_l = mx_left(s) + tw
         bx_r = mx_left(s + 1)
-        tube_rect(bx_l, y_bot, bx_r - bx_l, th)
+        tube_rect(bx_l, y_bot, bx_r - bx_l, th, TRAV_B_C)
 
     # 4. Montants
     #    Rectangulaire : tube_rect jusqu'à y_top-th (sous traverse du haut).
@@ -342,9 +343,9 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
         if est_trap:
             y_tl = y_at_x(mx)
             y_tr = y_at_x(mx + tw)
-            tube_path([(mx, y_bot), (mx + tw, y_bot), (mx + tw, y_tr), (mx, y_tl)])
+            tube_path([(mx, y_bot), (mx + tw, y_bot), (mx + tw, y_tr), (mx, y_tl)], MONT_C)
         else:
-            tube_rect(mx, y_bot, tw, (y_top - th) - y_bot)
+            tube_rect(mx, y_bot, tw, (y_top - th) - y_bot, MONT_C)
 
     # 5. Traverse du haut (rectangulaire) / Tube hypoténuse (trapèze)
     #    Rectangulaire : tube_rect pleine largeur, dessiné EN DERNIER.
@@ -358,9 +359,9 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
             (x1, _yt(1)),
             (x1, _yt(1) - th),
             (x0, _yt(0) - th),
-        ])
+        ], TRAV_H_C)
     else:
-        tube_rect(x0, y_top - th, vue_w, th)
+        tube_rect(x0, y_top - th, vue_w, th, TRAV_H_C)
 
     # 6. Contour extérieur
     c.setStrokeColor(PROF_C); c.setLineWidth(1.8)
@@ -384,14 +385,18 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
         c.setFont("Helvetica-Bold", max(6, int(spigot_r * 1.15)))
         c.drawCentredString(sx, sy - spigot_r * 0.38, "S")
 
-    # HAUT — Rectangulaire uniquement : 1 S par montant à la jonction traverse du haut
-    # Trapèze : pas de S en haut (retirés)
-    if not est_trap:
-        for m in range(nb_mont):
+    # HAUT — 1 S par montant à la jonction traverse du haut / hypoténuse
+    # Rectangulaire : milieu de la traverse du haut au-dessus de chaque montant
+    # Trapèze : milieu de la traverse hypoténuse au-dessus de chaque montant (même logique)
+    for m in range(nb_mont):
+        sx = mx_left(m) + tw / 2
+        if est_trap:
+            # Centre de l'hypoténuse à la position horizontale du montant
+            sy = y_at_x(sx) - th / 2
+        else:
             frac = m / (nb_mont - 1) if nb_mont > 1 else 0
-            sx = mx_left(m) + tw / 2
             sy = _yt(frac) - th / 2
-            draw_spigot(sx, sy)
+        draw_spigot(sx, sy)
 
     # BAS — extrémités de chaque segment de traverse du bas (rect ET trapèze identiques)
     # Position : légèrement au-dessus de la traverse du bas (pas dessus)
@@ -568,7 +573,246 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
 
     # (Angle hypoténuse affiché dans l'en-tête colonne TRAPÈZE — pas d'encadré séparé)
 
+    # Légende couleurs (après la légende spigot)
+    leg2 = [("Trav. haut", TRAV_H_C), ("Trav. bas", TRAV_B_C), ("Montants", MONT_C)]
+    for lbl2, col2 in leg2:
+        c.setFillColor(col2)
+        c.roundRect(leg_x, leg_y, 0.12*inch, 0.12*inch, 1, fill=True, stroke=False)
+        c.setFillColor(NOIR); c.setFont("Helvetica", 9)
+        c.drawString(leg_x + 0.15*inch, leg_y - 1, lbl2)
+        leg_y -= 0.20*inch
+
     return cy_sec - 0.48*inch
+
+
+def dessiner_2_trapezes_cote_a_cote(c, mc_g, mc_d, w, h, inch, colors):
+    """Dessine 2 trapèzes côte à côte sur une page (Trapèze GAUCHE / Trapèze DROIT)."""
+    from reportlab.lib import colors as cl
+    from math import gcd as _gcd, sqrt as _sqrt, atan as _atan, degrees as _deg
+    NOIR    = cl.HexColor("#1A1A1A")
+    BLEU_C  = cl.HexColor("#0055AA")
+    BLEU_BG = cl.HexColor("#D6E4F7")
+    OR_C    = cl.HexColor("#C68B00")
+    OR_BG   = cl.HexColor("#FFF4DC")
+    WHT     = cl.white
+    TRAV_H_C = cl.HexColor("#1F3864")
+    TRAV_B_C = cl.HexColor("#C68B00")
+    MONT_C   = cl.HexColor("#2D6A3F")
+    VERRE_F  = cl.HexColor("#E8F4FD")
+    VERRE_B  = cl.HexColor("#4A90D9")
+    SPIG_C   = cl.HexColor("#FF6600")
+
+    def _dvf_local(d):
+        if d is None:
+            return ""
+        s = round(d * 16) / 16
+        entier = int(s); reste = s - entier
+        if reste < 0.001:
+            return f'{entier}"'
+        num = round(reste * 16); den = 16
+        g = _gcd(num, den); num //= g; den //= g
+        return f'{entier}-{num}/{den}"' if entier else f'{num}/{den}"'
+
+    # Zone dessin sous le bandeau (pas de bandeau ici — la page a déjà entete())
+    HDR_H = 1.30 * inch   # espace réservé en haut (titre de page)
+    BOT_H = 0.90 * inch   # marge bas
+    half_w = w / 2
+
+    def _draw_one(mc, x_off, mirror=False):
+        """Dessine un trapèze dans la zone x_off .. x_off+half_w.
+        mirror=True → côté LONG vers le centre (pignon gauche)."""
+        VG_orig = mc.get('vg_po') or mc.get('hauteur_po', 0)
+        VD_orig = mc.get('vd_po') or VG_orig
+        VG_mm_orig = mc.get('vg_mm', round(VG_orig * 25.4))
+        VD_mm_orig = mc.get('vd_mm', round(VD_orig * 25.4))
+        L_po  = mc['largeur_po']
+        L_mm  = mc['largeur_mm']
+        nb_mont = int(mc.get('nb_montants', 2))
+        nb_sec  = max(nb_mont - 1, 1)
+
+        # Swap VG/VD si mirror (côté long vers le centre)
+        if mirror:
+            VG, VD = VD_orig, VG_orig
+            VG_mm, VD_mm = VD_mm_orig, VG_mm_orig
+            lbl_l, lbl_r   = "VD", "VG"
+            mm_l, po_l     = VD_mm_orig, VD_orig
+            mm_r, po_r     = VG_mm_orig, VG_orig
+        else:
+            VG, VD = VG_orig, VD_orig
+            VG_mm, VD_mm = VG_mm_orig, VD_mm_orig
+            lbl_l, lbl_r   = "VG", "VD"
+            mm_l, po_l     = VG_mm_orig, VG_orig
+            mm_r, po_r     = VD_mm_orig, VD_orig
+
+        H_po = max(VG, VD)
+
+        mg_l = 0.75 * inch; mg_r = 0.75 * inch
+        avail_w = half_w - mg_l - mg_r
+
+        # Zone verticale disponible — centrage vertical (Fix 2)
+        zone_top = h - HDR_H - 0.28*inch   # sous entete + label nom mur
+        zone_bot = BOT_H + 0.68*inch        # au-dessus cotation largeur bas
+        zone_h   = max(zone_top - zone_bot, 1.0*inch)
+
+        ratio = H_po / L_po if L_po > 0 else 1
+        vue_w = avail_w
+        vue_h = vue_w * ratio
+        if vue_h > zone_h:
+            vue_h = zone_h
+            vue_w = vue_h / ratio if ratio > 0 else avail_w
+        if vue_w > avail_w:
+            vue_w = avail_w; vue_h = vue_w * ratio
+        vue_w = max(vue_w, 0.8*inch); vue_h = max(vue_h, 0.8*inch)
+
+        x0 = x_off + mg_l + (avail_w - vue_w) / 2
+        x1 = x0 + vue_w
+        # Centrage vertical dans la zone disponible
+        y_bot = zone_bot + (zone_h - vue_h) / 2
+        y_top = y_bot + vue_h
+
+        px_h = vue_w / L_po if L_po > 0 else 1
+        px_v = vue_h / H_po if H_po > 0 else 1
+        tw = TUBE_W * px_h
+        th = TUBE_W * px_v
+
+        def _yt(frac):
+            return y_bot + (VG + frac * (VD - VG)) * px_v
+
+        def mx_left(m):
+            frac = m / (nb_mont - 1) if nb_mont > 1 else 0
+            return x0 + frac * (vue_w - tw)
+
+        # Fond blanc
+        c.setFillColor(WHT)
+        p = c.beginPath()
+        p.moveTo(x0, y_bot); p.lineTo(x1, y_bot)
+        p.lineTo(x1, _yt(1)); p.lineTo(x0, _yt(0))
+        p.close(); c.drawPath(p, fill=1, stroke=0)
+
+        # Verres
+        for s in range(nb_sec):
+            vx_l = mx_left(s) + tw; vx_r = mx_left(s + 1)
+            vy_b = y_bot + th
+            vy_tl = _yt(0) - th + ((_yt(0) - th) - (_yt(1) - th)) * (vx_l - x0) / vue_w if vue_w > 0 else _yt(0) - th
+            vy_tr = _yt(0) - th + ((_yt(0) - th) - (_yt(1) - th)) * (vx_r - x0) / vue_w if vue_w > 0 else _yt(1) - th
+            p = c.beginPath()
+            p.moveTo(vx_l, vy_b); p.lineTo(vx_r, vy_b)
+            p.lineTo(vx_r, vy_tr); p.lineTo(vx_l, vy_tl); p.close()
+            c.setFillColor(VERRE_F); c.drawPath(p, fill=1, stroke=0)
+            c.setStrokeColor(VERRE_B); c.setLineWidth(0.6); c.drawPath(p, fill=0, stroke=1)
+
+        # Traverses du bas
+        for s in range(nb_sec):
+            bx_l = mx_left(s) + tw; bx_r = mx_left(s + 1)
+            c.setFillColor(TRAV_B_C)
+            c.rect(bx_l, y_bot, bx_r - bx_l, th, fill=True, stroke=False)
+
+        # Montants
+        for m in range(nb_mont):
+            mx = mx_left(m)
+            f_l = (mx - x0) / vue_w if vue_w > 0 else 0
+            f_r = (mx + tw - x0) / vue_w if vue_w > 0 else 0
+            y_tl2 = _yt(max(0.0, min(1.0, f_l)))
+            y_tr2 = _yt(max(0.0, min(1.0, f_r)))
+            c.setFillColor(MONT_C)
+            p = c.beginPath()
+            p.moveTo(mx, y_bot); p.lineTo(mx + tw, y_bot)
+            p.lineTo(mx + tw, y_tr2); p.lineTo(mx, y_tl2)
+            p.close(); c.drawPath(p, fill=1, stroke=0)
+
+        # Traverse du haut (hyp)
+        c.setFillColor(TRAV_H_C)
+        p = c.beginPath()
+        p.moveTo(x0, _yt(0) - th); p.lineTo(x1, _yt(1) - th)
+        p.lineTo(x1, _yt(1)); p.lineTo(x0, _yt(0))
+        p.close(); c.drawPath(p, fill=1, stroke=0)
+
+        # Contour
+        c.setStrokeColor(cl.HexColor("#1A1A1A")); c.setLineWidth(1.6)
+        p = c.beginPath()
+        p.moveTo(x0, y_bot); p.lineTo(x1, y_bot)
+        p.lineTo(x1, _yt(1)); p.lineTo(x0, _yt(0))
+        p.close(); c.drawPath(p, fill=0, stroke=1)
+
+        # Spigots
+        spigot_r = max(min(tw * 0.38, 0.088*inch), 5.0)
+        def draw_spigot(sx, sy):
+            c.setFillColor(SPIG_C)
+            c.circle(sx, sy, spigot_r, fill=True, stroke=False)
+            c.setFillColor(WHT); c.setFont("Helvetica-Bold", max(6, int(spigot_r * 1.15)))
+            c.drawCentredString(sx, sy - spigot_r * 0.38, "S")
+        GAP_BAS = 3.0; sy_b = y_bot + th + spigot_r + GAP_BAS
+        for m in range(nb_mont):
+            sx_s = mx_left(m) + tw / 2
+            sy_s = _yt((mx_left(m) + tw/2 - x0) / vue_w if vue_w > 0 else 0) - th/2
+            draw_spigot(sx_s, sy_s)
+        for s in range(nb_sec):
+            bx_l = mx_left(s) + tw; bx_r = mx_left(s + 1)
+            draw_spigot(bx_l, sy_b); draw_spigot(bx_r, sy_b)
+
+        # Cotations VG (gauche)
+        cy_vg = x_off + mg_l * 0.45
+        c.setStrokeColor(BLEU_C); c.setLineWidth(0.5)
+        c.line(x0 - 0.03*inch, y_bot, cy_vg - 0.03*inch, y_bot)
+        c.line(x0 - 0.03*inch, _yt(0), cy_vg - 0.03*inch, _yt(0))
+        c.line(cy_vg, y_bot, cy_vg, _yt(0))
+        lw2 = 0.80*inch; lh2 = 0.28*inch
+        lx2 = max(x_off + 0.02*inch, cy_vg - lw2/2)
+        ly2 = (y_bot + _yt(0))/2 - lh2/2
+        c.setFillColor(BLEU_BG); c.roundRect(lx2, ly2, lw2, lh2, 0.02*inch, fill=True, stroke=False)
+        c.setStrokeColor(BLEU_C); c.setLineWidth(0.4)
+        c.roundRect(lx2, ly2, lw2, lh2, 0.02*inch, fill=False, stroke=True)
+        c.setFillColor(BLEU_C); c.setFont("Helvetica-Bold", 6.5)
+        c.drawCentredString(lx2 + lw2/2, ly2 + lh2 - 0.09*inch, f"{lbl_l} {mm_l} mm")
+        c.setFont("Helvetica", 6)
+        c.drawCentredString(lx2 + lw2/2, ly2 + 0.055*inch, _dvf_local(po_l))
+
+        # Cotations droite (VD ou VG selon mirror)
+        cy_vd = x1 + 0.36*inch
+        c.setStrokeColor(BLEU_C); c.setLineWidth(0.5)
+        c.line(x1 + 0.03*inch, y_bot, cy_vd + 0.03*inch, y_bot)
+        c.line(x1 + 0.03*inch, _yt(1), cy_vd + 0.03*inch, _yt(1))
+        c.line(cy_vd, y_bot, cy_vd, _yt(1))
+        lx3 = min(x_off + half_w - 0.02*inch - lw2, cy_vd - lw2/2)
+        ly3 = (y_bot + _yt(1))/2 - lh2/2
+        c.setFillColor(BLEU_BG); c.roundRect(lx3, ly3, lw2, lh2, 0.02*inch, fill=True, stroke=False)
+        c.setStrokeColor(BLEU_C); c.setLineWidth(0.4)
+        c.roundRect(lx3, ly3, lw2, lh2, 0.02*inch, fill=False, stroke=True)
+        c.setFillColor(BLEU_C); c.setFont("Helvetica-Bold", 6.5)
+        c.drawCentredString(lx3 + lw2/2, ly3 + lh2 - 0.09*inch, f"{lbl_r} {mm_r} mm")
+        c.setFont("Helvetica", 6)
+        c.drawCentredString(lx3 + lw2/2, ly3 + 0.055*inch, _dvf_local(po_r))
+
+        # Cotation largeur bas
+        cy_l = y_bot - 0.26*inch
+        c.setStrokeColor(OR_C); c.setLineWidth(0.5)
+        c.line(x0, y_bot - 0.03*inch, x0, cy_l + 0.03*inch)
+        c.line(x1, y_bot - 0.03*inch, x1, cy_l + 0.03*inch)
+        c.line(x0, cy_l, x1, cy_l)
+        lw4 = 0.85*inch; lh4 = 0.28*inch
+        lx4 = (x0+x1)/2 - lw4/2; ly4 = cy_l - lh4 - 0.02*inch
+        c.setFillColor(OR_BG); c.roundRect(lx4, ly4, lw4, lh4, 0.02*inch, fill=True, stroke=False)
+        c.setStrokeColor(OR_C); c.setLineWidth(0.4)
+        c.roundRect(lx4, ly4, lw4, lh4, 0.02*inch, fill=False, stroke=True)
+        c.setFillColor(OR_C); c.setFont("Helvetica-Bold", 6.5)
+        c.drawCentredString((x0+x1)/2, ly4 + lh4 - 0.09*inch, f"{L_mm} mm")
+        c.setFont("Helvetica", 6)
+        c.drawCentredString((x0+x1)/2, ly4 + 0.055*inch, _dvf_local(L_po))
+
+        # Nom du mur
+        c.setFillColor(cl.HexColor("#1F3864")); c.setFont("Helvetica-Bold", 10)
+        c.drawCentredString(x_off + half_w/2, y_top + 0.15*inch, mc.get('nom','').upper())
+
+    # Séparateur vertical central
+    c.setStrokeColor(cl.HexColor("#CCCCCC")); c.setLineWidth(0.8)
+    c.setDash(4, 4)
+    c.line(w/2, BOT_H, w/2, h - HDR_H)
+    c.setDash()
+
+    # Gauche : mirror=True (côté LONG vers le centre)
+    # Droite : mirror=False (côté LONG déjà vers le centre)
+    _draw_one(mc_g, 0,       mirror=True)
+    _draw_one(mc_d, half_w,  mirror=False)
 
 
 def _entete_mini(c, w, h, inch, colors, mur_calc):

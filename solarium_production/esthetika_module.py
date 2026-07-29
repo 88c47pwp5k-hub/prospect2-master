@@ -337,7 +337,7 @@ def _draw_qr(c, no_proj, w, h, inch):
 
 
 # ─── GÉNÉRATION PDF ───────────────────────────────────────────────────────────
-def generer_pdf_esthetika(params, fichier):
+def generer_pdf_esthetika(params, fichier, mode=None):
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.units    import inch
     from reportlab.pdfgen       import canvas
@@ -436,77 +436,42 @@ def generer_pdf_esthetika(params, fichier):
     # ══════════════════════════════════════════════════════════════════════════
     # PAGES 1+ : APPROBATION CLIENT
     # ══════════════════════════════════════════════════════════════════════════
-    for mc in murs_calc:
-        entete(f"APPROBATION CLIENT — Estétika {variante_label}")
-        y = h - 1.3 * inch
-        y = bandeau_mur(y, mc)
-        y -= 0.1 * inch
-        y = _dessiner_esthetika(c, y, mc, w, h, inch, colors)
+    if mode in (None, 'all', 'approbation'):
+        for mc in murs_calc:
+            entete(f"APPROBATION CLIENT — Estétika {variante_label}")
+            y = h - 1.3 * inch
+            y = bandeau_mur(y, mc)
+            y -= 0.1 * inch
+            y = _dessiner_esthetika(c, y, mc, w, h, inch, colors)
 
-        # Notes
-        if notes.strip():
-            c.setFillColor(colors.HexColor("#FFF3CD"))
-            c.rect(0.4 * inch, y - 0.55 * inch, w - 0.8 * inch, 0.55 * inch, fill=True, stroke=False)
-            c.setFillColor(colors.HexColor("#856404")); c.setFont("Helvetica-Bold", 8)
-            c.drawString(0.5 * inch, y - 0.16 * inch, "NOTES :")
-            c.setFont("Helvetica", 8)
-            c.drawString(0.5 * inch, y - 0.38 * inch, notes[:130])
+            # Notes
+            if notes.strip():
+                c.setFillColor(colors.HexColor("#FFF3CD"))
+                c.rect(0.4 * inch, y - 0.55 * inch, w - 0.8 * inch, 0.55 * inch, fill=True, stroke=False)
+                c.setFillColor(colors.HexColor("#856404")); c.setFont("Helvetica-Bold", 8)
+                c.drawString(0.5 * inch, y - 0.16 * inch, "NOTES :")
+                c.setFont("Helvetica", 8)
+                c.drawString(0.5 * inch, y - 0.38 * inch, notes[:130])
 
-        # Bloc signature
-        sig_y = 1.5 * inch
-        c.setStrokeColor(BLEU); c.setLineWidth(0.5)
-        c.line(0.4 * inch, sig_y, 3.5 * inch, sig_y)
-        c.line(4.2 * inch, sig_y, 7.7 * inch, sig_y)
-        c.setFillColor(BLEU); c.setFont("Helvetica", 7)
-        c.drawString(0.4 * inch, sig_y - 0.15 * inch, "Signature client")
-        c.drawString(4.2 * inch, sig_y - 0.15 * inch, "Date d'approbation")
-        c.setFont("Helvetica-Bold", 7)
-        c.drawString(0.4 * inch, sig_y - 0.30 * inch, "Préparé par : Céderic Rainville")
+            # Bloc signature
+            sig_y = 1.5 * inch
+            c.setStrokeColor(BLEU); c.setLineWidth(0.5)
+            c.line(0.4 * inch, sig_y, 3.5 * inch, sig_y)
+            c.line(4.2 * inch, sig_y, 7.7 * inch, sig_y)
+            c.setFillColor(BLEU); c.setFont("Helvetica", 7)
+            c.drawString(0.4 * inch, sig_y - 0.15 * inch, "Signature client")
+            c.drawString(4.2 * inch, sig_y - 0.15 * inch, "Date d'approbation")
+            c.setFont("Helvetica-Bold", 7)
+            c.drawString(0.4 * inch, sig_y - 0.30 * inch, "Préparé par : Céderic Rainville")
 
-        c.showPage()
-
-    # ══════════════════════════════════════════════════════════════════════════
-    # PAGE : SCHÉMA TECHNIQUE / MONTAGE
-    # ══════════════════════════════════════════════════════════════════════════
-    entete(f"SCHÉMA TECHNIQUE — Estétika {variante_label}")
-    y = h - 1.3 * inch
-    for mc in murs_calc:
-        y = bandeau_mur(y, mc)
-        y -= 0.1 * inch
-        y = _dessiner_esthetika(c, y, mc, w, h, inch, colors)
-        y -= 0.15 * inch
-    c.showPage()
+            c.showPage()
+        if mode == 'approbation':
+            c.save()
+            print(f"✓ Estétika {variante_label} PDF approbation généré: {fichier}")
+            return
 
     # ══════════════════════════════════════════════════════════════════════════
-    # PAGE : RÉCAPITULATIF DES PIÈCES
-    # ══════════════════════════════════════════════════════════════════════════
-    entete(f"RÉCAPITULATIF DES PIÈCES — Estétika {variante_label}")
-    y = h - 1.3 * inch
-    for mc in murs_calc:
-        y = bandeau_mur(y, mc)
-        y = titre_section(y, f"{mc['nom']} — PIÈCES")
-        data = [["Kit", "Désignation", "Longueur (pouces)", "Longueur (mm)", "Qté"]]
-        for p in mc['pieces']:
-            data.append([
-                f"KIT {p['kit']}",
-                p['nom'],
-                _dvf(p['long']),
-                str(round(p['long'] * 25.4)),
-                str(p['qte']),
-            ])
-        y = tableau(y, data, [0.9 * inch, 2.5 * inch, 1.5 * inch, 1.4 * inch, 0.9 * inch])
-
-    if notes.strip():
-        c.setFillColor(colors.HexColor("#FFF3CD"))
-        c.rect(0.4 * inch, y - 0.55 * inch, w - 0.8 * inch, 0.55 * inch, fill=True, stroke=False)
-        c.setFillColor(colors.HexColor("#856404")); c.setFont("Helvetica-Bold", 8)
-        c.drawString(0.5 * inch, y - 0.16 * inch, "NOTES :")
-        c.setFont("Helvetica", 8)
-        c.drawString(0.5 * inch, y - 0.38 * inch, notes[:130])
-    c.showPage()
-
-    # ══════════════════════════════════════════════════════════════════════════
-    # PAGES 4 : COUPES & QUINCAILLERIE — flux continu
+    # Agrégation kits_ffd (nécessaire pour COUPES et RESTES)
     # ══════════════════════════════════════════════════════════════════════════
     par_kit_agg = {}
     for mc in murs_calc:
@@ -533,151 +498,232 @@ def generer_pdf_esthetika(params, fichier):
         kits_ffd[kc] = {**kd, 'barres': barres}
     del par_kit_agg
 
-    entete(f"COUPES & QUINCAILLERIE — Estétika {variante_label}")
-    _draw_qr(c, no_proj, w, h, inch)
-    y = h - 1.3 * inch
-    y = titre_section(y, f"LISTES DE COUPE — {couleur}")
-    for kc, kd in kits_ffd.items():
-        nb_b = len(kd['barres'])
-        if y < 1.8 * inch:
-            c.showPage(); entete(f"COUPES — Estétika {variante_label} (suite)"); y = h - 1.3 * inch
-        y = titre_section(y, f"KIT {kc} — {kd['kit_nom']}  ·  barre {kd['barre_mm']} mm  ·  {nb_b} barre{'s' if nb_b>1 else ''}")
-        y = table_coupes(y, kd['barres'], kd['barre_po'])
-        y -= 0.06 * inch
+    if mode in (None, 'all'):
+        # ══════════════════════════════════════════════════════════════════════
+        # PAGE : SCHÉMA TECHNIQUE / MONTAGE
+        # ══════════════════════════════════════════════════════════════════════
+        entete(f"SCHÉMA TECHNIQUE — Estétika {variante_label}")
+        y = h - 1.3 * inch
+        for mc in murs_calc:
+            y = bandeau_mur(y, mc)
+            y -= 0.1 * inch
+            y = _dessiner_esthetika(c, y, mc, w, h, inch, colors)
+            y -= 0.15 * inch
+        c.showPage()
 
-    quincaillerie = (QUINCAILLERIE_EST_MAN + QUINCAILLERIE_EST_MOT) if variante == 'motorisee' else QUINCAILLERIE_EST_MAN
-    if quincaillerie:
-        if y < 1.8 * inch:
-            c.showPage(); entete(f"QUINCAILLERIE — Estétika {variante_label} (suite)"); y = h - 1.3 * inch
-        y -= 0.04 * inch
-        y = titre_section(y, f"QUINCAILLERIE & ACCESSOIRES — Estétika {variante_label} — par projet")
-        # Métriques projet pour formules linéaires
-        total_L_m  = sum(mc['largeur_mm']  / 1000 for mc in murs_calc)
-        total_H_m  = sum(mc['hauteur_mm']  / 1000 for mc in murs_calc)
-        total_ballast = sum(ceil(mc['largeur_mm'] / 400) for mc in murs_calc)
-        data_q = [["Code KIT", "Description", "Quantité", "Unité", "Note"]]
-        for item in quincaillerie:
-            q = item['qte']
-            if q == 'L':
-                qte_str = f"{total_L_m:.2f}"; unite_str = "ml"
-            elif q == 'H':
-                qte_str = f"{total_H_m:.2f}"; unite_str = "ml"
-            elif q == 'H2':
-                qte_str = f"{total_H_m * 2:.2f}"; unite_str = "ml"
-            elif q == 'BALLAST':
-                qte_str = str(total_ballast); unite_str = item['unite']
-            else:
-                qte_str = str(q); unite_str = item['unite']
-            data_q.append([item['code'], item['desc'], qte_str, unite_str, item.get('note', '')])
-        y = tableau(y, data_q, [1.0 * inch, 3.1 * inch, 1.1 * inch, 0.7 * inch, 1.3 * inch])
+        # ══════════════════════════════════════════════════════════════════════
+        # PAGE : RÉCAPITULATIF DES PIÈCES
+        # ══════════════════════════════════════════════════════════════════════
+        entete(f"RÉCAPITULATIF DES PIÈCES — Estétika {variante_label}")
+        y = h - 1.3 * inch
+        for mc in murs_calc:
+            y = bandeau_mur(y, mc)
+            y = titre_section(y, f"{mc['nom']} — PIÈCES")
+            data = [["Kit", "Désignation", "Longueur (pouces)", "Longueur (mm)", "Qté"]]
+            for p in mc['pieces']:
+                data.append([
+                    f"KIT {p['kit']}",
+                    p['nom'],
+                    _dvf(p['long']),
+                    str(round(p['long'] * 25.4)),
+                    str(p['qte']),
+                ])
+            y = tableau(y, data, [0.9 * inch, 2.5 * inch, 1.5 * inch, 1.4 * inch, 0.9 * inch])
 
-    # ── Kit installation FORO/LUCE CON VITI (Manuelle seulement) ─────────────
-    if variante == 'manuelle':
-        if y < 1.8 * inch:
-            c.showPage(); entete(f"QUINCAILLERIE — Estetika {variante_label} (suite)"); y = h - 1.3 * inch
-        y -= 0.15 * inch
-        y = titre_section(y, "KIT INSTALLATION — FORO/LUCE CON VITI")
-        total_murs = len(murs_calc)
-        install_items = [
-            ('KIT4126/40', 'Piece installation (a confirmer avec Cedric)', 2),
-            ('KIT4144/40', 'Piece installation (a confirmer avec Cedric)', 2),
-            ('KIT3923',    'Groupe de pression gauche',                     1),
-            ('KIT3925',    'Arret gauche',                                  1),
-            ('KIT3926',    'Arret droite',                                  1),
-            ('KIT3924',    'Groupe de pression droite',                     1),
-        ]
-        data_inst = [["Code KIT", "Description", "Qte / mur", "Total projet"]]
-        for code, desc, qte_par in install_items:
-            data_inst.append([code, desc, str(qte_par), str(qte_par * total_murs)])
-        y = tableau(y, data_inst, [1.1 * inch, 3.2 * inch, 1.4 * inch, 1.0 * inch])
+        if notes.strip():
+            c.setFillColor(colors.HexColor("#FFF3CD"))
+            c.rect(0.4 * inch, y - 0.55 * inch, w - 0.8 * inch, 0.55 * inch, fill=True, stroke=False)
+            c.setFillColor(colors.HexColor("#856404")); c.setFont("Helvetica-Bold", 8)
+            c.drawString(0.5 * inch, y - 0.16 * inch, "NOTES :")
+            c.setFont("Helvetica", 8)
+            c.drawString(0.5 * inch, y - 0.38 * inch, notes[:130])
+        c.showPage()
 
-    c.showPage()
+    if mode in (None, 'all'):
+        # ══════════════════════════════════════════════════════════════════════
+        # PAGES 4 : COUPES & QUINCAILLERIE — flux continu
+        # ══════════════════════════════════════════════════════════════════════
+        entete(f"COUPES & QUINCAILLERIE — Estétika {variante_label}")
+        _draw_qr(c, no_proj, w, h, inch)
+        y = h - 1.3 * inch
+        y = titre_section(y, f"LISTES DE COUPE — {couleur}")
+        for kc, kd in kits_ffd.items():
+            nb_b = len(kd['barres'])
+            if y < 1.8 * inch:
+                c.showPage(); entete(f"COUPES — Estétika {variante_label} (suite)"); y = h - 1.3 * inch
+            y = titre_section(y, f"KIT {kc} — {kd['kit_nom']}  ·  barre {kd['barre_mm']} mm  ·  {nb_b} barre{'s' if nb_b>1 else ''}")
+            y = table_coupes(y, kd['barres'], kd['barre_po'])
+            y -= 0.06 * inch
+
+        quincaillerie = (QUINCAILLERIE_EST_MAN + QUINCAILLERIE_EST_MOT) if variante == 'motorisee' else QUINCAILLERIE_EST_MAN
+        if quincaillerie:
+            if y < 1.8 * inch:
+                c.showPage(); entete(f"QUINCAILLERIE — Estétika {variante_label} (suite)"); y = h - 1.3 * inch
+            y -= 0.04 * inch
+            y = titre_section(y, f"QUINCAILLERIE & ACCESSOIRES — Estétika {variante_label} — par projet")
+            # Métriques projet pour formules linéaires
+            total_L_m  = sum(mc['largeur_mm']  / 1000 for mc in murs_calc)
+            total_H_m  = sum(mc['hauteur_mm']  / 1000 for mc in murs_calc)
+            total_ballast = sum(ceil(mc['largeur_mm'] / 400) for mc in murs_calc)
+            data_q = [["Code KIT", "Description", "Quantité", "Unité", "Note"]]
+            for item in quincaillerie:
+                q = item['qte']
+                if q == 'L':
+                    qte_str = f"{total_L_m:.2f}"; unite_str = "ml"
+                elif q == 'H':
+                    qte_str = f"{total_H_m:.2f}"; unite_str = "ml"
+                elif q == 'H2':
+                    qte_str = f"{total_H_m * 2:.2f}"; unite_str = "ml"
+                elif q == 'BALLAST':
+                    qte_str = str(total_ballast); unite_str = item['unite']
+                else:
+                    qte_str = str(q); unite_str = item['unite']
+                data_q.append([item['code'], item['desc'], qte_str, unite_str, item.get('note', '')])
+            y = tableau(y, data_q, [1.0 * inch, 3.1 * inch, 1.1 * inch, 0.7 * inch, 1.3 * inch])
+
+        # ── Kit installation FORO/LUCE CON VITI (Manuelle seulement) ─────────────
+        if variante == 'manuelle':
+            if y < 1.8 * inch:
+                c.showPage(); entete(f"QUINCAILLERIE — Estetika {variante_label} (suite)"); y = h - 1.3 * inch
+            y -= 0.15 * inch
+            y = titre_section(y, "KIT INSTALLATION — FORO/LUCE CON VITI")
+            total_murs = len(murs_calc)
+            install_items = [
+                ('KIT4126/40', 'Piece installation (a confirmer avec Cedric)', 2),
+                ('KIT4144/40', 'Piece installation (a confirmer avec Cedric)', 2),
+                ('KIT3923',    'Groupe de pression gauche',                     1),
+                ('KIT3925',    'Arret gauche',                                  1),
+                ('KIT3926',    'Arret droite',                                  1),
+                ('KIT3924',    'Groupe de pression droite',                     1),
+            ]
+            data_inst = [["Code KIT", "Description", "Qte / mur", "Total projet"]]
+            for code, desc, qte_par in install_items:
+                data_inst.append([code, desc, str(qte_par), str(qte_par * total_murs)])
+            y = tableau(y, data_inst, [1.1 * inch, 3.2 * inch, 1.4 * inch, 1.0 * inch])
+
+        c.showPage()
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE 5 : FICHE PEINTURE
     # ══════════════════════════════════════════════════════════════════════════
-    entete(f"FICHE PEINTURE — Estétika {variante_label}")
-    y = h - 1.4 * inch
-    y = titre_section(y, f"Estetika {variante_label}.  Couleur : {couleur}")
+    if mode in (None, 'all', 'peinture'):
+        from solarium_utils import est_couleur_stock
+        from reportlab.platypus import Image as RLImage
 
-    _IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images_pieces')
-    IMAGES_PROFILS_EST = {
-        '3812': os.path.join(_IMG_DIR, 'profil_3812.png'),
-        '3813': os.path.join(_IMG_DIR, 'profil_3813.png'),
-        '3814': os.path.join(_IMG_DIR, 'profil_3814.png'),
-        '3816': os.path.join(_IMG_DIR, 'profil_3816.png'),
-        '3817': os.path.join(_IMG_DIR, 'profil_3817.png'),
-        '3818': os.path.join(_IMG_DIR, 'profil_3818.png'),
-        '3928': os.path.join(_IMG_DIR, 'profil_tube_25x100.jpeg'),
-        '3931': os.path.join(_IMG_DIR, 'profil_tube_25x100.jpeg'),
-    }
+        entete(f"FICHE PEINTURE — Estétika {variante_label}")
+        y = h - 1.4 * inch
 
-    from reportlab.platypus import Image as RLImage
+        _IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images_pieces')
+        IMAGES_PROFILS_EST = {
+            '3812': os.path.join(_IMG_DIR, 'profil_3812.png'),
+            '3813': os.path.join(_IMG_DIR, 'profil_3813.png'),
+            '3814': os.path.join(_IMG_DIR, 'profil_3814.png'),
+            '3816': os.path.join(_IMG_DIR, 'profil_3816.png'),
+            '3817': os.path.join(_IMG_DIR, 'profil_3817.png'),
+            '3818': os.path.join(_IMG_DIR, 'profil_3818.png'),
+            '3928': os.path.join(_IMG_DIR, 'profil_tube_25x100.jpeg'),
+            '3931': os.path.join(_IMG_DIR, 'profil_tube_25x100.jpeg'),
+        }
 
-    def _img_cell_est(kit_code):
-        path = IMAGES_PROFILS_EST.get(kit_code)
-        if path and os.path.exists(path):
-            return RLImage(path, width=0.52 * inch, height=0.38 * inch)
-        return None
+        def _img_cell_est(kit_code):
+            path = IMAGES_PROFILS_EST.get(kit_code)
+            if path and os.path.exists(path):
+                return RLImage(path, width=0.52 * inch, height=0.38 * inch)
+            return ""
 
-    pieces_peinture = {}
-    for mc in murs_calc:
-        for p in mc['pieces']:
-            key = (p['kit'], p['kit_nom'], round(p['long'] * 25.4))
-            pieces_peinture[key] = pieces_peinture.get(key, 0) + p['qte']
+        pieces_peinture = {}
+        for mc in murs_calc:
+            for p in mc['pieces']:
+                key = (p['kit'], p['kit_nom'], round(p['long'] * 25.4))
+                pieces_peinture[key] = pieces_peinture.get(key, 0) + p['qte']
 
-    data_p = [["Profil", "Code", "Designation", "Grandeur", "Nombre", "Coupe"]]
-    for (kc, kit_nom, long_mm), qte in sorted(pieces_peinture.items()):
-        img = _img_cell_est(kc) or ""
-        grandeur = f"{_dvf(long_mm / 25.4)}  ({long_mm} mm)"
-        data_p.append([img, kc, kit_nom, grandeur, str(qte), ""])
+        stock = est_couleur_stock(couleur)
+        cas_label = "STOCK — barres completes" if stock else "SUR MESURE — longueurs precisees"
+        y = titre_section(y, f"Estetika {variante_label}.  Couleur : {couleur}  [{cas_label}]")
 
-    y = tableau(y, data_p, [0.62 * inch, 0.65 * inch, 1.7 * inch, 2.05 * inch, 0.65 * inch, 0.95 * inch])
-    y -= 0.3 * inch
+        kits = KITS_ESTHETIKA[variante]
 
-    # Note Keven
-    note_h = 0.40 * inch
-    if y - note_h < 0.9 * inch:
-        c.showPage(); entete(f"FICHE PEINTURE — Estetika {variante_label} (suite)"); y = h - 1.4 * inch
-    c.setFillColor(colors.HexColor("#FFF3CD"))
-    c.rect(0.4 * inch, y - note_h, w - 0.8 * inch, note_h, fill=True, stroke=False)
-    c.setFillColor(colors.HexColor("#856404")); c.setFont("Helvetica-Bold", 9)
-    c.drawString(0.55 * inch, y - 0.17 * inch, "Note :")
-    c.setFont("Helvetica", 9)
-    c.drawString(1.1 * inch, y - 0.17 * inch,
-                 "Keven — cocher chaque profil apres la coupe avant d'envoyer a la peinture")
-    y -= note_h + 0.45 * inch
+        if stock:
+            # CAS 1 — Couleur stock : envoyer barres COMPLÈTES
+            # FFD avec utile = barre_mm - 50mm pour compter le nombre de barres nécessaires
+            par_code = {}
+            for (kc, kit_nom, long_mm), qte in pieces_peinture.items():
+                if kc not in par_code:
+                    _, barre_mm = kits[kc]
+                    par_code[kc] = {'kit_nom': kit_nom, 'barre_mm': barre_mm, 'pieces': []}
+                par_code[kc]['pieces'].append({'nom': f'{long_mm}mm', 'long': long_mm / 25.4, 'qte': qte})
 
-    # Signatures — 3 champs
-    sig_y = max(y, 1.8 * inch)
-    c.setStrokeColor(BLEU); c.setLineWidth(0.5)
-    c.line(0.4 * inch, sig_y, 2.8 * inch, sig_y)
-    c.line(3.1 * inch, sig_y, 5.3 * inch, sig_y)
-    c.line(5.6 * inch, sig_y, 7.7 * inch, sig_y)
-    c.setFillColor(BLEU); c.setFont("Helvetica", 7)
-    c.drawString(0.4 * inch,  sig_y - 0.14 * inch, "Recu par le peintre — Nom + Signature")
-    c.drawString(3.1 * inch,  sig_y - 0.14 * inch, "Date de reception")
-    c.drawString(5.6 * inch,  sig_y - 0.14 * inch, "Date de retour prevue")
-    c.showPage()
+            data_p = [["Profil", "Code", "Designation", "Barre complete", "Nb barres", "Note"]]
+            for kc in sorted(par_code):
+                kd = par_code[kc]
+                barre_mm = kd['barre_mm']
+                utile_po = (barre_mm - 50) / 25.4
+                barres = _ffd(kd['pieces'], utile_po)
+                nb = len(barres)
+                max_piece_mm = max(p['long'] * 25.4 for b in barres for p in b['pieces'])
+                note = "(!) piece > barre-50mm" if max_piece_mm > (barre_mm - 50) else ""
+                data_p.append([_img_cell_est(kc), kc, kd['kit_nom'],
+                               f"{barre_mm} mm ({_dvf(barre_mm/25.4)})", str(nb), note])
+            y = tableau(y, data_p, [0.62 * inch, 0.65 * inch, 1.65 * inch, 1.85 * inch, 0.7 * inch, 1.15 * inch])
+        else:
+            # CAS 2 — Couleur sur mesure : longueur précise + 50mm par pièce
+            data_p = [["Profil", "Code", "Designation", "Grandeur (+50mm)", "Nombre", "Coupe"]]
+            for (kc, kit_nom, long_mm), qte in sorted(pieces_peinture.items()):
+                long_p = long_mm + 50
+                grandeur = f"{_dvf(long_p / 25.4)}  ({long_p} mm)"
+                data_p.append([_img_cell_est(kc), kc, kit_nom, grandeur, str(qte), ""])
+            y = tableau(y, data_p, [0.62 * inch, 0.65 * inch, 1.7 * inch, 2.05 * inch, 0.65 * inch, 0.95 * inch])
+
+        y -= 0.3 * inch
+
+        # Note Keven
+        note_h = 0.40 * inch
+        if y - note_h < 0.9 * inch:
+            c.showPage(); entete(f"FICHE PEINTURE — Estetika {variante_label} (suite)"); y = h - 1.4 * inch
+        c.setFillColor(colors.HexColor("#FFF3CD"))
+        c.rect(0.4 * inch, y - note_h, w - 0.8 * inch, note_h, fill=True, stroke=False)
+        c.setFillColor(colors.HexColor("#856404")); c.setFont("Helvetica-Bold", 9)
+        c.drawString(0.55 * inch, y - 0.17 * inch, "Note :")
+        c.setFont("Helvetica", 9)
+        c.drawString(1.1 * inch, y - 0.17 * inch,
+                     "Keven — cocher chaque profil apres la coupe avant d'envoyer a la peinture")
+        y -= note_h + 0.45 * inch
+
+        # Signatures — 3 champs
+        sig_y = max(y, 1.8 * inch)
+        c.setStrokeColor(BLEU); c.setLineWidth(0.5)
+        c.line(0.4 * inch, sig_y, 2.8 * inch, sig_y)
+        c.line(3.1 * inch, sig_y, 5.3 * inch, sig_y)
+        c.line(5.6 * inch, sig_y, 7.7 * inch, sig_y)
+        c.setFillColor(BLEU); c.setFont("Helvetica", 7)
+        c.drawString(0.4 * inch,  sig_y - 0.14 * inch, "Recu par le peintre — Nom + Signature")
+        c.drawString(3.1 * inch,  sig_y - 0.14 * inch, "Date de reception")
+        c.drawString(5.6 * inch,  sig_y - 0.14 * inch, "Date de retour prevue")
+        c.showPage()
+        if mode == 'peinture':
+            c.save()
+            print(f"✓ Estétika {variante_label} PDF peinture généré: {fichier}")
+            return
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE 6 : RESTES À ENREGISTRER
     # ══════════════════════════════════════════════════════════════════════════
-    restes = []
-    for kc, kd in kits_ffd.items():
-        for b in kd['barres']:
-            if b['reste'] >= SEUIL_RESTE_PO:
-                restes.append({'profil': f"KIT {kc} — {kd['kit_nom']}", 'reste': b['reste']})
+    if mode in (None, 'all'):
+        restes = []
+        for kc, kd in kits_ffd.items():
+            for b in kd['barres']:
+                if b['reste'] >= SEUIL_RESTE_PO:
+                    restes.append({'profil': f"KIT {kc} — {kd['kit_nom']}", 'reste': b['reste']})
 
-    if restes:
-        entete(f"RESTES À ENREGISTRER — Estétika {variante_label}")
-        y = h - 1.3 * inch
-        y = titre_section(y, "NOUVEAUX RESTES GÉNÉRÉS PAR CETTE PRODUCTION")
-        data = [["Profil", "Longueur (pouces)", "Longueur (mm)", "Notes"]]
-        for r in restes:
-            data.append([r['profil'], _dvf(r['reste']), str(round(r['reste'] * 25.4)), ""])
-        y = tableau(y, data, [2.0 * inch, 1.5 * inch, 1.5 * inch, 2.8 * inch])
-        c.showPage()
+        if restes:
+            entete(f"RESTES À ENREGISTRER — Estétika {variante_label}")
+            y = h - 1.3 * inch
+            y = titre_section(y, "NOUVEAUX RESTES GÉNÉRÉS PAR CETTE PRODUCTION")
+            data = [["Profil", "Longueur (pouces)", "Longueur (mm)", "Notes"]]
+            for r in restes:
+                data.append([r['profil'], _dvf(r['reste']), str(round(r['reste'] * 25.4)), ""])
+            y = tableau(y, data, [2.0 * inch, 1.5 * inch, 1.5 * inch, 2.8 * inch])
+            c.showPage()
 
     c.save()
     print(f"✓ Estétika {variante_label} PDF généré : {fichier}")

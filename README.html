@@ -139,6 +139,58 @@
   <div class="date-badge">Mis à jour le <strong>27 juillet 2026</strong></div>
 </header>
 
+<!-- MISES À JOUR 29 JUILLET 2026 — SOLARIUM PRO · PDFs MODES SÉPARÉS + CORRECTIONS CADRE/TRAPÈZE -->
+<div class="section">
+  <div class="section-title">Mises à jour — 29 juillet 2026 — Solarium Pro · Modes PDF séparés, corrections Cadre/Trapèze &amp; standardisation</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">cadre_approbation_v2.py + cadre_montage_v1.py — Orientation pignons</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Bug critique : côté LONG (84") apparaissait aux 2 extrémités extérieures au lieu du centre. Correction : swap des paramètres mirror dans <code>page_approbation_2_trapezes()</code> et <code>_draw_one()</code>. Centrage vertical du dessin sur la page corrigé (était écrasé dans le tiers inférieur).</td>
+        </tr>
+        <tr>
+          <td class="name">cadre_module.py — Commande verre 1 page</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">La commande verre généraient 3 pages séparées (texte p.1, dessin pignon gauche p.2, droit p.3). Refonte complète : en-tête + grille (max 3/rangée) sur UNE SEULE PAGE. Format badge mur (mauve) + dessin + badge quantité (jaune).</td>
+        </tr>
+        <tr>
+          <td class="name">solarium_production.py — Téléchargement direct navigateur</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Route <code>GET /telecharger/&lt;nom&gt;</code> ajoutée. Toutes les fonctions JS de génération déclenchent maintenant <code>window.location.href</code> → PDF téléchargé directement dans le navigateur au lieu d'être seulement ouvert via <code>open</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">neoscenica_module.py + esthetika_module.py — Modes PDF séparés</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Ajout du paramètre <code>mode=None/'approbation'/'peinture'</code> aux deux modules. 6 nouvelles routes Flask correspondantes. Boutons Approbation + Peinture ajoutés pour Néoscenica, Estétika Motorisée et Estétika Manuelle dans l'interface.</td>
+        </tr>
+        <tr>
+          <td class="name">neoscenica_module.py — Kit Installation V1 (2 Battenti)</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Section "KIT INSTALLATION — V1 (2 Battenti)" ajoutée sur la page Coupes &amp; Quincaillerie : KIT3738 (Ressort pression ×2), KIT3889 (Groupe pression ×2), KIT3895 (Support coffre ×2) par moustiquaire. Total projet calculé automatiquement.</td>
+        </tr>
+        <tr>
+          <td class="name">esthetika_module.py — Règle peinture universelle</td>
+          <td><span class="tag tag-python">Correction</span></td>
+          <td class="role">La fiche peinture Estétika affichait toujours la longueur exacte sans distinction stock/custom. Corrigé : si couleur stock (Blanc RAL9016 / Noir RAL9005) → barres complètes avec FFD (utile = barre−50mm) ; sinon → longueur précise +50mm par pièce. Identique à Néoscenica et Aika.</td>
+        </tr>
+        <tr>
+          <td class="name">Tous les modules — En-têtes standardisés</td>
+          <td><span class="tag tag-python">Design</span></td>
+          <td class="role">En-têtes uniformisés sur Néoscenica, Estétika, Cadre/Trapèze : fond noir #111111, "SOLARIUM PRO" centré en or #C68B00 (16pt), sous-titre produit centré en blanc, titre document centré, filet or en bas de l'en-tête. Remplacement du fond navy #1F3864.</td>
+        </tr>
+        <tr>
+          <td class="name">cadre_module.py — Images peinture Tube alu</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Colonne photo ajoutée sur la fiche peinture Cadre/Trapèze (modes peinture seul et complet). Tube alu 2-1/2" affiche <code>profil_tube_25x100.jpeg</code>. Plaque pression et Couvercle : photo manquante, à fournir.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- MISES À JOUR 27 JUILLET 2026 — STACK SOLARIUM PRO · INFRA + ACCÈS DISTANT -->
 <div class="section">
   <div class="section-title">Mises à jour — 27 juillet 2026 — Stack Solarium Pro · Infrastructure &amp; accès distant</div>
