@@ -1,0 +1,162 @@
+RÉPONSES AU FORMULAIRE DIAGNOSTIC — PROSPECT 2.0
+============================================================
+Client     : Ludovic Clermont
+Entreprise : Terrasses Clermont
+Date       : 2026-07-30
+Score      : 69/100
+
+
+── — Informations générales — ──
+
+Q : Votre prénom et nom
+R : Ludovic Clermont
+
+Q : Le nom de votre entreprise
+R : Terrasses Clermont
+
+Q : Dans quel secteur travaillez-vous ? (ex : paysagement, construction, piscines…)
+R : Rénovation extérieure
+
+Q : Combien d'employés avez-vous en haute saison ?
+R : 8
+
+Q : Votre chiffre d'affaires annuel approximatif
+R : 1.5M$
+
+Q : Quelle est votre saison active ? (ex : mai à octobre)
+R : Mai à octobre
+
+Q : Depuis combien d'années êtes-vous en affaires ?
+R : 7 ans
+
+Q : Votre courriel
+R : ludovicclermont.danslmille@gmail.com
+
+
+── Section 01 — Comment vous organisez-vous au quotidien ? ──
+
+Q : Est-ce que vos façons de faire sont écrites quelque part ?
+R : 3
+
+Q : Dites-moi en quelques mots ce qui est documenté et ce qui ne l'est pas.
+R : Documenté: 
+Soumissions
+Comptabilité
+
+Pas documenté: 
+Génération de leads
+Publication de contenu
+Suivis clients
+Demande d'avis après service
+
+
+Q : Est-ce que votre équipe peut opérer sans que vous soyez là ?
+R : 3
+
+Q : Avez-vous un guide pour accueillir vos nouveaux employés saisonniers ?
+R : On a quelque chose de partiel, mais c'est surtout verbal
+
+Q : Combien d'heures par semaine travaillez-vous en haute saison ?
+R : 65 à 75h — c'est trop, je le sais
+
+Q : Quand vous estimez le temps pour un projet, est-ce que vos estimations sont généralement exactes ?
+R : Parfois oui, parfois non — c'est variable
+
+Q : Savez-vous combien d'heures réelles ont été investies sur vos derniers projets ?
+R : On a une idée approximative, mais rien de précis
+
+Q : Qu'est-ce qui vous complique le plus la vie en ce moment ?
+R : Planifier la saison d'avance sans être pris de court / Jongler avec plusieurs chantiers en même temps
+
+Q : Si vous récupériez 10 heures par semaine, à quoi les consacreriez-vous ?
+R : Marketing et recrutement 
+
+
+── Section 02 — Vos ventes et soumissions ──
+
+Q : Sur 10 soumissions envoyées, combien se convertissent en contrats ?
+R : 3 à 5 sur 10 (30–50%)
+
+Q : Comment suivez-vous vos soumissions après les avoir envoyées ?
+R : J'utilise un tableau Excel ou Google Sheets
+
+Q : Combien de temps passez-vous à préparer une soumission en moyenne ?
+R : 30 minutes à 1 heure
+
+Q : Est-ce que vos prix sont basés sur des coûts réels ou sur votre expérience ?
+R : Je calcule les matériaux mais la main-d'œuvre est approximative
+
+Q : Savez-vous quels sont vos projets ou services les plus rentables ?
+R : J'ai une intuition, mais pas de données précises
+
+Q : Qu'est-ce qui vous empêche de vendre plus ou à de meilleurs prix ?
+R : Je n'ai que des leads avec un budget ''classe-moyenne'' 
+
+
+── Section 03 — Votre équipe et votre recrutement ──
+
+Q : Comment évaluez-vous la performance de vos employés ?
+R : Je donne du feedback informel au besoin
+
+Q : À quel point la rétention de vos employés saisonniers est-elle un défi ?
+R : 4
+
+Q : Avez-vous des rôles et responsabilités clairement définis pour chaque employé ?
+R : Globalement oui, mais il y a des zones grises
+
+Q : Qu'est-ce qui vous pose le plus de défis avec votre équipe ?
+R : Former rapidement en début de saison / Déléguer sans devoir tout vérifier
+
+
+── Section 04 — Vos finances et votre rentabilité ──
+
+Q : Comment décririez-vous votre visibilité sur vos finances en temps réel ?
+R : 3
+
+Q : Comment gérez-vous les variations de trésorerie entre la haute et la basse saison ?
+R : C'est stressant chaque année, je cherche une meilleure façon
+
+Q : Faites-vous des prévisions financières pour la saison à venir ?
+R : Oui, mais c'est assez sommaire
+
+Q : Avez-vous l'impression que votre croissance crée de la pression financière ?
+R : 4
+
+Q : Qu'est-ce qui vous préoccupe le plus côté finances ?
+R : Plus je scale, plus mes marges de profits baissent
+
+
+── Section 05 — Vos outils et votre façon de travailler ──
+
+Q : Comment gérez-vous vos projets et chantiers au quotidien ?
+R : Un tableau Excel ou Google Sheets
+
+Q : Utilisez-vous un logiciel de comptabilité ?
+R : Oui, mais c'est surtout mon comptable qui s'en occupe
+
+Q : Comment communiquez-vous avec votre équipe en cours de saison ?
+R : Messages texte / SMS / Téléphone
+
+Q : Combien de temps par semaine passez-vous à chercher des informations ?
+R : 1 à 3 heures — quelques pertes de temps
+
+Q : Quel outil ou façon de faire vous manque le plus dans votre quotidien ?
+R : Une façon d'échapper le moins d'opportunités de vente possible. 
+
+
+── Section 06 — Votre vision et vos objectifs ──
+
+Q : Où voulez-vous que votre entreprise soit dans 3 ans ?
+R : J'aimerais que l'on soit à 3M de CA avec maximum 15 employés 
+
+Q : Quel est le principal obstacle entre vous et cet objectif aujourd'hui ?
+R : Manque de temps pour travailler sur la croissance / Manque de systèmes et de processus clairs
+
+Q : Avez-vous déjà travaillé avec un consultant ou coach d'affaires ?
+R : Oui, mais l'expérience était décevante ou mal adaptée
+
+Q : À quel point êtes-vous prêt à changer des choses dans la façon dont votre entreprise opère ?
+R : 4
+
+Q : Y a-t-il quelque chose d'important que vous n'avez pas pu exprimer dans ce formulaire ?
+R : Je crois que c'est tout 

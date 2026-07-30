@@ -1,0 +1,5 @@
+Statut      : Envoyé
+Généré le   : 2026-07-30
+Envoyé le   : 2026-07-30
+Méthode     : SMTP Gmail
+Notes       :
