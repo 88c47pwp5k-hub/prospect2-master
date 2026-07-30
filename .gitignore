@@ -4,3 +4,10 @@
 __pycache__/
 *.pyc
 *.pyo
+
+credentials/
+dist/
+invitation_log.txt
+pipeline_log.txt
+*.pdf
+*.DS_Store
