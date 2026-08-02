@@ -256,7 +256,19 @@ Les apps importantes sont protégées contre suppression accidentelle via `chfla
   ```bash
   sudo chflags nouchg "~/Desktop/Prospect 2,0/Prospect 2,0 Apps/Dashboard Prospect 2.0.app"
   ```
-- **Icône** : fond bleu marine `#1B3A5C` (27,58,92) + pieuvre prospect 2.0, marge 8%, générée par `generateur_pastille_prospect2.py`
+- **Icône** : fond bleu marine `#1B3A5C` (27,58,92) + pieuvre prospect 2.0, marge 8%, générée par `generateur_app_maitre.py`
+
+### Routes disponibles (2 août 2026)
+
+| Route | Méthode | Description |
+|-------|---------|-------------|
+| `/api/clients` | GET | Liste tous les clients (suivi_global.csv) |
+| `/api/update-statut` | POST | Modifier étape/sous-étape/raison |
+| `/api/export/csv` | GET | Export CSV filtré (params : etape, sous_etape, recherche) |
+| `/api/export/pdf` | GET | Export PDF WeasyPrint filtré (mêmes params) |
+| `/api/client/<nom>` | DELETE | Retire la ligne CSV — dossier RAPPORTS_CLIENTS/ préservé |
+| `/api/fiche/<nom>` | GET/POST | Lire/écrire fiche_outils.json du client |
+| `/rapport/<nom>` | GET | Télécharger le PDF rapport du client |
 
 ### Autres apps Prospect 2,0 protégées
 ```bash
