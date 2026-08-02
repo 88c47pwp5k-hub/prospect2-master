@@ -282,6 +282,61 @@ done
 > Note : `sudo chflags uchg` requiert le mot de passe administrateur. `touch app.app` après chflags force le Finder à rafraîchir l'icône.
 
 
+### RÈGLE — Ne jamais faire `touch` sur une app protégée sous iCloud Drive
+
+Un `touch` sur un bundle `.app` situé dans un dossier synchronisé iCloud déclenche une
+resynchronisation qui efface temporairement le flag `chflags uchg` et restaure le `FinderInfo`.
+Si un rafraîchissement est nécessaire, appliquer `chflags uchg` directement **sans passer par `touch`**.
+
+```bash
+# ✓ Correct — pas de touch
+chflags uchg "/Users/benoitdupuis/Desktop/.../MonApp.app"
+
+# ✗ À éviter sous iCloud Drive — déclenche une resync qui efface uchg
+touch "/Users/benoitdupuis/Desktop/.../MonApp.app"
+chflags uchg "/Users/benoitdupuis/Desktop/.../MonApp.app"
+```
+
+Symptôme : après `touch`, le flag repasse de `uchg` à `-` dans `ls -dlO` quelques secondes plus
+tard, et `com.apple.FinderInfo` est restauré par le daemon iCloud.
+
+
+### RÈGLE — Rafraîchir un dossier éventail (stack) complet, pas ses items un par un
+
+Le cache d'icônes du Dock pour un dossier éventail (ex : `Solarium Pro Apps`,
+`Prospect 2,0 Apps`) peut rester périmé même après `chflags` / `killall Dock` / `killall Finder`
+— surtout si seulement certains items du dossier ont été modifiés récemment.
+
+Les items individuels dans un éventail **ne sont PAS des entrées séparées** dans
+`persistent-apps` (confirmé via `defaults read com.apple.dock persistent-others`) — donc
+"Retirer du Dock" ne fonctionne pas sur un item individuel.
+
+**Solution qui fonctionne** : retirer et remettre le **dossier complet** via script Python
+(ou glisser-déposer manuel du dossier, pas des items dedans) :
+
+```python
+# Retirer puis réinsérer l'entrée dans persistent-others via plistlib
+import subprocess, plistlib, copy
+
+result = subprocess.run(["defaults", "export", "com.apple.dock", "-"], capture_output=True)
+dock = plistlib.loads(result.stdout)
+others = dock.get("persistent-others", [])
+
+# Trouver, retirer, réinsérer à la même position
+for i, item in enumerate(others):
+    if "Solarium Pro Apps" in item.get("tile-data", {}).get("file-label", ""):
+        entry = copy.deepcopy(item)
+        others.pop(i)
+        others.insert(i, entry)
+        break
+
+dock["persistent-others"] = others
+subprocess.run(["defaults", "import", "com.apple.dock", "-"],
+               input=plistlib.dumps(dock), capture_output=True)
+subprocess.run(["killall", "Dock"])
+```
+
+
 ## 13. Checklist fin de session
 
 - [ ] README.html mis à jour avec tous les changements
