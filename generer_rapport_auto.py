@@ -380,15 +380,35 @@ def _patch_and_generate(nom, entreprise, secteur, scores, textes, date_rapport=N
                      f"Méthode     :\n"
                      f"Notes       :\n")
 
-    # suivi_global.csv
-    _csv_path  = os.path.expanduser("~/Documents/prospect2/RAPPORTS_CLIENTS/suivi_global.csv")
+    # suivi_global.csv — schéma prospect2_server.py
+    _csv_path   = os.path.expanduser("~/Documents/prospect2/RAPPORTS_CLIENTS/suivi_global.csv")
     _csv_exists = os.path.exists(_csv_path)
-    with open(_csv_path, "a", newline="", encoding="utf-8") as _f:
-        _w = _csv.writer(_f)
-        if not _csv_exists:
-            _w.writerow(["Date génération", "Nom client", "Entreprise",
-                         "Score global", "Statut", "Date envoi", "Méthode"])
-        _w.writerow([_date_str, nom, entreprise, _score_global, "À envoyer", "", ""])
+    _colonnes   = ["nom_client", "entreprise", "score", "etape", "sous_etape",
+                   "raison", "date_dernier_envoi", "chemin_rapport_pdf"]
+    _chemin_pdf = f"RAPPORTS_CLIENTS/{_nom_safe}_{_ent_safe}/rapport_diagnostic.pdf"
+    # Vérifier si le client existe déjà (évite les doublons au re-run)
+    _deja_present = False
+    if _csv_exists:
+        with open(_csv_path, newline="", encoding="utf-8") as _rf:
+            for _r in _csv.DictReader(_rf):
+                if _r.get("nom_client", "").strip().lower() == nom.strip().lower():
+                    _deja_present = True
+                    break
+    if not _deja_present:
+        with open(_csv_path, "a", newline="", encoding="utf-8") as _f:
+            _dw = _csv.DictWriter(_f, fieldnames=_colonnes)
+            if not _csv_exists:
+                _dw.writeheader()
+            _dw.writerow({
+                "nom_client":         nom,
+                "entreprise":         entreprise,
+                "score":              _score_global,
+                "etape":              "en_prospection",
+                "sous_etape":         "",
+                "raison":             "",
+                "date_dernier_envoi": _date_str,
+                "chemin_rapport_pdf": _chemin_pdf,
+            })
 
     _folder_name = f"{_nom_safe}_{_ent_safe}"
     print("\n" + "=" * 62)

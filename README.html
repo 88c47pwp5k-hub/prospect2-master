@@ -136,8 +136,65 @@
       <div class="subtitle">Documentation complète du projet</div>
     </div>
   </div>
-  <div class="date-badge">Mis à jour le <strong>27 juillet 2026</strong></div>
+  <div class="date-badge">Mis à jour le <strong>2 août 2026</strong></div>
 </header>
+
+<!-- MISES À JOUR 2 AOÛT 2026 — PROSPECT 2.0 · DASHBOARD EXPORTS, SYNC PIPELINE, SCHÉMA CSV -->
+<div class="section">
+  <div class="section-title">Mises à jour — 2 août 2026 — Prospect 2.0 · Dashboard exports CSV/PDF, sync Pipeline↔Dashboard, schéma CSV unifié</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">prospect2_server.py — Export CSV</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Route <code>GET /api/export/csv?etape=&amp;sous_etape=&amp;recherche=</code> — retourne un CSV des 8 colonnes de suivi_global.csv filtré selon la vue active du dashboard · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/prospect2/dashboard/prospect2_server.py</span></td>
+        </tr>
+        <tr>
+          <td class="name">prospect2_server.py — Export PDF</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Route <code>GET /api/export/pdf</code> — PDF WeasyPrint avec en-tête bleu marine #1B3A5C + logo, tableau 5 colonnes, date de génération en pied. Mêmes filtres que l'export CSV · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/prospect2/dashboard/prospect2_server.py</span></td>
+        </tr>
+        <tr>
+          <td class="name">prospect2_server.py — Suppression client</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Route <code>DELETE /api/client/&lt;nom_client&gt;</code> — retire la ligne du CSV uniquement, préserve le dossier RAPPORTS_CLIENTS/[client]/ · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/prospect2/dashboard/prospect2_server.py</span></td>
+        </tr>
+        <tr>
+          <td class="name">dashboard_prospect2.html — Boutons Export + ✕</td>
+          <td><span class="tag tag-html">UI</span></td>
+          <td class="role">Boutons "Exporter CSV" et "Exporter PDF" (tabler-icons, fond blanc, bordure fine) dans l'en-tête à gauche du bouton Actualiser. Bouton ✕ rouge dans chaque ligne du tableau (confirm() + rechargement auto) · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/prospect2/dashboard/dashboard_prospect2.html</span></td>
+        </tr>
+        <tr>
+          <td class="name">generer_rapport_auto.py — Correction schéma CSV</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Écrivait dans suivi_global.csv avec un schéma incompatible (7 colonnes, date en position 0). Corrigé : DictWriter avec les 8 colonnes exactes du schéma prospect2_server.py + détection de doublon avant écriture (évite le re-run) · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/prospect2/generer_rapport_auto.py</span></td>
+        </tr>
+        <tr>
+          <td class="name">envoyer_rapport.py — Alignement schéma CSV</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Toutes les références aux anciens noms de colonnes ("Nom client", "Statut", "Date envoi"…) remplacées par le nouveau schéma. Après envoi : <code>sous_etape=rapport_envoye</code> au lieu de <code>Statut=Envoyé</code> · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/prospect2/envoyer_rapport.py</span></td>
+        </tr>
+        <tr>
+          <td class="name">generer_pipeline.py — Sync Pipeline → Dashboard</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Fonction <code>sync_converti_vers_dashboard(nom, entreprise)</code> : quand un prospect passe à "Converti", une entrée est automatiquement créée dans suivi_global.csv (etape=en_prospection, sous_etape=diagnostic_envoye). Skip silencieux si doublon. Log dans pipeline_log.txt · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/prospect2/generer_pipeline.py</span></td>
+        </tr>
+        <tr>
+          <td class="name">generer_pipeline.py — Champ Entreprise</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Colonne <code>entreprise</code> ajoutée à prospects.csv (position 2, après nom). lire_csv(), ecrire_csv(), tableau HTML, recherche texte et sync vers Dashboard mis à jour. Migration automatique des 10 lignes existantes · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/prospect2/generer_pipeline.py · prospects.csv</span></td>
+        </tr>
+        <tr>
+          <td class="name">backup_soumissions.sh — Extension Prospect 2.0</td>
+          <td><span class="tag tag-shell">Shell</span></td>
+          <td class="role">Script étendu pour inclure : <code>suivi_global_YYYY-MM-DD_HH.csv</code> et <code>fiches_outils_YYYY-MM-DD_HH/[CLIENT]_fiche_outils.json</code> à chaque cycle horaire launchd · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/backup-production/backup_soumissions.sh</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- MISES À JOUR 29 JUILLET 2026 — SOLARIUM PRO · PDFs MODES SÉPARÉS + CORRECTIONS CADRE/TRAPÈZE -->
 <div class="section">

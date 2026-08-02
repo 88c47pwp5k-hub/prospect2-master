@@ -49,14 +49,16 @@ def lire_suivi():
 
 def choisir_client(lignes):
     """Affiche les clients 'À envoyer' et laisse l'utilisateur en choisir un."""
-    a_envoyer = [r for r in lignes if r.get("Statut", "").strip() == "À envoyer"]
+    a_envoyer = [r for r in lignes
+                 if r.get("etape", "").strip() == "en_prospection"
+                 and not r.get("sous_etape", "").strip()]
     if not a_envoyer:
         print("✅ Aucun client avec statut 'À envoyer' dans suivi_global.csv.")
         return None
 
     print("\n─── Clients prêts à recevoir leur rapport ───")
     for i, r in enumerate(a_envoyer, 1):
-        print(f"  {i}. {r['Nom client']} — {r['Entreprise']}  (score {r['Score global']}/100, généré le {r['Date génération']})")
+        print(f"  {i}. {r['nom_client']} — {r['entreprise']}  (score {r['score']}/100, généré le {r['date_dernier_envoi']})")
 
     choix = input("\nNuméro du client (ou Entrée pour annuler) : ").strip()
     if not choix:
@@ -122,12 +124,12 @@ def mettre_a_jour_suivi(lignes, nom_client):
     """Met à jour la ligne du client dans suivi_global.csv."""
     date_envoi = datetime.now().strftime("%Y-%m-%d")
     for r in lignes:
-        if r["Nom client"].strip() == nom_client.strip():
-            r["Statut"] = "Envoyé"
-            r["Date envoi"] = date_envoi
-            r["Méthode"] = "SMTP Gmail"
+        if r["nom_client"].strip() == nom_client.strip():
+            r["sous_etape"]         = "rapport_envoye"
+            r["date_dernier_envoi"] = date_envoi
 
-    fieldnames = lignes[0].keys() if lignes else []
+    fieldnames = ["nom_client", "entreprise", "score", "etape", "sous_etape",
+                  "raison", "date_dernier_envoi", "chemin_rapport_pdf"]
     with open(SUIVI_CSV, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -179,8 +181,8 @@ def main():
         print("Annulé.")
         return
 
-    nom_client = client["Nom client"].strip()
-    entreprise = client["Entreprise"].strip()
+    nom_client = client["nom_client"].strip()
+    entreprise = client["entreprise"].strip()
     prenom     = nom_client.split()[0]
 
     # Trouver le dossier client

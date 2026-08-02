@@ -239,7 +239,38 @@ git push origin main   # Railway redéploie automatiquement (~2 min)
 - 5 questions : texte libre, 3 choix multiples, 1 échelle 1–5
 
 
-## 12. Checklist fin de session
+## 12. Protection des apps Dock (chflags uchg)
+
+Les apps importantes sont protégées contre suppression accidentelle via `chflags uchg`.
+
+### Dashboard Prospect 2.0
+- **Chemin** : `~/Desktop/Prospect 2,0/Prospect 2,0 Apps/Dashboard Prospect 2.0.app`
+- **Serveur Flask** : port `7374` — script `~/Documents/prospect2/dashboard/prospect2_server.py`
+- **Lancement** : le launcher vérifie si le port 7374 est occupé avant de démarrer le serveur (nohup), puis ouvre `http://localhost:7374`
+- **Log serveur** : `/tmp/prospect2_server.log`
+- **Commande de protection** :
+  ```bash
+  sudo chflags uchg "~/Desktop/Prospect 2,0/Prospect 2,0 Apps/Dashboard Prospect 2.0.app"
+  ```
+- **Pour retirer la protection** (si modification nécessaire) :
+  ```bash
+  sudo chflags nouchg "~/Desktop/Prospect 2,0/Prospect 2,0 Apps/Dashboard Prospect 2.0.app"
+  ```
+- **Icône** : fond bleu marine `#1B3A5C` (27,58,92) + pieuvre prospect 2.0, marge 8%, générée par `generateur_pastille_prospect2.py`
+
+### Autres apps Prospect 2,0 protégées
+```bash
+# Appliquer la protection sur toutes les apps Prospect 2,0
+for app in "Documentation.app" "Envoyer Invitation.app" "Générer Rapport Diagnostic.app" \
+           "Pipeline Prospects.app" "Tournee_Prospect2.app" "Dashboard Prospect 2.0.app"; do
+  sudo chflags uchg "~/Desktop/Prospect 2,0/Prospect 2,0 Apps/$app"
+done
+```
+
+> Note : `sudo chflags uchg` requiert le mot de passe administrateur. `touch app.app` après chflags force le Finder à rafraîchir l'icône.
+
+
+## 13. Checklist fin de session
 
 - [ ] README.html mis à jour avec tous les changements
 - [ ] Git push : `cd ~/prospect2-master && git push`

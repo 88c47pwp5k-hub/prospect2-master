@@ -3,7 +3,10 @@ import os, csv, json, socket, threading, webbrowser
 from datetime import datetime
 from flask import Flask, request, jsonify
 
-CSV_PATH = os.path.expanduser("~/Documents/prospect2/prospects.csv")
+CSV_PATH   = os.path.expanduser("~/Documents/prospect2/prospects.csv")
+SUIVI_PATH = os.path.expanduser("~/Documents/prospect2/RAPPORTS_CLIENTS/suivi_global.csv")
+_SUIVI_COLS = ["nom_client", "entreprise", "score", "etape", "sous_etape",
+               "raison", "date_dernier_envoi", "chemin_rapport_pdf"]
 
 def _port_libre():
     with socket.socket() as s:
@@ -26,27 +29,64 @@ def lire_csv():
     has_header = "nom" in header or "courriel" in header
     rows = []
     for cols in (lines[1:] if has_header else lines):
-        while len(cols) < 7:
+        while len(cols) < 8:
             cols.append("")
         rows.append({
-            "nom":      cols[0].strip(),
-            "courriel": cols[1].strip(),
-            "date_inv": cols[2].strip(),
-            "s_envoi":  cols[3].strip(),
-            "ouvert":   cols[4].strip(),
-            "date_rap": cols[5].strip(),
-            "statut":   cols[6].strip() or cols[3].strip(),
+            "nom":        cols[0].strip(),
+            "entreprise": cols[1].strip(),
+            "courriel":   cols[2].strip(),
+            "date_inv":   cols[3].strip(),
+            "s_envoi":    cols[4].strip(),
+            "ouvert":     cols[5].strip(),
+            "date_rap":   cols[6].strip(),
+            "statut":     cols[7].strip() or cols[4].strip(),
         })
     return rows
 
 def ecrire_csv(rows):
     with open(CSV_PATH, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["nom","courriel","date_envoi","statut_envoi",
+        w.writerow(["nom","entreprise","courriel","date_envoi","statut_envoi",
                     "invitation_ouverte","date_rapport","statut"])
         for r in rows:
-            w.writerow([r["nom"], r["courriel"], r["date_inv"], r["s_envoi"],
-                        r["ouvert"], r["date_rap"], r["statut"]])
+            w.writerow([r["nom"], r["entreprise"], r["courriel"], r["date_inv"],
+                        r["s_envoi"], r["ouvert"], r["date_rap"], r["statut"]])
+
+# ── Sync Pipeline → Dashboard ────────────────────────────────────────────────
+
+def sync_converti_vers_dashboard(nom, entreprise=""):
+    """Ajoute une entrée dans suivi_global.csv quand un prospect est converti.
+    Skip silencieusement si nom_client existe déjà."""
+    existants = []
+    if os.path.exists(SUIVI_PATH):
+        with open(SUIVI_PATH, newline="", encoding="utf-8") as f:
+            existants = list(csv.DictReader(f))
+
+    for e in existants:
+        if e.get("nom_client", "").strip().lower() == nom.strip().lower():
+            print(f"[Pipeline→Dashboard] SKIP doublon : {nom!r} déjà présent dans suivi_global.csv",
+                  flush=True)
+            return
+
+    already_has_file = os.path.exists(SUIVI_PATH)
+    with open(SUIVI_PATH, "a", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=_SUIVI_COLS)
+        if not already_has_file:
+            w.writeheader()
+        w.writerow({
+            "nom_client":         nom,
+            "entreprise":         entreprise,
+            "score":              "",
+            "etape":              "en_prospection",
+            "sous_etape":         "diagnostic_envoye",
+            "raison":             "",
+            "date_dernier_envoi": datetime.now().strftime("%Y-%m-%d"),
+            "chemin_rapport_pdf": "",
+        })
+    print(f"[Pipeline→Dashboard] SYNC OK : {nom!r} → suivi_global.csv "
+          f"(en_prospection / diagnostic_envoye, {datetime.now().strftime('%Y-%m-%d')})",
+          flush=True)
+
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -80,6 +120,7 @@ def update():
                 r["ouvert"]   = r["ouvert"] or "oui"
                 r["date_rap"] = r["date_rap"] or now
                 r["statut"]   = "converti"
+                sync_converti_vers_dashboard(r["nom"], r["entreprise"])
             break
 
     ecrire_csv(rows)
@@ -139,6 +180,7 @@ HTML = """<!DOCTYPE html>
     tbody tr:hover { background: #fffbf0; }
     td { padding: 10px 14px; vertical-align: middle; }
     td.nom { font-weight: 600; }
+    td.nom .entreprise-sous { font-weight: 400; font-size: .81rem; color: #888; margin-top: 1px; }
     td.courriel { color: #555; font-size: .83rem; }
     td.date { color: #888; font-size: .81rem; white-space: nowrap; }
     .badge {
@@ -197,13 +239,13 @@ HTML = """<!DOCTYPE html>
   <table>
     <thead>
       <tr>
-        <th onclick="sortBy(0)">Nom ↕</th>
-        <th onclick="sortBy(1)">Courriel ↕</th>
-        <th onclick="sortBy(2)">Date invitation ↕</th>
+        <th onclick="sortBy(0)">Nom / Entreprise ↕</th>
+        <th onclick="sortBy(2)">Courriel ↕</th>
+        <th onclick="sortBy(3)">Date invitation ↕</th>
         <th>Invitation ouverte</th>
         <th>Rapport envoyé</th>
-        <th onclick="sortBy(5)">Date rapport ↕</th>
-        <th onclick="sortBy(6)">Statut ↕</th>
+        <th onclick="sortBy(6)">Date rapport ↕</th>
+        <th onclick="sortBy(7)">Statut ↕</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -215,7 +257,7 @@ HTML = """<!DOCTYPE html>
 <script>
 const PORT = __PORT__;
 let rows = __DATA__;
-let sortCol = 2, sortAsc = false;
+let sortCol = 3, sortAsc = false;
 
 function badgeStatut(s) {
   const v = (s||'').toLowerCase();
@@ -272,10 +314,12 @@ async function updateStatut(courriel, action, btn) {
 function render() {
   const q  = document.getElementById('search').value.toLowerCase();
   const fs = document.getElementById('filtre-statut').value.toLowerCase();
-  const keys = ['nom','courriel','date_inv','s_envoi','ouvert','date_rap','statut'];
+  const keys = ['nom','entreprise','courriel','date_inv','s_envoi','ouvert','date_rap','statut'];
 
   let data = rows.filter(r => {
-    const match  = !q  || r.nom.toLowerCase().includes(q) || r.courriel.toLowerCase().includes(q);
+    const match  = !q  || r.nom.toLowerCase().includes(q)
+                       || (r.entreprise||'').toLowerCase().includes(q)
+                       || r.courriel.toLowerCase().includes(q);
     const fmatch = !fs || (r.statut||'').toLowerCase().includes(fs);
     return match && fmatch;
   });
@@ -292,7 +336,7 @@ function render() {
 
   tbody.innerHTML = data.map(r => `
     <tr>
-      <td class="nom">${r.nom}</td>
+      <td class="nom">${r.nom}${r.entreprise ? `<div class="entreprise-sous">${r.entreprise}</div>` : ''}</td>
       <td class="courriel">${r.courriel}</td>
       <td class="date">${r.date_inv||'—'}</td>
       <td class="date">${r.ouvert||'—'}</td>
