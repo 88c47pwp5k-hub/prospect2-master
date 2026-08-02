@@ -1,2 +1,2 @@
-Date génération,Nom client,Entreprise,Score global,Statut,Date envoi,Méthode
-2026-07-30,Ludovic Clermont,Terrasses Clermont,69,Envoyé,2026-07-30,SMTP Gmail
+nom_client,entreprise,score,etape,sous_etape,raison,date_dernier_envoi,chemin_rapport_pdf
+Ludovic Clermont,Terrasses Clermont,69,en_prospection,rapport_envoye,,2026-07-30,RAPPORTS_CLIENTS/Ludovic_Clermont_Terrasses_Clermont/rapport_diagnostic.pdf
