@@ -337,6 +337,27 @@ subprocess.run(["killall", "Dock"])
 ```
 
 
+## 14. Stockage des clés et secrets — standard établi le 3 août 2026
+
+### Règle unique
+Toutes les clés API, mots de passe et tokens sont stockés dans **l'app Mots de passe (Trousseau macOS)** ou dans les fichiers **`.env` exclus de git**. Jamais en clair dans le code source.
+
+### Emplacements autorisés
+| Type | Emplacement |
+|------|------------|
+| Mots de passe comptes (IMAP, Gmail, etc.) | App **Mots de passe** macOS |
+| Clés API locales (Anthropic, etc.) | `~/Documents/resume-matin/.env` (gitignore) |
+| Tokens Railway (SM, Suivi-Production) | Variables d'environnement Railway (dashboard web) |
+| Credentials Google OAuth | `~/Documents/prospect2/credentials/` (gitignore, chmod 600) |
+
+### Référence complète
+→ `~/Documents/Solarium-Pro-PDFs/REFERENCE_ACCES_CLES.md`
+
+### Rotation suggérée
+Prochaine rotation annuelle : **août 2027** (IMAP, Anthropic, token API SM, clé RSA Google)
+
+---
+
 ## 13. Checklist fin de session
 
 - [ ] README.html mis à jour avec tous les changements
