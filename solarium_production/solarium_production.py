@@ -18,7 +18,7 @@ PORT = 5757
 IMAP_SERVER     = "mail.mailconfig.net"
 IMAP_PORT_IMAP  = 993
 IMAP_USER       = "bdupuis@solariumpro.ca"
-IMAP_PASS       = "***IMAP_PASS_SUPPRIME***"
+IMAP_PASS       = os.environ.get("IMAP_PASS", "")
 SOUMISSIONS_JSON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "soumissions.json")
 
 sys.path.insert(0, DOSSIER_PDFS)
