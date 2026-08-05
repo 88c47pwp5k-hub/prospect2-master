@@ -3,849 +3,1310 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Optimisation de tournée</title>
-
-  <!-- Leaflet CSS -->
+  <title>Tournée — Solarium Pro</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <style>
+    /* ── Variables ─────────────────────────────────────────── */
     :root {
-      --accent: #185FA5;
-      --accent-dark: #134d87;
-      --accent-light: #e8f0fb;
-      --text: #1a1a2e;
-      --text-muted: #6b7280;
-      --border: #d1d5db;
-      --bg: #f9fafb;
-      --white: #ffffff;
-      --danger: #dc2626;
-      --danger-light: #fef2f2;
-      --success: #16a34a;
-      --radius: 8px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+      --blue:       #185FA5;
+      --blue-dark:  #134d87;
+      --blue-light: #e8f0fb;
+      --green:      #15803d;
+      --green-bg:   #f0fdf4;
+      --green-bdr:  #bbf7d0;
+      --red:        #dc2626;
+      --red-bg:     #fef2f2;
+      --amber:      #d97706;
+      --amber-bg:   #fffbeb;
+      --amber-bdr:  #fcd34d;
+      --text:       #1a1a2e;
+      --muted:      #6b7280;
+      --border:     #d1d5db;
+      --bg:         #f3f4f6;
+      --white:      #ffffff;
+      --radius:     8px;
+      --sh:         0 1px 3px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
+      --sh-md:      0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      background: var(--bg); color: var(--text);
+      height: 100vh; display: flex; flex-direction: column; overflow: hidden;
     }
 
+    /* ── Header ────────────────────────────────────────────── */
     header {
-      background: var(--white);
-      border-bottom: 2px solid var(--accent);
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: var(--shadow);
+      background: var(--white); border-bottom: 2px solid var(--blue);
+      padding: 12px 20px; display: flex; align-items: center;
+      justify-content: space-between; gap: 12px;
+      box-shadow: var(--sh); flex-shrink: 0; z-index: 100;
     }
-
-    header .logo-icon {
-      width: 36px;
-      height: 36px;
-      background: var(--accent);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 18px;
+    .header-brand { display: flex; align-items: center; gap: 10px; }
+    .header-brand .logo {
+      width: 34px; height: 34px; background: var(--blue); border-radius: 7px;
+      display: flex; align-items: center; justify-content: center; font-size: 17px;
     }
+    header h1 { font-size: 1.15rem; font-weight: 700; }
+    header h1 span { color: var(--blue); }
+    .header-actions { display: flex; gap: 8px; }
 
-    header h1 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    header h1 span {
-      color: var(--accent);
-    }
-
-    .main-layout {
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 0;
-      flex: 1;
-      min-height: 0;
-    }
-
-    /* LEFT PANEL */
-    .left-panel {
-      background: var(--white);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 20px;
-      gap: 20px;
-    }
-
-    .section-title {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
-
-    .card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: var(--shadow);
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-bottom: 12px;
-    }
-
-    .form-group:last-child { margin-bottom: 0; }
-
-    label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    input[type="text"] {
-      padding: 9px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 0.875rem;
-      color: var(--text);
-      background: var(--bg);
-      transition: border-color 0.15s, box-shadow 0.15s;
-      outline: none;
-      width: 100%;
-    }
-
-    input[type="text"]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.12);
-      background: var(--white);
-    }
-
-    .add-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 8px;
-      align-items: end;
-    }
-
+    /* ── Buttons ──────────────────────────────────────────── */
     .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 9px 16px;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-      text-decoration: none;
-      white-space: nowrap;
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px; padding: 8px 14px; border: none; border-radius: var(--radius);
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      transition: background .15s, opacity .15s, transform .1s, box-shadow .15s;
+      text-decoration: none; white-space: nowrap; line-height: 1;
     }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none !important; }
 
-    .btn:active { transform: scale(0.97); }
+    .btn-blue  { background: var(--blue); color: #fff; }
+    .btn-blue:not(:disabled):hover { background: var(--blue-dark); box-shadow: var(--sh-md); }
 
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
+    .btn-ghost { background: var(--blue-light); color: var(--blue); }
+    .btn-ghost:hover { background: #d0e2f7; }
 
-    .btn-primary:hover {
-      background: var(--accent-dark);
-      box-shadow: var(--shadow-md);
-    }
+    .btn-dark  { background: #1a1a2e; color: #fff; }
+    .btn-dark:hover { background: #2d2d4e; }
 
-    .btn-secondary {
-      background: var(--accent-light);
-      color: var(--accent);
-    }
+    .btn-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-bdr); }
+    .btn-amber:hover { background: #fef3c7; }
 
-    .btn-secondary:hover {
-      background: #d0e2f7;
-    }
+    .btn-red-ghost { background: var(--red-bg); color: var(--red); padding: 4px 8px; font-size: .75rem; }
+    .btn-red-ghost:hover { background: #fecaca; }
 
-    .btn-danger {
-      background: var(--danger-light);
-      color: var(--danger);
-      padding: 5px 8px;
-      font-size: 0.75rem;
-    }
-
-    .btn-danger:hover { background: #fecaca; }
-
-    .btn-full { width: 100%; }
+    .btn-full { width: 100%; justify-content: center; }
 
     .btn-optimize {
-      background: var(--accent);
-      color: white;
-      font-size: 0.925rem;
-      padding: 12px 20px;
+      background: var(--blue); color: #fff;
+      font-size: 1rem; padding: 13px 20px; border-radius: var(--radius);
     }
+    .btn-optimize:not(:disabled):hover { background: var(--blue-dark); box-shadow: var(--sh-md); }
+    .btn-optimize:disabled { background: #9ca3af; cursor: not-allowed; }
 
-    .btn-optimize:hover {
-      background: var(--accent-dark);
-      box-shadow: var(--shadow-md);
-    }
-
-    .btn-optimize:disabled {
-      background: #9ca3af;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .btn-print {
-      background: #1a1a2e;
-      color: white;
-    }
-
-    .btn-print:hover { background: #2d2d4e; }
-
-    /* STOPS LIST */
-    .stops-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 280px;
-      overflow-y: auto;
-      padding-right: 2px;
-    }
-
-    .stop-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      animation: slideIn 0.2s ease;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .stop-number {
-      width: 24px;
-      height: 24px;
-      background: var(--accent);
-      color: white;
-      border-radius: 50%;
-      font-size: 0.7rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .stop-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .stop-name {
-      font-size: 0.8rem;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .stop-address {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .empty-stops {
-      text-align: center;
-      padding: 20px;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      border: 1px dashed var(--border);
-      border-radius: var(--radius);
-    }
-
-    /* RIGHT PANEL */
-    .right-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-
-    .stats-bar {
-      background: var(--white);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      flex-wrap: wrap;
-    }
-
-    .stat-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .stat-label {
-      font-size: 0.68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-    }
-
-    .stat-value {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    .stat-divider {
-      width: 1px;
-      height: 30px;
-      background: var(--border);
-    }
-
-    .map-wrapper {
-      flex: 1;
-      position: relative;
-      min-height: 400px;
-    }
-
-    #map {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .map-overlay {
-      position: absolute;
-      bottom: 16px;
-      right: 16px;
-      z-index: 1000;
-    }
-
-    /* SPINNER */
     .spinner {
-      display: none;
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255,255,255,0.4);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
+      display: none; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+      border-radius: 50%; animation: spin .65s linear infinite;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
-
     .loading .spinner { display: block; }
     .loading .btn-text { display: none; }
 
-    /* TOAST */
-    .toast-container {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    /* ── Layout ───────────────────────────────────────────── */
+    .layout {
+      display: grid; grid-template-columns: 400px 1fr;
+      flex: 1; min-height: 0; overflow: hidden;
     }
 
+    /* ── Left panel ───────────────────────────────────────── */
+    .left {
+      background: var(--white); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .left-scroll {
+      flex: 1; overflow-y: auto; padding: 16px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .left-footer {
+      padding: 12px 16px; border-top: 1px solid var(--border); background: var(--white);
+    }
+    .section-label {
+      font-size: .68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--muted); margin-bottom: 7px;
+    }
+    .card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 13px; box-shadow: var(--sh);
+    }
+
+    /* form */
+    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .field:last-child { margin-bottom: 0; }
+    label { font-size: .78rem; font-weight: 600; color: var(--text); }
+
+    input[type="text"], input[type="time"] {
+      padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: .875rem; color: var(--text); background: var(--bg);
+      transition: border-color .15s, box-shadow .15s; outline: none; width: 100%;
+    }
+    input[type="text"]:focus, input[type="time"]:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 3px rgba(24,95,165,.12); background: var(--white);
+    }
+    .input-row { display: flex; gap: 7px; align-items: flex-end; }
+    .input-row input { flex: 1; }
+
+    /* ── Favorites / History ──────────────────────────────── */
+    .fav-toggle {
+      display: flex; align-items: center; gap: 5px;
+      font-size: .75rem; font-weight: 600; color: var(--blue);
+      background: none; border: none; cursor: pointer; padding: 4px 0;
+      margin-top: 8px;
+    }
+    .fav-toggle:hover { text-decoration: underline; }
+    .fav-panel {
+      margin-top: 8px; border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; display: none;
+    }
+    .fav-panel.open { display: block; }
+    .fav-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 10px; border-bottom: 1px solid var(--border);
+      font-size: .78rem; cursor: pointer;
+    }
+    .fav-item:last-child { border-bottom: none; }
+    .fav-item:hover { background: var(--blue-light); }
+    .fav-addr { flex: 1; color: var(--text); }
+    .fav-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: .8rem; padding: 0 2px; }
+    .fav-del:hover { color: var(--red); }
+    .fav-empty { padding: 10px; font-size: .78rem; color: var(--muted); text-align: center; }
+
+    /* ── Stop cards ───────────────────────────────────────── */
+    .stops-list { display: flex; flex-direction: column; gap: 7px; }
+
+    .stop-card {
+      display: flex; align-items: flex-start; gap: 9px;
+      padding: 10px 11px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      animation: fadeUp .18s ease;
+    }
+    .stop-card.is-dinner  { border-color: var(--amber-bdr); background: #fffdf5; }
+    .stop-card.is-pinned  { border-color: #93c5fd; background: #eff6ff; }
+    .stop-card.is-editing { border-color: var(--blue); background: #f0f6ff; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(-5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stop-badge {
+      width: 26px; height: 26px; flex-shrink: 0; margin-top: 1px;
+      background: var(--blue); color: #fff; border-radius: 50%;
+      font-size: .72rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stop-badge.dinner { background: var(--amber); font-size: .9rem; }
+    .stop-badge.pinned { background: #1d4ed8; box-shadow: 0 0 0 2px #93c5fd; }
+
+    .stop-body { flex: 1; min-width: 0; }
+    .stop-name    { font-size: .85rem; font-weight: 700; margin-bottom: 2px; }
+    .stop-address { font-size: .75rem; color: var(--muted); margin-bottom: 5px; }
+    .stop-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .stop-leg { font-size: .75rem; color: var(--blue); font-weight: 600; }
+    .stop-arr {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: var(--green-bg); border: 1px solid var(--green-bdr);
+      color: var(--green); font-size: .72rem; font-weight: 700;
+      padding: 2px 7px; border-radius: 20px;
+    }
+    .stop-depart {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: var(--amber-bg); border: 1px solid var(--amber-bdr);
+      color: #92400e; font-size: .72rem; font-weight: 700;
+      padding: 2px 7px; border-radius: 20px;
+    }
+
+    .btn-gmaps {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .72rem; font-weight: 600; color: var(--blue);
+      background: var(--blue-light); border: none;
+      padding: 2px 8px; border-radius: 20px;
+      text-decoration: none; cursor: pointer; transition: background .15s;
+    }
+    .btn-gmaps:hover { background: #d0e2f7; }
+
+    /* pin button */
+    .btn-pin {
+      background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px;
+      cursor: pointer; font-size: .85rem; padding: 4px 6px; line-height: 1;
+      color: #94a3b8; transition: background .15s, color .15s, transform .15s, border-color .15s;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .btn-pin:hover { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+    .btn-pin.active {
+      background: #1d4ed8; border-color: #1d4ed8; color: #fff;
+      transform: rotate(-15deg); box-shadow: 0 0 0 3px rgba(29,78,216,.25);
+    }
+
+    /* edit button */
+    .btn-edit {
+      background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;
+      cursor: pointer; font-size: .82rem; padding: 4px 6px; line-height: 1;
+      color: #64748b; transition: background .15s, color .15s, border-color .15s;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .btn-edit:hover { background: var(--amber-bg); border-color: var(--amber-bdr); color: var(--amber); }
+
+    /* edit form inside card */
+    .edit-form { display: flex; flex-direction: column; gap: 5px; }
+    .edit-form input[type="text"] { font-size: .82rem; padding: 6px 9px; }
+    .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .edit-actions { display: flex; gap: 6px; margin-top: 2px; }
+
+    .empty-stops {
+      text-align: center; padding: 24px 16px; color: var(--muted);
+      font-size: .82rem; border: 1px dashed var(--border); border-radius: var(--radius);
+    }
+
+    /* ── Right panel ──────────────────────────────────────── */
+    .right { display: flex; flex-direction: column; min-height: 0; }
+    .stats-bar {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      padding: 12px 20px; display: flex; align-items: center; gap: 20px;
+      flex-wrap: wrap; flex-shrink: 0;
+    }
+    .stat { display: flex; flex-direction: column; gap: 1px; }
+    .stat-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+    .stat-value { font-size: 1.1rem; font-weight: 700; color: var(--blue); }
+    .stat-value.retour { color: var(--green); }
+    .stat-div { width: 1px; height: 28px; background: var(--border); }
+
+    .map-wrap { flex: 1; position: relative; min-height: 0; }
+    #map { position: absolute; inset: 0; }
+
+    /* ── Toasts ───────────────────────────────────────────── */
+    .toasts { position: fixed; top: 14px; right: 14px; z-index: 9999; display: flex; flex-direction: column; gap: 7px; }
     .toast {
-      padding: 10px 16px;
-      border-radius: var(--radius);
-      font-size: 0.8rem;
-      font-weight: 500;
-      max-width: 320px;
-      box-shadow: var(--shadow-md);
-      animation: toastIn 0.2s ease;
-      cursor: pointer;
+      padding: 9px 14px; border-radius: var(--radius); font-size: .8rem;
+      font-weight: 500; max-width: 300px; box-shadow: var(--sh-md);
+      animation: toastIn .18s ease; cursor: pointer; color: #fff;
     }
-
     @keyframes toastIn {
-      from { opacity: 0; transform: translateX(20px); }
+      from { opacity: 0; transform: translateX(16px); }
       to   { opacity: 1; transform: translateX(0); }
     }
+    .toast-error   { background: var(--red); }
+    .toast-success { background: var(--green); }
+    .toast-info    { background: var(--blue); }
 
-    .toast-error { background: var(--danger); color: white; }
-    .toast-success { background: var(--success); color: white; }
-    .toast-info { background: var(--accent); color: white; }
-
-    /* PRINT */
-    @media print {
-      header, .left-panel, .stats-bar, .map-overlay { display: none !important; }
-      .main-layout { grid-template-columns: 1fr; }
-      .right-panel { display: block; }
-      .map-wrapper { min-height: 500px; }
-      #map { position: relative !important; width: 100% !important; height: 500px !important; }
+    /* ── Segment labels on map ────────────────────────────── */
+    .seg-label-wrap { position: absolute; transform: translate(-50%,-50%); pointer-events: none; z-index: 500; }
+    .seg-label {
+      background: rgba(18,75,140,.88); color: #fff;
+      font-size: 10px; font-weight: 700; padding: 3px 8px;
+      border-radius: 10px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.35);
     }
 
-    /* SCROLLBAR */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    /* ══════════════════════════════════════════════════════
+       PRINT
+    ══════════════════════════════════════════════════════ */
+    #print-list { display: none; }
+
+    @media print {
+      body { display: block !important; overflow: visible !important; height: auto !important; }
+      header, .toasts { display: none !important; }
+
+      #print-list {
+        display: block !important; padding: 18px 22px 22px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      .pl-header { margin-bottom: 14px; border-bottom: 2pt solid #185FA5; padding-bottom: 8px; }
+      .pl-title { font-size: 16pt; font-weight: 700; color: #185FA5; margin-bottom: 2px; }
+      .pl-meta { font-size: 9pt; color: #6b7280; }
+      .pl-depart {
+        background: #f3f4f6; border-left: 4pt solid #374151;
+        padding: 7px 12px; margin-bottom: 14px; border-radius: 2pt; font-size: 10pt;
+      }
+      .pl-depart strong {
+        display: block; font-size: 7.5pt; text-transform: uppercase;
+        color: #6b7280; margin-bottom: 2px; letter-spacing: .05em;
+      }
+      .pl-stop {
+        display: flex; border: 1pt solid #d1d5db; border-radius: 4pt;
+        margin-bottom: 8pt; page-break-inside: avoid; overflow: hidden;
+      }
+      .pl-num {
+        width: 36pt; flex-shrink: 0; background: #185FA5; color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14pt; font-weight: 700;
+      }
+      .pl-num.dinner { background: #d97706; font-size: 16pt; }
+      .pl-body { flex: 1; padding: 8pt 10pt; }
+      .pl-client { font-size: 12pt; font-weight: 700; margin-bottom: 2pt; color: #1a1a2e; }
+      .pl-addr { font-size: 10pt; color: #374151; margin-bottom: 5pt; }
+      .pl-row2 { display: flex; align-items: center; gap: 12pt; flex-wrap: wrap; }
+      .pl-seg { font-size: 10pt; font-weight: 600; color: #185FA5; }
+      .pl-arr-badge {
+        background: #f0fdf4; border: 1pt solid #bbf7d0; color: #15803d;
+        font-size: 10pt; font-weight: 700; padding: 1pt 7pt; border-radius: 12pt;
+      }
+      .pl-maps { font-size: 8pt; color: #6b7280; word-break: break-all; margin-top: 3pt; }
+      .pl-maps a { color: #185FA5; }
+      .pl-totals {
+        margin-top: 14pt; border-top: 1pt solid #d1d5db; padding-top: 9pt;
+        display: flex; gap: 24pt; font-size: 10pt; color: #374151; flex-wrap: wrap;
+      }
+      .pl-totals b { color: #185FA5; }
+      .pl-retour { color: #15803d !important; }
+      .pl-retour b { color: #15803d !important; }
+
+      /* Carte masquée à l'impression — feuille de route uniquement */
+      .layout { display: none !important; }
+    }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="logo-icon">&#9432;</div>
-  <h1>Optimisation de <span>tournée</span></h1>
+  <div class="header-brand">
+    <div class="logo">🗺</div>
+    <h1>Tournée <span>Solarium Pro</span></h1>
+  </div>
+  <div class="header-actions">
+    <button id="btn-html" class="btn btn-ghost" onclick="downloadHtml()" disabled>💾 HTML</button>
+    <button id="btn-email" class="btn btn-ghost" onclick="sendEmail()" disabled>📧 Courriel</button>
+    <button class="btn btn-dark" onclick="window.print()">🖨 Imprimer</button>
+  </div>
 </header>
 
-<div class="main-layout">
+<div id="print-list"></div>
 
-  <!-- LEFT PANEL -->
-  <div class="left-panel">
+<div class="layout">
 
-    <!-- Departure -->
-    <div>
-      <div class="section-title">Point de départ</div>
-      <div class="card">
-        <div class="form-group">
-          <label for="input-depart">Adresse de départ</label>
-          <input type="text" id="input-depart" placeholder="ex: 12 rue Principale, Granby, QC" />
+  <!-- LEFT -->
+  <div class="left">
+    <div class="left-scroll">
+
+      <!-- Departure -->
+      <div>
+        <div class="section-label">Point de départ</div>
+        <div class="card">
+          <div class="field">
+            <label for="input-depart">Adresse</label>
+            <div class="input-row">
+              <input type="text" id="input-depart" placeholder="ex: 200 Ch. des Palissades, Mont-Tremblant" />
+              <button class="btn btn-ghost" onclick="saveFavori()" title="Sauvegarder en favori" style="padding:8px 10px;flex-shrink:0">★</button>
+            </div>
+          </div>
+          <button class="fav-toggle" onclick="toggleFavoris()">☆ Adresses favorites</button>
+          <div class="fav-panel" id="fav-panel"><div id="fav-list"></div></div>
+          <div class="field" style="margin-top:10px;margin-bottom:0">
+            <label for="input-heure">Heure de départ</label>
+            <input type="time" id="input-heure" value="08:00" style="max-width:120px" />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Add stop -->
-    <div>
-      <div class="section-title">Ajouter un arrêt</div>
-      <div class="card">
-        <div class="add-row">
-          <div class="form-group" style="margin-bottom:0">
-            <label for="input-nom">Nom client</label>
-            <input type="text" id="input-nom" placeholder="Jean Dupont" />
+      <!-- Add stop -->
+      <div>
+        <div class="section-label">Ajouter un arrêt</div>
+        <div class="card">
+          <div style="display:grid;grid-template-columns:1fr 1fr 90px;gap:7px;margin-bottom:7px">
+            <div class="field" style="margin-bottom:0">
+              <label for="input-nom">Nom client</label>
+              <input type="text" id="input-nom" placeholder="Jean Dupont" />
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label for="input-tel">Téléphone <span style="font-weight:400;color:var(--muted)">(opt.)</span></label>
+              <input type="text" id="input-tel" placeholder="514-000-0000" />
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label for="input-visite">Visite <span style="font-weight:400;color:var(--muted)">(min)</span></label>
+              <input type="text" id="input-visite" placeholder="30" style="text-align:center" />
+            </div>
           </div>
-          <div class="form-group" style="margin-bottom:0">
+          <div class="field" style="margin-bottom:7px">
             <label for="input-adresse">Adresse</label>
-            <input type="text" id="input-adresse" placeholder="12 rue Principale, Granby" />
+            <div class="input-row">
+              <input type="text" id="input-adresse" placeholder="12 rue Principale, Granby, QC" />
+              <button class="btn btn-ghost" onclick="addStop()" title="Ajouter" style="padding:8px 10px;flex-shrink:0">+</button>
+            </div>
           </div>
-          <button class="btn btn-secondary" onclick="addStop()" id="btn-add" title="Ajouter" style="padding:9px 12px; margin-top:auto;">
-            &#43;
+          <button class="btn btn-amber" style="font-size:.78rem;padding:5px 10px" onclick="addDinnerStop()">
+            🍽 Pause dîner
           </button>
+          <span style="font-size:.7rem;color:var(--muted);margin-left:8px">Adresse optionnelle · durée du champ Visite</span>
         </div>
       </div>
-    </div>
 
-    <!-- Stops list -->
-    <div>
-      <div class="section-title">Arrêts (<span id="stop-count">0</span>)</div>
-      <div id="stops-container">
-        <div class="empty-stops" id="empty-msg">Aucun arrêt ajouté</div>
+      <!-- Stops list -->
+      <div>
+        <div class="section-label">Arrêts (<span id="stop-count">0</span>)</div>
+        <div id="stops-container">
+          <div class="empty-stops">Aucun arrêt ajouté — commencez par saisir une adresse de départ.</div>
+        </div>
       </div>
+
+      <!-- Tour history -->
+      <div>
+        <div class="section-label" style="margin-bottom:0">Historique</div>
+        <button class="fav-toggle" style="margin-top:4px" onclick="toggleHistory()">📋 Tournées précédentes</button>
+        <div class="fav-panel" id="hist-panel"><div id="hist-list"></div></div>
+      </div>
+
     </div>
 
-    <!-- Optimize button -->
-    <button class="btn btn-optimize btn-full" onclick="optimizeRoute()" id="btn-optimize">
-      <span class="btn-text">&#9654; Optimiser la route</span>
-      <div class="spinner"></div>
-    </button>
-
+    <div class="left-footer">
+      <button class="btn btn-optimize btn-full" id="btn-optimize" onclick="optimizeRoute()">
+        <span class="btn-text">▶ Optimiser la route</span>
+        <div class="spinner"></div>
+      </button>
+    </div>
   </div>
 
-  <!-- RIGHT PANEL -->
-  <div class="right-panel">
-
-    <!-- Stats bar -->
+  <!-- RIGHT -->
+  <div class="right">
     <div class="stats-bar">
-      <div class="stat-item">
+      <div class="stat">
         <div class="stat-label">Arrêts</div>
-        <div class="stat-value" id="stat-stops">0</div>
+        <div class="stat-value" id="s-stops">0</div>
       </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <div class="stat-label">Distance totale</div>
-        <div class="stat-value" id="stat-km">— km</div>
+      <div class="stat-div"></div>
+      <div class="stat">
+        <div class="stat-label">Distance</div>
+        <div class="stat-value" id="s-km">—</div>
       </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <div class="stat-label">Durée estimée</div>
-        <div class="stat-value" id="stat-time">—</div>
+      <div class="stat-div"></div>
+      <div class="stat">
+        <div class="stat-label">Durée route</div>
+        <div class="stat-value" id="s-dur">—</div>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat">
+        <div class="stat-label">Dernier arrêt</div>
+        <div class="stat-value" id="s-arr">—</div>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat">
+        <div class="stat-label">Retour prévu</div>
+        <div class="stat-value retour" id="s-retour">—</div>
       </div>
     </div>
-
-    <!-- Map -->
-    <div class="map-wrapper">
-      <div id="map"></div>
-      <div class="map-overlay">
-        <button class="btn btn-print" onclick="window.print()">&#128438; Imprimer la feuille de route</button>
-      </div>
-    </div>
-
+    <div class="map-wrap"><div id="map"></div></div>
   </div>
 
 </div>
 
-<!-- Toast container -->
-<div class="toast-container" id="toasts"></div>
+<div class="toasts" id="toasts"></div>
 
 <script>
-// ============================================================
-// CONFIG & CONSTANTS
-// ============================================================
-const ORS_KEY = '5b3ce3597851110001cf6248a4c2b84fefb84128997bf26a90d6528c';
-const DEFAULT_LAT = 45.4;
-const DEFAULT_LNG = -72.73;
-const DEFAULT_ACCENT = '#185FA5';
+/* ═══════════════════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════════════════ */
+const EMAIL_TO  = 'bdupuis@solariumpro.ca';
+const FAV_KEY   = 'tournee_favoris_v1';
+const STOPS_KEY = 'tournee_stops_v1';
+const HIST_KEY  = 'tournee_historique_v1';
+const MAX_FAVS  = 5;
+const MAX_HIST  = 30;
+const ACCENT    = '#185FA5';
 
-let accentColor = DEFAULT_ACCENT;
-let stops = []; // [{name, address, lat, lng}]
-let map, routeLayer;
-let markers = [];
+// stop: {name, phone, visite, address, type, pinned, lat, lng, leg_dist, leg_dur, arrival, departure}
+let stops      = [];
+let editingIdx = null;   // index of stop currently being edited
+let map, routeLayer, markers = [], segLabels = [];
+let lastResult = null;
 
-// ============================================================
-// INIT
-// ============================================================
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadConfig();
+/* ═══════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
   initMap();
-  setupEnterKeys();
+  renderFavs();
+  renderHistory();
+  loadStopsFromStorage();
+  loadConfigJson();
+  setupKeys();
 });
 
-async function loadConfig() {
+async function loadConfigJson() {
   try {
-    const resp = await fetch('../config.json');
-    if (!resp.ok) return;
-    const cfg = await resp.json();
-    const color = cfg?.client?.couleur_primaire;
-    if (color && /^#[0-9a-fA-F]{3,6}$/.test(color)) {
-      accentColor = color;
-      applyAccentColor(color);
-    }
+    const r = await fetch('../config.json');
+    if (!r.ok) return;
+    const cfg = await r.json();
     const dep = cfg?.client?.adresse_depart;
-    if (dep) document.getElementById('input-depart').value = dep;
-  } catch (e) {
-    // config not available — use defaults
-  }
+    if (dep && !document.getElementById('input-depart').value)
+      document.getElementById('input-depart').value = dep;
+  } catch {}
 }
 
-function applyAccentColor(color) {
-  document.documentElement.style.setProperty('--accent', color);
-  // Darken by ~15% for hover
-  const dark = shadeColor(color, -15);
-  document.documentElement.style.setProperty('--accent-dark', dark);
-  // Light tint
-  document.documentElement.style.setProperty('--accent-light', shadeColor(color, 85));
-}
-
-function shadeColor(hex, percent) {
-  hex = hex.replace('#', '');
-  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-  let r = parseInt(hex.substring(0,2),16);
-  let g = parseInt(hex.substring(2,4),16);
-  let b = parseInt(hex.substring(4,6),16);
-  if (percent > 0) {
-    r = Math.round(r + (255 - r) * percent / 100);
-    g = Math.round(g + (255 - g) * percent / 100);
-    b = Math.round(b + (255 - b) * percent / 100);
-  } else {
-    r = Math.round(r * (1 + percent / 100));
-    g = Math.round(g * (1 + percent / 100));
-    b = Math.round(b * (1 + percent / 100));
-  }
-  r = Math.min(255, Math.max(0, r));
-  g = Math.min(255, Math.max(0, g));
-  b = Math.min(255, Math.max(0, b));
-  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
-}
-
-// ============================================================
-// MAP
-// ============================================================
+/* ═══════════════════════════════════════════════════════════
+   MAP
+═══════════════════════════════════════════════════════════ */
 function initMap() {
-  map = L.map('map').setView([DEFAULT_LAT, DEFAULT_LNG], 11);
+  map = L.map('map').setView([45.7, -73.7], 9);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19
   }).addTo(map);
 }
 
-function makeMarkerIcon(number, color) {
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
-      <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z"
-            fill="${color}" stroke="white" stroke-width="1.5"/>
-      <text x="16" y="20" text-anchor="middle" dominant-baseline="middle"
-            fill="white" font-family="-apple-system,sans-serif" font-size="12" font-weight="700">
-        ${number}
-      </text>
-    </svg>`;
-  return L.divIcon({
-    html: svg,
-    className: '',
-    iconSize: [32, 40],
-    iconAnchor: [16, 40],
-    popupAnchor: [0, -40]
-  });
+function pinIcon(label, color) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
+    <path d="M16 0C7.16 0 0 7.16 0 16c0 10.5 16 26 16 26S32 26.5 32 16C32 7.16 24.84 0 16 0z"
+      fill="${color}" stroke="#fff" stroke-width="1.5"/>
+    <text x="16" y="21" text-anchor="middle" dominant-baseline="middle"
+      fill="#fff" font-family="-apple-system,sans-serif" font-size="11" font-weight="700">${label}</text>
+  </svg>`;
+  return L.divIcon({ html: svg, className: '', iconSize: [32,42], iconAnchor: [16,42], popupAnchor: [0,-42] });
 }
 
-function clearMapLayers() {
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
+function drawMap(departPt, mapStops, geometry, legData) {
+  segLabels.forEach(l => map.removeLayer(l)); segLabels = [];
+  markers.forEach(m => map.removeLayer(m));   markers   = [];
   if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
-}
 
-function placeMarkers(points) {
-  clearMapLayers();
+  routeLayer = L.geoJSON(geometry, { style: { color: ACCENT, weight: 4, opacity: .85 } }).addTo(map);
+
+  const allPts = [departPt, ...mapStops];
   const bounds = [];
-  points.forEach((pt, i) => {
-    const isDepart = i === 0;
-    const color = isDepart ? '#374151' : accentColor;
-    const label = isDepart ? 'D' : i;
-    const marker = L.marker([pt.lat, pt.lng], { icon: makeMarkerIcon(label, color) })
-      .bindPopup(`<strong>${pt.name}</strong><br>${pt.address}`)
+
+  allPts.forEach((pt, i) => {
+    const isDinner = pt.type === 'dinner';
+    const lbl   = i === 0 ? 'D' : (isDinner ? '🍽' : String(i));
+    const color = i === 0 ? '#374151' : (isDinner ? '#d97706' : (pt.pinned ? '#1d4ed8' : ACCENT));
+    const m = L.marker([pt.lat, pt.lng], { icon: pinIcon(lbl, color) })
+      .bindPopup(`<b>${esc(pt.name)}</b><br>${esc(pt.address)}`)
       .addTo(map);
-    markers.push(marker);
+    markers.push(m);
     bounds.push([pt.lat, pt.lng]);
   });
-  if (bounds.length > 1) {
-    map.fitBounds(bounds, { padding: [40, 40] });
-  } else if (bounds.length === 1) {
-    map.setView(bounds[0], 13);
+
+  if (legData) {
+    legData.forEach((leg, i) => {
+      const a = allPts[i], b = allPts[i + 1];
+      if (!a || !b) return;
+      const midLat = (a.lat + b.lat) / 2;
+      const midLng = (a.lng + b.lng) / 2;
+      const html = `<div class="seg-label-wrap"><div class="seg-label">${leg.dist} km · ${fmtDur(leg.dur)}</div></div>`;
+      const icon = L.divIcon({ html, className: '', iconSize: [1,1], iconAnchor: [0,0] });
+      segLabels.push(L.marker([midLat, midLng], { icon, interactive: false }).addTo(map));
+    });
   }
+
+  if (bounds.length > 1) map.fitBounds(bounds, { padding: [40, 40] });
 }
 
-// ============================================================
-// GEOCODING (Nominatim)
-// ============================================================
-async function geocode(address) {
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=ca`;
-  const resp = await fetch(url, { headers: { 'Accept-Language': 'fr' } });
-  if (!resp.ok) throw new Error('Géocodage échoué');
-  const data = await resp.json();
-  if (!data.length) throw new Error(`Adresse introuvable : ${address}`);
-  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+/* ═══════════════════════════════════════════════════════════
+   GEOCODING
+═══════════════════════════════════════════════════════════ */
+async function geocode(addr) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1&countrycodes=ca`;
+  const r = await fetch(url, { headers: { 'Accept-Language': 'fr' } });
+  if (!r.ok) throw new Error('Géocodage échoué');
+  const d = await r.json();
+  if (!d.length) throw new Error(`Adresse introuvable : ${addr}`);
+  return { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
 }
 
-// ============================================================
-// STOPS MANAGEMENT
-// ============================================================
-async function addStop() {
-  const nomEl = document.getElementById('input-nom');
-  const adresseEl = document.getElementById('input-adresse');
-  const name = nomEl.value.trim();
-  const address = adresseEl.value.trim();
-  if (!name) { showToast('Veuillez entrer un nom client.', 'error'); nomEl.focus(); return; }
-  if (!address) { showToast('Veuillez entrer une adresse.', 'error'); adresseEl.focus(); return; }
+/* ═══════════════════════════════════════════════════════════
+   FAVORITES
+═══════════════════════════════════════════════════════════ */
+function getFavs()    { try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch { return []; } }
+function setFavs(arr) { localStorage.setItem(FAV_KEY, JSON.stringify(arr)); }
 
-  stops.push({ name, address, lat: null, lng: null });
-  nomEl.value = '';
-  adresseEl.value = '';
-  nomEl.focus();
-  renderStops();
-  updateStats();
+function saveFavori() {
+  const addr = document.getElementById('input-depart').value.trim();
+  if (!addr) { toast('Entrez d\'abord une adresse de départ.', 'error'); return; }
+  let favs = getFavs();
+  if (favs.includes(addr)) { toast('Déjà dans vos favoris.', 'info'); return; }
+  favs.unshift(addr);
+  if (favs.length > MAX_FAVS) favs = favs.slice(0, MAX_FAVS);
+  setFavs(favs); renderFavs(); openFavPanel(true);
+  toast('Adresse sauvegardée en favori ★', 'success');
 }
 
-function deleteStop(index) {
-  stops.splice(index, 1);
-  renderStops();
-  updateStats();
-  clearMapLayers();
-  resetStats();
+function loadFavori(i) {
+  document.getElementById('input-depart').value = getFavs()[i] || '';
+  openFavPanel(false);
 }
 
+function deleteFavori(i) {
+  const favs = getFavs(); favs.splice(i, 1); setFavs(favs); renderFavs();
+}
+
+function renderFavs() {
+  const favs = getFavs();
+  const list = document.getElementById('fav-list');
+  if (!favs.length) {
+    list.innerHTML = '<div class="fav-empty">Aucun favori — cliquez ★ pour sauvegarder.</div>';
+    return;
+  }
+  list.innerHTML = favs.map((f, i) => `
+    <div class="fav-item">
+      <span class="fav-addr" onclick="loadFavori(${i})">★ ${esc(f)}</span>
+      <button class="fav-del" onclick="deleteFavori(${i})" title="Supprimer">✕</button>
+    </div>`).join('');
+}
+
+function toggleFavoris() { openFavPanel(!document.getElementById('fav-panel').classList.contains('open')); }
+function openFavPanel(open) { document.getElementById('fav-panel').classList.toggle('open', open); }
+
+/* ═══════════════════════════════════════════════════════════
+   STOPS PERSISTENCE
+═══════════════════════════════════════════════════════════ */
+function saveStopsToStorage() { localStorage.setItem(STOPS_KEY, JSON.stringify(stops)); }
+
+function loadStopsFromStorage() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STOPS_KEY));
+    if (saved && Array.isArray(saved) && saved.length > 0) {
+      stops = saved; renderStops();
+      toast(`${stops.length} arrêt${stops.length > 1 ? 's' : ''} restauré${stops.length > 1 ? 's' : ''}`, 'info');
+    }
+  } catch {}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STOPS — Add / Edit / Delete
+═══════════════════════════════════════════════════════════ */
+function makeStop(name, phone, visite, address, type) {
+  return { name, phone, visite, address, type: type || 'normal', pinned: false,
+           lat: null, lng: null, leg_dist: null, leg_dur: null, arrival: null, departure: null };
+}
+
+// ─ Virtual dinner: dinner stop with no address ─
+const isVirtualDinner = s => s.type === 'dinner' && !s.address;
+
+function addStop() {
+  const nomEl    = document.getElementById('input-nom');
+  const adrEl    = document.getElementById('input-adresse');
+  const telEl    = document.getElementById('input-tel');
+  const visiteEl = document.getElementById('input-visite');
+  const name    = nomEl.value.trim();
+  const phone   = telEl.value.trim();
+  const visite  = Math.max(0, parseInt(visiteEl.value) || 0);
+  const address = adrEl.value.trim();
+  if (!name)    { toast('Entrez un nom client.', 'error'); nomEl.focus(); return; }
+  if (!address) { toast('Entrez une adresse.', 'error'); adrEl.focus(); return; }
+  stops.push(makeStop(name, phone, visite, address));
+  nomEl.value = ''; telEl.value = ''; visiteEl.value = ''; adrEl.value = ''; nomEl.focus();
+  renderStops(); saveStopsToStorage();
+}
+
+function addDinnerStop() {
+  const visiteEl = document.getElementById('input-visite');
+  const adrEl    = document.getElementById('input-adresse');
+  const visite   = Math.max(1, parseInt(visiteEl.value) || 45);
+  const address  = adrEl.value.trim(); // optional
+  stops.push(makeStop('🍽 Dîner', '', visite, address, 'dinner'));
+  visiteEl.value = ''; adrEl.value = '';
+  document.getElementById('input-nom').value = '';
+  renderStops(); saveStopsToStorage();
+  toast(`Pause dîner ${visite} min ajoutée${address ? '' : ' — sans adresse fixe'}`, 'success');
+}
+
+function togglePin(i) {
+  const wasPin = stops[i].pinned;
+  stops.forEach(s => s.pinned = false);
+  if (!wasPin) stops[i].pinned = true;
+  renderStops(); saveStopsToStorage();
+  if (!wasPin) toast(`📌 ${stops[i].name} visitera en premier`, 'info');
+}
+
+function deleteStop(i) {
+  if (editingIdx === i) editingIdx = null;
+  else if (editingIdx > i) editingIdx--;
+  stops.splice(i, 1);
+  renderStops(); resetStats(); saveStopsToStorage();
+  segLabels.forEach(l => map.removeLayer(l)); segLabels = [];
+  markers.forEach(m => map.removeLayer(m));   markers   = [];
+  if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+  lastResult = null;
+  document.getElementById('btn-email').disabled = true;
+  document.getElementById('btn-html').disabled  = true;
+}
+
+/* ─ Edit ─ */
+function startEdit(i) {
+  editingIdx = i; renderStops();
+  setTimeout(() => document.getElementById('edit-nom')?.focus(), 30);
+}
+
+function cancelEdit() { editingIdx = null; renderStops(); }
+
+function saveEdit(i) {
+  const nomEl    = document.getElementById('edit-nom');
+  const telEl    = document.getElementById('edit-tel');
+  const visiteEl = document.getElementById('edit-visite');
+  const adrEl    = document.getElementById('edit-adresse');
+  const name    = nomEl.value.trim();
+  const phone   = telEl.value.trim();
+  const visite  = Math.max(0, parseInt(visiteEl.value) || 0);
+  const address = adrEl.value.trim();
+
+  if (!name) { toast('Entrez un nom.', 'error'); nomEl.focus(); return; }
+  // address required unless it's a dinner stop
+  if (!address && stops[i].type !== 'dinner') { toast('Entrez une adresse.', 'error'); adrEl.focus(); return; }
+
+  // If address changed, reset geocoding + routing data
+  if (address !== stops[i].address) {
+    stops[i].lat = null; stops[i].lng = null;
+    stops[i].leg_dist = null; stops[i].leg_dur = null;
+    stops[i].arrival = null; stops[i].departure = null;
+  }
+  stops[i].name    = name;
+  stops[i].phone   = phone;
+  stops[i].visite  = visite;
+  stops[i].address = address;
+
+  editingIdx = null;
+  renderStops(); saveStopsToStorage();
+  toast('Arrêt modifié ✓', 'success');
+}
+
+/* ─ Render all stop cards ─ */
 function renderStops() {
-  const container = document.getElementById('stops-container');
-  const emptyMsg = document.getElementById('empty-msg');
+  const el = document.getElementById('stops-container');
   document.getElementById('stop-count').textContent = stops.length;
+  document.getElementById('s-stops').textContent    = stops.length;
 
-  if (stops.length === 0) {
-    container.innerHTML = '<div class="empty-stops" id="empty-msg">Aucun arrêt ajouté</div>';
+  if (!stops.length) {
+    el.innerHTML = '<div class="empty-stops">Aucun arrêt ajouté — commencez par saisir une adresse de départ.</div>';
     return;
   }
 
-  let html = '<div class="stops-list">';
-  stops.forEach((s, i) => {
-    html += `
-      <div class="stop-item">
-        <div class="stop-number">${i + 1}</div>
-        <div class="stop-info">
-          <div class="stop-name">${escHtml(s.name)}</div>
-          <div class="stop-address">${escHtml(s.address)}</div>
-        </div>
-        <button class="btn btn-danger" onclick="deleteStop(${i})" title="Supprimer">&#10005;</button>
-      </div>`;
-  });
-  html += '</div>';
-  container.innerHTML = html;
-}
+  el.innerHTML = '<div class="stops-list">' + stops.map((s, i) => {
+    const isDinner = s.type === 'dinner';
+    const isVirt   = isVirtualDinner(s);
+    const badgeClass = isDinner ? 'dinner' : (s.pinned ? 'pinned' : '');
+    const badgeLabel = isDinner ? '🍽' : (i + 1);
+    const cardClass  = isDinner ? 'is-dinner' : (s.pinned ? 'is-pinned' : '');
 
-function updateStats() {
-  document.getElementById('stat-stops').textContent = stops.length;
+    /* ── EDIT MODE ── */
+    if (i === editingIdx) {
+      return `<div class="stop-card is-editing">
+        <div class="stop-badge ${badgeClass}">${badgeLabel}</div>
+        <div class="stop-body">
+          <div class="edit-form">
+            <input type="text" id="edit-nom"     value="${esc(s.name)}"    placeholder="Nom client" />
+            <div class="edit-grid">
+              <input type="text" id="edit-tel"    value="${esc(s.phone||'')}"  placeholder="Téléphone (opt.)" />
+              <input type="text" id="edit-visite" value="${s.visite || ''}" placeholder="Durée visite (min)" style="text-align:center" />
+            </div>
+            <input type="text" id="edit-adresse" value="${esc(s.address)}"  placeholder="${isDinner ? 'Adresse restaurant (opt.)' : 'Adresse'}" />
+            <div class="edit-actions">
+              <button class="btn btn-blue" style="font-size:.78rem;padding:5px 12px" onclick="saveEdit(${i})">✓ Sauvegarder</button>
+              <button class="btn btn-red-ghost" onclick="cancelEdit()">Annuler</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-red-ghost" onclick="deleteStop(${i})" title="Supprimer" style="flex-shrink:0;margin-top:1px">✕</button>
+      </div>`;
+    }
+
+    /* ── DISPLAY MODE ── */
+    const phoneHtml = s.phone
+      ? `<a href="tel:${esc(s.phone)}" style="font-size:.75rem;color:var(--blue);font-weight:600;text-decoration:none">📞 ${esc(s.phone)}</a>`
+      : '';
+
+    const mapsBtn = (!isDinner && s.address)
+      ? `<a class="btn-gmaps" href="${gmapsUrl(s.address)}" target="_blank" rel="noopener">📍 Google Maps</a>`
+      : '';
+
+    // Address line: hide if virtual dinner
+    const addrLine = (!isVirt && s.address)
+      ? `<div class="stop-address">${esc(s.address)}</div>`
+      : (isVirt ? `<div class="stop-address" style="color:var(--amber)">⏱ Pause sans adresse fixe</div>` : '');
+
+    let legHtml;
+    if (s.leg_dist !== null) {
+      // Post-optimization: normal stop with routing data
+      legHtml = `
+        <div class="stop-meta" style="margin-top:5px">
+          <span class="stop-leg">→ ${s.leg_dist} km · ${fmtDur(s.leg_dur)}</span>
+          ${s.arrival   ? `<span class="stop-arr">🕑 Arrivée ${s.arrival}</span>` : ''}
+          ${s.departure ? `<span class="stop-depart">🚗 Départ ${s.departure}</span>` : ''}
+        </div>
+        <div class="stop-meta" style="margin-top:4px">
+          ${s.visite > 0 ? `<span style="font-size:.72rem;color:var(--muted)">⏱ ${s.visite} min</span>` : ''}
+          ${phoneHtml}
+          ${mapsBtn}
+        </div>`;
+    } else if (s.arrival && isVirt) {
+      // Post-optimization virtual dinner (no leg, just time block)
+      legHtml = `
+        <div class="stop-meta" style="margin-top:5px">
+          <span class="stop-arr">🕑 ${s.arrival}</span>
+          ${s.departure ? `<span class="stop-depart">🚗 Fin ${s.departure}</span>` : ''}
+          <span style="font-size:.72rem;color:var(--amber);font-weight:600;background:var(--amber-bg);border:1px solid var(--amber-bdr);padding:2px 7px;border-radius:20px">⏱ ${s.visite} min</span>
+        </div>`;
+    } else {
+      // Pre-optimization
+      const visitePreHtml = s.visite > 0
+        ? `<div style="font-size:.72rem;color:var(--muted);margin-top:3px">⏱ Visite prévue : ${s.visite} min</div>`
+        : '';
+      legHtml = `
+        <div class="stop-meta" style="margin-top:5px">
+          ${phoneHtml}
+          ${mapsBtn}
+        </div>
+        ${visitePreHtml}`;
+    }
+
+    const pinBtn = !isDinner
+      ? `<button class="btn-pin ${s.pinned ? 'active' : ''}" onclick="togglePin(${i})" title="${s.pinned ? 'Désépingler' : 'Visiter en premier'}">📌</button>`
+      : '';
+
+    return `<div class="stop-card ${cardClass}">
+      <div class="stop-badge ${badgeClass}">${badgeLabel}</div>
+      <div class="stop-body">
+        <div class="stop-name">${esc(s.name)}</div>
+        ${addrLine}
+        ${legHtml}
+      </div>
+      <button class="btn-edit" onclick="startEdit(${i})" title="Modifier">✏️</button>
+      ${pinBtn}
+      <button class="btn btn-red-ghost" onclick="deleteStop(${i})" title="Supprimer" style="flex-shrink:0;margin-top:1px">✕</button>
+    </div>`;
+  }).join('') + '</div>';
 }
 
 function resetStats() {
-  document.getElementById('stat-km').textContent = '— km';
-  document.getElementById('stat-time').textContent = '—';
+  ['s-km','s-dur','s-arr','s-retour'].forEach(id => document.getElementById(id).textContent = '—');
+  document.getElementById('s-stops').textContent = stops.length;
 }
 
-// ============================================================
-// ROUTE OPTIMIZATION
-// ============================================================
-async function optimizeRoute() {
-  const departAddress = document.getElementById('input-depart').value.trim();
-  if (!departAddress) { showToast('Veuillez entrer une adresse de départ.', 'error'); return; }
-  if (stops.length === 0) { showToast('Ajoutez au moins un arrêt.', 'error'); return; }
+/* ═══════════════════════════════════════════════════════════
+   GOOGLE MAPS URL
+═══════════════════════════════════════════════════════════ */
+function gmapsUrl(addr) {
+  return `https://maps.google.com/?daddr=${encodeURIComponent(addr)}`;
+}
 
-  setLoading(true);
-  resetStats();
-  clearMapLayers();
+/* ═══════════════════════════════════════════════════════════
+   ROUTE OPTIMIZATION — OSRM trip + route (TSP)
+═══════════════════════════════════════════════════════════ */
+async function optimizeRoute() {
+  const departAddr = document.getElementById('input-depart').value.trim();
+  if (!departAddr) { toast('Entrez une adresse de départ.', 'error'); return; }
+  if (!stops.length) { toast('Ajoutez au moins un arrêt.', 'error'); return; }
+
+  setLoading(true); resetStats(); editingIdx = null;
 
   try {
-    // 1. Geocode all addresses
-    showToast('Géocodage des adresses…', 'info');
-
-    const departCoords = await geocode(departAddress);
-    const departPoint = { name: 'Départ', address: departAddress, ...departCoords };
+    // ── 1. Geocode ──
+    toast('Géocodage des adresses…', 'info');
+    const depCoords = await geocode(departAddr);
+    const depPt = { name: 'Départ', address: departAddr, lat: depCoords.lat, lng: depCoords.lng };
 
     for (let i = 0; i < stops.length; i++) {
+      if (isVirtualDinner(stops[i])) continue; // no address = skip geocoding
       if (!stops[i].lat) {
-        const coords = await geocode(stops[i].address);
-        stops[i].lat = coords.lat;
-        stops[i].lng = coords.lng;
+        const c = await geocode(stops[i].address);
+        stops[i].lat = c.lat; stops[i].lng = c.lng;
       }
     }
 
-    // 2. Build ordered waypoints: depart + stops (optimization is done by ORS)
-    const coordinates = [
-      [departCoords.lng, departCoords.lat],
-      ...stops.map(s => [s.lng, s.lat])
-    ];
-
-    // 3. Call ORS Directions API
-    showToast('Calcul de l\'itinéraire…', 'info');
-    const orsBody = {
-      coordinates,
-      instructions: false,
-      units: 'km'
-    };
-
-    const orsResp = await fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson', {
-      method: 'POST',
-      headers: {
-        'Authorization': ORS_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(orsBody)
+    // Separate routable stops from virtual dinners
+    const routableIndices = [], routableStops = [];
+    stops.forEach((s, i) => {
+      if (!isVirtualDinner(s)) { routableIndices.push(i); routableStops.push(s); }
     });
 
-    if (!orsResp.ok) {
-      const errText = await orsResp.text();
-      throw new Error(`ORS API erreur ${orsResp.status}: ${errText}`);
+    if (routableStops.length === 0) {
+      toast('Aucun arrêt avec adresse — impossible d\'optimiser.', 'error');
+      setLoading(false); return;
     }
 
-    const orsData = await orsResp.json();
-    const summary = orsData.features[0].properties.summary;
-    const distanceKm = (summary.distance).toFixed(1);
-    const durationMin = Math.round(summary.duration / 60);
+    toast('Optimisation OSRM…', 'info');
 
-    // 4. Draw route on map
-    routeLayer = L.geoJSON(orsData, {
-      style: {
-        color: accentColor,
-        weight: 4,
-        opacity: 0.85
+    // ── 2. OSRM routing on routable stops ──
+    const pinnedIdx = routableStops.findIndex(s => s.pinned);
+    let orderedRouteable, combinedGeometry, legData = [], totalDist, totalDur;
+
+    if (pinnedIdx >= 0) {
+      // Two-call strategy: route(dep→pinned) + trip(pinned→others)
+      const pinnedStop = routableStops[pinnedIdx];
+      const otherStops = routableStops.filter((_, i) => i !== pinnedIdx);
+
+      const r1Url = `https://router.project-osrm.org/route/v1/driving/${depCoords.lng},${depCoords.lat};${pinnedStop.lng},${pinnedStop.lat}?geometries=geojson&steps=false`;
+      const d1 = await (await fetch(r1Url)).json();
+      if (d1.code !== 'Ok') throw new Error('OSRM route : ' + (d1.message || d1.code));
+      const leg0 = d1.routes[0].legs[0], geo1 = d1.routes[0].geometry;
+      pinnedStop.leg_dist = (leg0.distance / 1000).toFixed(1);
+      pinnedStop.leg_dur  = Math.round(leg0.duration / 60);
+
+      if (otherStops.length === 0) {
+        orderedRouteable = [pinnedStop]; totalDist = leg0.distance; totalDur = leg0.duration;
+        combinedGeometry = geo1; legData = [{ dist: pinnedStop.leg_dist, dur: pinnedStop.leg_dur }];
+      } else {
+        const coords2 = [`${pinnedStop.lng},${pinnedStop.lat}`, ...otherStops.map(s => `${s.lng},${s.lat}`)].join(';');
+        const r2Url = `https://router.project-osrm.org/trip/v1/driving/${coords2}?roundtrip=false&source=first&geometries=geojson&steps=false&annotations=false`;
+        const d2 = await (await fetch(r2Url)).json();
+        if (d2.code !== 'Ok') throw new Error('OSRM trip : ' + (d2.message || d2.code));
+        const trip2 = d2.trips[0], wps2 = d2.waypoints;
+        const orderedOthers = new Array(otherStops.length);
+        for (let i = 0; i < otherStops.length; i++)
+          orderedOthers[wps2[i + 1].waypoint_index - 1] = otherStops[i];
+        for (let j = 0; j < orderedOthers.length; j++) {
+          orderedOthers[j].leg_dist = (trip2.legs[j].distance / 1000).toFixed(1);
+          orderedOthers[j].leg_dur  = Math.round(trip2.legs[j].duration / 60);
+        }
+        orderedRouteable = [pinnedStop, ...orderedOthers];
+        totalDist = leg0.distance + trip2.distance;
+        totalDur  = leg0.duration + trip2.duration;
+        combinedGeometry = { type: 'LineString', coordinates: [...geo1.coordinates, ...trip2.geometry.coordinates.slice(1)] };
+        legData = orderedRouteable.map(s => ({ dist: s.leg_dist, dur: s.leg_dur }));
       }
-    }).addTo(map);
 
-    // 5. Place markers
-    const allPoints = [departPoint, ...stops];
-    placeMarkers(allPoints);
+    } else {
+      // Standard single OSRM trip call
+      const coords = [`${depCoords.lng},${depCoords.lat}`, ...routableStops.map(s => `${s.lng},${s.lat}`)].join(';');
+      const osrmUrl = `https://router.project-osrm.org/trip/v1/driving/${coords}?roundtrip=false&source=first&geometries=geojson&steps=false&annotations=false`;
+      const d = await (await fetch(osrmUrl)).json();
+      if (d.code !== 'Ok') throw new Error(`OSRM : ${d.message || d.code}`);
+      const trip = d.trips[0], wps = d.waypoints;
+      orderedRouteable = new Array(routableStops.length);
+      for (let i = 0; i < routableStops.length; i++)
+        orderedRouteable[wps[i + 1].waypoint_index - 1] = routableStops[i];
+      for (let i = 0; i < orderedRouteable.length; i++) {
+        orderedRouteable[i].leg_dist = (trip.legs[i].distance / 1000).toFixed(1);
+        orderedRouteable[i].leg_dur  = Math.round(trip.legs[i].duration / 60);
+        legData.push({ dist: orderedRouteable[i].leg_dist, dur: orderedRouteable[i].leg_dur });
+      }
+      totalDist = trip.distance; totalDur = trip.duration; combinedGeometry = trip.geometry;
+    }
 
-    // 6. Update stats
-    document.getElementById('stat-km').textContent = `${distanceKm} km`;
-    document.getElementById('stat-time').textContent = formatDuration(durationMin);
-    document.getElementById('stat-stops').textContent = stops.length;
+    // ── 3. Insert virtual dinners at their relative position ──
+    // For each virtual dinner, count how many routable stops came before it in the original list
+    const dinnerInsertions = [];
+    stops.forEach((s, origI) => {
+      if (isVirtualDinner(s)) {
+        const beforeCount = routableIndices.filter(ri => ri < origI).length;
+        dinnerInsertions.push({ stop: s, afterCount: beforeCount });
+      }
+    });
 
-    showToast(`Itinéraire calculé : ${distanceKm} km, ${formatDuration(durationMin)}`, 'success');
+    let finalOrdered = [...orderedRouteable];
+    dinnerInsertions.sort((a, b) => a.afterCount - b.afterCount);
+    dinnerInsertions.forEach(({ stop, afterCount }) => {
+      // Find insertion point: after N routable stops currently in finalOrdered
+      if (afterCount === 0) { finalOrdered.splice(0, 0, stop); return; }
+      let routableCount = 0, insertAt = finalOrdered.length;
+      for (let j = 0; j < finalOrdered.length; j++) {
+        if (!isVirtualDinner(finalOrdered[j])) routableCount++;
+        if (routableCount === afterCount) { insertAt = j + 1; break; }
+      }
+      finalOrdered.splice(insertAt, 0, stop);
+    });
 
-  } catch (err) {
-    showToast(err.message || 'Erreur lors du calcul.', 'error');
-    console.error(err);
+    // ── 4. Arrival / departure times ──
+    const [depH, depM] = (document.getElementById('input-heure').value || '08:00').split(':').map(Number);
+    let cumMin = depH * 60 + depM;
+    const toHM = m => `${String(Math.floor(m / 60) % 24).padStart(2,'0')}:${String(m % 60).padStart(2,'0')}`;
+
+    for (let i = 0; i < finalOrdered.length; i++) {
+      const s = finalOrdered[i];
+      if (isVirtualDinner(s)) {
+        // No travel, just a time block at current position
+        s.leg_dist = null; s.leg_dur = 0;
+        s.arrival  = toHM(cumMin);
+        if (s.visite > 0) { cumMin += s.visite; s.departure = toHM(cumMin); }
+        else { s.departure = null; }
+      } else {
+        cumMin += s.leg_dur;
+        s.arrival = toHM(cumMin);
+        if (s.visite > 0) { cumMin += s.visite; s.departure = toHM(cumMin); }
+        else { s.departure = null; }
+      }
+    }
+
+    // ── 5. Return trip: last routable stop → depart ──
+    const lastRout = orderedRouteable[orderedRouteable.length - 1];
+    const retUrl   = `https://router.project-osrm.org/route/v1/driving/${lastRout.lng},${lastRout.lat};${depCoords.lng},${depCoords.lat}?steps=false`;
+    const retD     = await (await fetch(retUrl)).json();
+    const retLeg   = retD.routes[0].legs[0];
+    const retDistKm = (retLeg.distance / 1000).toFixed(1);
+    const retDurMin = Math.round(retLeg.duration / 60);
+    const retourHeure = toHM(cumMin + retDurMin); // cumMin = end of last stop
+
+    // ── 6. Commit & render ──
+    stops = finalOrdered;
+    renderStops(); saveStopsToStorage();
+
+    const mapStops = finalOrdered.filter(s => s.lat !== null);
+    drawMap(depPt, mapStops, combinedGeometry, legData);
+
+    const distKm  = (totalDist / 1000).toFixed(1);
+    const durMin  = Math.round(totalDur / 60);
+    const lastArr = finalOrdered[finalOrdered.length - 1].arrival;
+
+    document.getElementById('s-km').textContent     = `${distKm} km`;
+    document.getElementById('s-dur').textContent    = fmtDur(durMin);
+    document.getElementById('s-arr').textContent    = lastArr;
+    document.getElementById('s-retour').textContent = retourHeure;
+
+    lastResult = {
+      departAddr,
+      heureDepart: `${String(depH).padStart(2,'0')}:${String(depM).padStart(2,'0')}`,
+      stops: stops.map(s => ({ ...s })),
+      distKm, durMin, retDistKm, retDurMin, retourHeure
+    };
+    buildPrintList(lastResult);
+    saveToHistory(lastResult); renderHistory();
+    document.getElementById('btn-email').disabled = false;
+    document.getElementById('btn-html').disabled  = false;
+
+    toast(`✓ ${distKm} km · ${fmtDur(durMin)} · Retour : ${retourHeure}`, 'success');
+
+  } catch (e) {
+    toast(e.message || 'Erreur de calcul.', 'error'); console.error(e);
   } finally {
     setLoading(false);
   }
 }
 
-function formatDuration(minutes) {
-  if (minutes < 60) return `${minutes} min`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+/* ═══════════════════════════════════════════════════════════
+   PRINT LIST (page 1)
+═══════════════════════════════════════════════════════════ */
+function buildPrintList({ departAddr, heureDepart, stops, distKm, durMin, retDistKm, retDurMin, retourHeure }) {
+  const dateStr = new Date().toLocaleDateString('fr-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const lastArr = stops[stops.length - 1].arrival;
+
+  const stopsHtml = stops.map((s, i) => {
+    const isDinner = s.type === 'dinner';
+    const isVirt   = isVirtualDinner(s);
+    const segLine  = isVirt
+      ? `<span style="font-size:9pt;color:#d97706;font-weight:600">⏱ Pause ${s.visite} min</span>`
+      : `<span class="pl-seg">→ ${s.leg_dist} km · ${fmtDur(s.leg_dur)}</span>`;
+    return `
+    <div class="pl-stop">
+      <div class="pl-num${isDinner ? ' dinner' : ''}">${isDinner ? '🍽' : i+1}</div>
+      <div class="pl-body">
+        <div class="pl-client">${esc(s.name)}</div>
+        ${s.phone ? `<div style="font-size:9.5pt;margin-bottom:3pt"><a href="tel:${esc(s.phone)}" style="color:#185FA5;font-weight:600;text-decoration:none">📞 ${esc(s.phone)}</a></div>` : ''}
+        ${!isVirt && s.address ? `<div class="pl-addr">${esc(s.address)}</div>` : ''}
+        <div class="pl-row2">
+          ${segLine}
+          <span class="pl-arr-badge">🕑 ${s.arrival}</span>
+          ${s.visite > 0 && !isVirt ? `<span style="font-size:9pt;color:#92400e;font-weight:600;background:#fffbeb;border:0.5pt solid #fcd34d;padding:1pt 6pt;border-radius:10pt">⏱ ${s.visite} min → Départ ${s.departure}</span>` : ''}
+          ${isVirt && s.departure ? `<span style="font-size:9pt;color:#d97706;font-weight:600">Fin : ${s.departure}</span>` : ''}
+        </div>
+        ${!isDinner && s.address ? `<div class="pl-maps"><a href="${gmapsUrl(s.address)}">${gmapsUrl(s.address)}</a></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('print-list').innerHTML = `
+    <div class="pl-header">
+      <div class="pl-title">🗺 Feuille de route — Solarium Pro</div>
+      <div class="pl-meta">${dateStr} &nbsp;·&nbsp; Départ prévu : ${heureDepart}</div>
+    </div>
+    <div class="pl-depart"><strong>Point de départ</strong>${esc(departAddr)}</div>
+    ${stopsHtml}
+    <div class="pl-totals">
+      <div>Arrêts : <b>${stops.length}</b></div>
+      <div>Distance : <b>${distKm} km</b></div>
+      <div>Durée route : <b>${fmtDur(durMin)}</b></div>
+      <div>Dernier arrêt : <b>${lastArr}</b></div>
+      <div class="pl-retour">Retour prévu : <b>${retourHeure}</b> (${retDistKm} km · ${fmtDur(retDurMin)})</div>
+    </div>`;
 }
 
-// ============================================================
-// UI HELPERS
-// ============================================================
-function setLoading(state) {
-  const btn = document.getElementById('btn-optimize');
-  if (state) {
-    btn.classList.add('loading');
-    btn.disabled = true;
-  } else {
-    btn.classList.remove('loading');
-    btn.disabled = false;
-  }
-}
+/* ═══════════════════════════════════════════════════════════
+   EMAIL — mailto:
+═══════════════════════════════════════════════════════════ */
+function sendEmail() {
+  if (!lastResult) return;
+  const { departAddr, heureDepart, stops, distKm, durMin, retDistKm, retDurMin, retourHeure } = lastResult;
+  const dateStr = new Date().toLocaleDateString('fr-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const lastArr = stops[stops.length - 1].arrival;
+  const subj    = `Tournée du ${dateStr} — ${stops.length} arrêts / ${distKm} km`;
 
-function showToast(message, type = 'info') {
-  const container = document.getElementById('toasts');
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.textContent = message;
-  toast.onclick = () => toast.remove();
-  container.appendChild(toast);
-  setTimeout(() => { if (toast.parentNode) toast.remove(); }, 4000);
-}
+  let body = `FEUILLE DE ROUTE — ${dateStr}\n`;
+  body += `Départ : ${departAddr}  •  ${heureDepart}\n`;
+  body += `${'─'.repeat(60)}\n\n`;
 
-function escHtml(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function setupEnterKeys() {
-  document.getElementById('input-depart').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('input-nom').focus();
+  stops.forEach((s, i) => {
+    body += `${i+1}. ${s.name}\n`;
+    if (s.phone) body += `   📞 ${s.phone}\n`;
+    if (!isVirtualDinner(s) && s.address) body += `   ${s.address}\n`;
+    if (isVirtualDinner(s)) {
+      body += `   ⏱ Pause ${s.visite} min · ${s.arrival} → ${s.departure || ''}\n`;
+    } else {
+      body += `   → ${s.leg_dist} km · ${fmtDur(s.leg_dur)} · Arrivée : ${s.arrival}\n`;
+      if (s.visite > 0) body += `   ⏱ Visite : ${s.visite} min · Départ : ${s.departure}\n`;
+      if (s.type !== 'dinner') body += `   Google Maps : ${gmapsUrl(s.address)}\n`;
+    }
+    body += '\n';
   });
-  document.getElementById('input-nom').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('input-adresse').focus();
+
+  body += `${'─'.repeat(60)}\n`;
+  body += `Total : ${distKm} km · ${fmtDur(durMin)} · Dernier arrêt : ${lastArr}\n`;
+  body += `Retour prévu : ${retourHeure} (${retDistKm} km · ${fmtDur(retDurMin)} de retour)\n`;
+
+  window.location.href = `mailto:${EMAIL_TO}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DOWNLOAD INTERACTIVE HTML
+═══════════════════════════════════════════════════════════ */
+function downloadHtml() {
+  if (!lastResult) { toast('Optimisez d\'abord la route.', 'error'); return; }
+  const { departAddr, heureDepart, stops, distKm, durMin, retDistKm, retDurMin, retourHeure } = lastResult;
+  const dateStr = new Date().toLocaleDateString('fr-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const lastArr = stops[stops.length - 1].arrival;
+
+  let stopsHtml = '';
+  stops.forEach((s, i) => {
+    const isDinner = s.type === 'dinner';
+    const isVirt   = s.type === 'dinner' && !s.address;
+    stopsHtml += `<div class="stop${isDinner ? ' dinner-stop' : ''}">
+<div class="num${isDinner ? ' dinner' : ''}">${isDinner ? '🍽' : i+1}</div>
+<div class="body">
+<div class="client">${esc(s.name)}</div>
+${s.phone ? `<div style="margin-bottom:4px"><a href="tel:${esc(s.phone)}" class="tel">📞 ${esc(s.phone)}</a></div>` : ''}
+${!isVirt && s.address ? `<div class="addr">${esc(s.address)}</div>` : ''}
+<div class="meta">
+${isVirt
+  ? `<span class="vis">⏱ Pause ${s.visite} min</span><span class="arr">🕑 ${s.arrival}${s.departure ? ' → ' + s.departure : ''}</span>`
+  : `<span class="seg">→ ${s.leg_dist} km · ${fmtDur(s.leg_dur)}</span><span class="arr">🕑 Arrivée ${s.arrival}</span>${s.visite > 0 ? `<span class="vis">⏱ ${s.visite} min → Départ ${s.departure}</span>` : ''}`
+}
+</div>
+${!isDinner && s.address ? `<div class="maps"><a href="${gmapsUrl(s.address)}">📍 Google Maps</a></div>` : ''}
+</div></div>`;
   });
-  document.getElementById('input-adresse').addEventListener('keydown', e => {
+
+  const html = `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tournée ${dateStr}</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:720px;margin:0 auto;padding:20px 16px;color:#1a1a2e}
+h1{color:#185FA5;border-bottom:2px solid #185FA5;padding-bottom:8px;margin-bottom:4px}
+.sub{color:#6b7280;font-size:14px;margin-bottom:16px}
+.depart{background:#f3f4f6;border-left:4px solid #374151;padding:10px 14px;margin:14px 0;border-radius:4px;font-size:15px}
+.depart strong{display:block;font-size:11px;text-transform:uppercase;color:#6b7280;margin-bottom:3px;letter-spacing:.05em}
+.stop{border:1px solid #d1d5db;border-radius:8px;margin-bottom:12px;overflow:hidden;display:flex}
+.dinner-stop{border-color:#fcd34d;background:#fffdf5}
+.num{min-width:48px;background:#185FA5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;padding:8px}
+.num.dinner{background:#d97706;font-size:22px}
+.body{padding:12px 14px;flex:1}
+.client{font-size:17px;font-weight:700;margin-bottom:4px}
+.addr{color:#374151;margin-bottom:8px;font-size:14px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;margin-bottom:4px}
+.arr{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;padding:3px 10px;border-radius:20px;font-weight:700}
+.seg{color:#185FA5;font-weight:600}
+.vis{color:#92400e;background:#fffbeb;border:1px solid #fcd34d;padding:3px 10px;border-radius:20px;font-weight:700}
+.tel{color:#185FA5;font-weight:600;text-decoration:none;font-size:14px}
+.maps{font-size:13px}.maps a{color:#185FA5;font-weight:600;text-decoration:none}
+.totals{margin-top:20px;border-top:1px solid #d1d5db;padding-top:12px;display:flex;gap:20px;flex-wrap:wrap;font-size:14px}
+.totals b{color:#185FA5}
+.retour{color:#15803d}.retour b{color:#15803d}
+</style></head><body>
+<h1>🗺 Feuille de route — Solarium Pro</h1>
+<div class="sub">${dateStr} &nbsp;·&nbsp; Départ prévu : ${heureDepart}</div>
+<div class="depart"><strong>Point de départ</strong>${esc(departAddr)}</div>
+${stopsHtml}
+<div class="totals">
+<div>Arrêts : <b>${stops.length}</b></div>
+<div>Distance : <b>${distKm} km</b></div>
+<div>Durée route : <b>${fmtDur(durMin)}</b></div>
+<div>Dernier arrêt : <b>${lastArr}</b></div>
+<div class="retour">Retour prévu : <b>${retourHeure}</b> (${retDistKm} km · ${fmtDur(retDurMin)})</div>
+</div></body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `tournee_${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  toast('HTML téléchargé', 'success');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOUR HISTORY
+═══════════════════════════════════════════════════════════ */
+function getHistory()    { try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch { return []; } }
+function setHistory(arr) { localStorage.setItem(HIST_KEY, JSON.stringify(arr)); }
+
+function saveToHistory(result) {
+  const hist = getHistory();
+  hist.unshift({
+    id: Date.now(),
+    date: new Date().toLocaleDateString('fr-CA', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }),
+    departAddr: result.departAddr, heureDepart: result.heureDepart,
+    distKm: result.distKm, durMin: result.durMin,
+    stops: result.stops.map(s => ({ ...s }))
+  });
+  if (hist.length > MAX_HIST) hist.splice(MAX_HIST);
+  setHistory(hist);
+}
+
+function renderHistory() {
+  const hist = getHistory();
+  const el   = document.getElementById('hist-list');
+  if (!hist.length) { el.innerHTML = '<div class="fav-empty">Aucun historique</div>'; return; }
+  el.innerHTML = hist.map((h, i) => `
+    <div style="padding:8px 10px;border-bottom:1px solid var(--border)">
+      <div style="font-size:.78rem;font-weight:700;margin-bottom:1px">${h.date} · ${h.heureDepart}</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:3px">${h.stops.length} arrêts · ${h.distKm} km · ${fmtDur(h.durMin)}</div>
+      <div style="font-size:.7rem;color:var(--muted);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(h.departAddr)}</div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-ghost" style="padding:3px 8px;font-size:.72rem" onclick="loadHistoryTour(${i})">🔄 Recharger</button>
+        <button class="btn btn-red-ghost" onclick="deleteHistoryTour(${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function loadHistoryTour(i) {
+  const h = getHistory()[i]; if (!h) return;
+  stops = h.stops.map(s => ({ ...s }));
+  document.getElementById('input-depart').value = h.departAddr;
+  document.getElementById('input-heure').value  = h.heureDepart;
+  editingIdx = null; renderStops(); saveStopsToStorage();
+  document.getElementById('hist-panel').classList.remove('open');
+  toast(`${h.stops.length} arrêts rechargés depuis l'historique`, 'success');
+}
+
+function deleteHistoryTour(i) {
+  const hist = getHistory(); hist.splice(i, 1); setHistory(hist); renderHistory();
+}
+
+function toggleHistory() { document.getElementById('hist-panel').classList.toggle('open'); }
+
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════ */
+function fmtDur(min) {
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  return m ? `${h}h ${m}min` : `${h}h`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setLoading(on) {
+  const b = document.getElementById('btn-optimize');
+  b.classList.toggle('loading', on); b.disabled = on;
+}
+
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`; t.textContent = msg;
+  t.onclick = () => t.remove(); c.appendChild(t);
+  setTimeout(() => t.parentNode && t.remove(), 4500);
+}
+
+function setupKeys() {
+  const next = (fromId, toId) =>
+    document.getElementById(fromId)?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById(toId)?.focus();
+    });
+  next('input-depart',  'input-nom');
+  next('input-nom',     'input-tel');
+  next('input-tel',     'input-visite');
+  next('input-visite',  'input-adresse');
+  document.getElementById('input-adresse')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') addStop();
+  });
+  // Edit form: Enter on adresse triggers save
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && editingIdx !== null && document.activeElement?.id === 'edit-adresse') {
+      saveEdit(editingIdx);
+    }
+    if (e.key === 'Escape' && editingIdx !== null) cancelEdit();
   });
 }
 </script>
