@@ -136,8 +136,139 @@
       <div class="subtitle">Documentation complète du projet</div>
     </div>
   </div>
-  <div class="date-badge">Mis à jour le <strong>10 août 2026</strong></div>
+  <div class="date-badge">Mis à jour le <strong>13 août 2026</strong></div>
 </header>
+
+<!-- MISES À JOUR 13 AOÛT 2026 — SOLARIUM SM · PIPELINE KM/LIVRAISON · PARTIALS JINJA2 · CORRECTIFS PDF -->
+<div class="section">
+  <div class="section-title">Mises à jour — 13 août 2026 — Solarium SM · Pipeline KM automatique · Unification templates (4 partials) · Correctifs PDF signé</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">app.py — Route POST /soumissions/&lt;numero&gt;/maj-livraison-km</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Nouvelle route qui reçoit la distance KM calculée par l'API Google Maps et met à jour automatiquement la ligne de service <code>SOLP-DEPLACEMENT-KM</code> dans le dossier (quantité = km calculé). Si la ligne n'existe pas, elle est créée avec <code>prix=1.25 $/km</code>. Les totaux (sous-total, TPS, TVQ, total) sont recalculés via <code>calculer_totaux()</code> et persistés immédiatement.</td>
+        </tr>
+        <tr>
+          <td class="name">dossier_detail.html — Connexion KM Google Maps → ligne Livraison</td>
+          <td><span class="tag tag-html">Fonctionnalité</span></td>
+          <td class="role">La fonction JS <code>_appelerDistanceAPI()</code>, qui calcule la distance depuis l'adresse des travaux, appelle maintenant <code>/maj-livraison-km</code> après chaque calcul réussi. Toast de confirmation affiché (<code>#toast-livraison-km</code>) avec le nombre de km et le statut (créée/mise à jour). En cas d'erreur de l'API Maps, le message d'erreur est maintenant affiché à la fois dans <code>#dist-erreur</code> ET dans <code>#sidebar-dist-calcul</code> (était seulement dans un des deux).</td>
+        </tr>
+        <tr>
+          <td class="name">_modalites_contenu.html — Partial Jinja2 (NOUVEAU)</td>
+          <td><span class="tag tag-html">Architecture</span></td>
+          <td class="role">Partial unifié pour le bloc "Modalités de paiement". Inclus par <code>pdf_soumission.html</code> ET <code>signature.html</code>. Logique : si <code>dossier.modalites_texte</code> → texte personnalisé ; sinon si <code>dossier.methode_label</code> → label de la méthode ; sinon → défaut "90 % à la signature / 10 % à la livraison". Note "non remboursable" toujours visible (fond crème <code>#FDF8EC</code>, bordure <code>#EDD9A0</code>). <strong>Pour modifier le texte par défaut ou la note de dépôt : modifier CE FICHIER UNIQUEMENT.</strong></td>
+        </tr>
+        <tr>
+          <td class="name">_termes_liste.html — Partial Jinja2 (NOUVEAU)</td>
+          <td><span class="tag tag-html">Architecture</span></td>
+          <td class="role">Partial unifié pour la liste des termes et conditions. Boucle sur la variable <code>termes</code> (liste de strings passée par le parent). Classes CSS : <code>.termes</code> / <code>.terme-item</code> / <code>.terme-num</code> — les mêmes dans les deux templates. Inclus par <code>pdf_soumission.html</code> ET <code>signature.html</code>. CSS WeasyPrint : <code>page-break-inside:avoid; break-inside:avoid</code> appliqués sur <code>.termes</code> et <code>.terme-item</code> pour éviter les coupures de page au milieu d'un terme.</td>
+        </tr>
+        <tr>
+          <td class="name">_garanties_blocs.html — Partial Jinja2 (NOUVEAU)</td>
+          <td><span class="tag tag-html">Architecture</span></td>
+          <td class="role">Partial unifié pour les blocs de garanties. Variable de contexte <code>_garanties_ctx</code> : <code>'pdf'</code> (affiche "Voir document joint" + date de confirmation si dossier signé) ou <code>'web'</code> (affiche lien "Voir les conditions ↗"). Boucle sur <code>garanties</code>. Inclus par <code>pdf_soumission.html</code> ET <code>signature.html</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">_paiement_details.html — Partial Jinja2 (NOUVEAU)</td>
+          <td><span class="tag tag-html">Architecture</span></td>
+          <td class="role">Partial unifié pour les coordonnées de paiement (BMO et Interac). Variables requises : <code>_paiement_mode</code> (<code>'bancaire'</code> ou <code>'interac'</code>) et <code>_paiement_ctx</code> (<code>'pdf'</code> ou <code>'web'</code>). BMO : Transit 01771, Institution 001, Compte 1984022 / 9336-1186 Québec Inc. Interac : bdupuis@solariumpro.ca, question Produit / réponse Solarium (affiché seulement en mode <code>'web'</code>). <strong>Règle critique :</strong> dans <code>pdf_soumission.html</code>, le mode se lit depuis <code>versions[].mode_paiement</code> (version active), JAMAIS depuis <code>dossier.mode_paiement</code> (toujours vide après signature). Voir commentaire RÈGLE CRITIQUE dans le fichier.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html + signature.html — Connexion aux 4 partials</td>
+          <td><span class="tag tag-html">Architecture</span></td>
+          <td class="role">Les deux templates utilisent maintenant <code>{% include %}</code> vers les 4 partials au lieu de dupliquer le code. Chaque section (modalités, garanties, termes, paiement) n'existe plus qu'en un seul endroit. Principe validé par test [TEST-PARTIAL] : un marqueur ajouté dans <code>_modalites_contenu.html</code> est apparu simultanément dans l'aperçu web et dans le PDF généré par WeasyPrint — preuve d'unicité de la source.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Correctif mode paiement vide (SP202608-007)</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Le mode de paiement choisi par le client n'apparaissait pas dans le PDF final. Cause : lecture de <code>dossier.mode_paiement</code> (toujours vide après signature). Fix : boucle <code>{% for v in dossier.get('versions',[]) %}{% if v.statut == 'active' %}{% set _ns.mode = v.mode_paiement %}{% endif %}{% endfor %}</code> avec <code>namespace()</code> pour la mutabilité dans la boucle.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Correctif modalités vides (SP202608-007)</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Bloc "Modalités de paiement" affiché vide dans le PDF signé. Cause : aucun fallback quand <code>dossier.modalites_texte</code> et <code>dossier.methode_label</code> sont tous deux vides/None. Fix : valeur par défaut "90 % à la signature / 10 % à la livraison" ajoutée dans le partial <code>_modalites_contenu.html</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">pdf_soumission.html — Correctif termes isolés sur page séparée (SP202608-007)</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Le point 6 des termes et conditions apparaissait seul sur une nouvelle page. Cause : WeasyPrint appliquait un saut de page automatique à l'intérieur du bloc termes. Fix : <code>page-break-inside:avoid; break-inside:avoid</code> sur <code>.termes</code> + <code>break-before:avoid</code> sur <code>.terme-item</code>. Ces propriétés sont maintenant dans <code>_termes_liste.html</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MISES À JOUR 4 AOÛT 2026 — IMAP RETRY · SUIVI USINE KEVEN SSR · BASIC AUTH EXEMPTION -->
+<div class="section">
+  <div class="section-title">Mises à jour — 4 août 2026 — Retry IMAP · Suivi Usine /keven SSR · Basic Auth routes publiques</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">import_leads_v4.py · scanner_soumissions.py — Retry IMAP</td>
+          <td><span class="tag tag-python">Fiabilité</span></td>
+          <td class="role">Retry automatique 3× avec délais croissants (5 min → 15 min → 30 min) en cas d'échec IMAP (<code>connecter_imap_avec_retry()</code>). Si les 3 tentatives échouent : alerte courriel via <code>mail.mailconfig.net:587</code> (STARTTLS), fallback Gmail <code>smtp.gmail.com:465</code> si <code>GMAIL_APP_PASSWORD</code> disponible dans l'environnement. Aucun mot de passe codé en dur. Plist launchd mis à jour avec <code>EnvironmentVariables/GMAIL_APP_PASSWORD</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">Suivi-Production app.py — Exemption Basic Auth routes publiques</td>
+          <td><span class="tag tag-python">Sécurité</span></td>
+          <td class="role">Ajout de <code>_PUBLIC_PATHS = {"/", "/procedure", "/keven"}</code> dans <code>require_auth()</code> (Railway). Les pages HTML front-end sont exemptées du Basic Auth ; toutes les routes <code>/api/*</code> restent protégées (lecture ET écriture). Variables Railway <code>SP_API_USER=solarium</code> et <code>SP_API_PASSWORD</code> confirmées actives. Commit <code>9b806db</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">Suivi-Production templates/keven.html — Rendu SSR</td>
+          <td><span class="tag tag-python">Architecture</span></td>
+          <td class="role">La route <code>/keven</code> passe de <code>send_from_directory</code> à <code>render_template</code> + <code>make_response</code>. Les dossiers sont injectés au chargement via <code>_DOSSIERS_INIT = {{ dossiers_json | safe }}</code> (Jinja2). Suppression du <code>fetch("/api/dossiers")</code> qui déclenchait la popup Basic Auth dans Safari/Chrome. Bouton Actualiser et auto-refresh (60s) utilisent <code>window.location.reload()</code>. Commit <code>c099482</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">Suivi-Production — Restauration données Railway</td>
+          <td><span class="tag tag-python">Données</span></td>
+          <td class="role">Le volume Railway contenait 0 dossier au démarrage de session (backup 19h13 était vide). Restauration via <code>POST /api/restore/dossiers_2026-08-03_19h11.json</code> — 36 dossiers récupérés sans perte (backup 19h11 identique à 15h07, seul un timestamp <code>updated_at</code> diffère sans modification de contenu).</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MISES À JOUR 3 AOÛT 2026 — SÉCURITÉ + RÉSUMÉ MATIN + RECHERCHE MULTI-CRITÈRES -->
+<div class="section">
+  <div class="section-title">Mises à jour — 3 août 2026 — Audit sécurité complet · Recherche multi-critères · Résumé matin hybride</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">prospect2-master — Nettoyage sécurité</td>
+          <td><span class="tag tag-python">Sécurité</span></td>
+          <td class="role">Audit de sécurité complet : IMAP_PASS codé en dur retiré de <code>solarium_production/solarium_production.py</code> via <code>git filter-repo</code> (43 commits réécrits). Remplacé par <code>os.environ.get("IMAP_PASS", "")</code>. Force-push effectué — repo public entièrement propre.</td>
+        </tr>
+        <tr>
+          <td class="name">credentials/service_account_solarium.json</td>
+          <td><span class="tag tag-python">Sécurité</span></td>
+          <td class="role">Rotation de la clé RSA Google Service Account (<code>resume-matin-service@resumes-matinaux.iam.gserviceaccount.com</code>) — 2 anciennes clés révoquées dans Google Cloud Console, nouvelle clé en place. Permissions <code>chmod 600</code> appliquées sur tous les fichiers credentials. Voir <code>REFERENCE_ACCES_CLES.md</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">dashboard_prospect2.html — Recherche multi-critères</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Fonction <code>appliquerFiltres()</code> élargie : recherche insensible aux accents/casse sur <code>nom_client</code>, <code>entreprise</code>, <code>raison</code>, <code>sous_etape</code>, <code>etape</code>. Normalisation NFD + suppression diacritiques + <code>[-\s().]</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">resume_matin.py — Affichage hybride soumissions</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Section "Soumissions à traiter" : dossiers &gt; 7 jours affichés individuellement avec badge ⚠️ + âge en jours, dossiers ≤ 7 jours regroupés en une ligne compteur "＋ X autres récents → dashboard complet". Clé Anthropic migrée vers <code>.env</code> (plus aucune clé en dur).</td>
+        </tr>
+        <tr>
+          <td class="name">REFERENCE_ACCES_CLES.md</td>
+          <td><span class="tag tag-python">Documentation</span></td>
+          <td class="role">Nouveau fichier créé dans <code>~/Documents/Solarium-Pro-PDFs/</code> — index sans valeurs réelles de tous les accès/clés (courriel, API, GitHub, Railway, infrastructure). Copie dans <code>~/Documents/backup-production/</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- MISES À JOUR 2 AOÛT 2026 — PROSPECT 2.0 · DASHBOARD EXPORTS, SYNC PIPELINE, SCHÉMA CSV -->
 <div class="section">
@@ -587,6 +718,58 @@
           <td class="name">dossier_form.html — QTÉ + champ ligne sauvegardé</td>
           <td><span class="tag tag-html">HTML</span></td>
           <td class="role">Largeur colonne QTÉ : 72→90px. Les deux <code>arr.push()</code> (ajout catalogue + panel dimensions) incluent désormais <code>ligne: item.ligne</code> pour persistance correcte du champ ligne à chaque sauvegarde.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MISES À JOUR 13 AOÛT 2026 -->
+<div class="section">
+  <div class="section-title">Mises à jour — 13 août 2026</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Module</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">neoscenica_module.py — P1 à P6</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><strong>Néoscenica V3 complet.</strong> P1 : formules Kit4184/Kit3214 (Neo extérieur conditionnel)/Kit3707 confirmées. P2 : arrondis pouce→mm, split panneau, faux couplage L/H — aucun bug. P3 : Kit3808 ÷2 (qte 4→2), Kit3214 conditionnel au récap. P4 : couleurs individuelles par mur — groupement FFD par <code>couleur_alu</code>, est_couleur_stock par groupe, fiche peinture + coupes + inventaire en sections séparées. P5 : affichage mm dans listes de coupe (Découpes mm / Utilisé mm / Reste mm). P6 : wrapping bandeaux (<code>_bandeau_lines</code> + <code>c.stringWidth()</code>), titre+schéma restent sur la même page (<code>_bandeau_height</code> + <code>_schema_espace</code> pre-checks). · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/Solarium-Pro-PDFs/neoscenica_module.py</span></td>
+        </tr>
+        <tr>
+          <td class="name">neoscenica_module.py + document_decaissement.py</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><strong>Correctif post-révision #1 — couleur dupliquée dans Décaissement.</strong> Quand multi_couleur=True, le profil contenait déjà <code>[Noir RAL 9005]</code> entre crochets ET la couleur était ré-affichée dans le titre de section. Fix : <code>document_decaissement.py:188</code> — la couleur n'est ajoutée que si elle n'est pas déjà dans le profil sous forme <code>[couleur]</code>. · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/Solarium-Pro-PDFs/</span></td>
+        </tr>
+        <tr>
+          <td class="name">neoscenica_module.py + document_restes.py</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><strong>Correctif post-révision #2 — restes groupés par couleur réelle.</strong> Avant : generer_pdf_restes recevait la couleur globale unique — restes Blanc/Gentek absents du rapport. Fix : chaque entrée <code>_nr</code> est taguée <code>couleur=c_alu</code> à l'agrégation ; <code>document_restes.py</code> groupe et affiche une section par couleur réelle avec sous-en-tête bleu. Bandeau global : <code>17 restes [5 Noir · 6 Blanc · 6 Gentek]</code>. · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/Solarium-Pro-PDFs/</span></td>
+        </tr>
+        <tr>
+          <td class="name">esthetika_module.py</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><strong>Correctif couleur individuelle par mur.</strong> Même pattern que Néoscenica P4. Ligne 414 : <code>m['couleur_alu'] = m.get('couleur_alu', couleur)</code> (fallback sans écrasement). Agrégation FFD restructurée en <code>murs_par_couleur</code> + <code>kits_ffd_par_couleur</code>. Coupes, fiche peinture, inventaire : une section par <code>couleur_alu</code>. Testé : 3 couleurs manuelle (Noir STOCK, Blanc STOCK, Gentek SUR MESURE) + motorisée mono-couleur. · <span style="font-family:monospace;font-size:.8rem;color:#888">~/Documents/Solarium-Pro-PDFs/esthetika_module.py</span></td>
+        </tr>
+        <tr>
+          <td class="name">app.py SM — /modalites-ref + placeholders</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><strong>Modalités de paiement.</strong> Page CRUD <code>/modalites-ref</code> (permission <code>gerer_modalites</code>). 6 modèles par défaut migrés depuis <code>_MODALITES_DEFAUT</code>. Placeholders <code>{total}, {p90}, {p10}, {p50}, {p33}</code> résolus par <code>resoudre_placeholders_modalites()</code> (Python) + <code>resoudrePlaceholdersModalites()</code> (JS). 50/50 pré-sélectionné par défaut à la création. Recalcul temps réel sur qty/prix via <code>updateTotaux()</code>. · <span style="font-family:monospace;font-size:.8rem;color:#888">~/solarium-sm/app.py</span></td>
+        </tr>
+        <tr>
+          <td class="name">4 partials Jinja2 + pdf_soumission.html + signature.html</td>
+          <td><span class="tag tag-html">HTML</span></td>
+          <td class="role"><strong>Templates SM unifiés.</strong> Partials créés : <code>_modalites_contenu.html</code>, <code>_termes_liste.html</code>, <code>_garanties_blocs.html</code>, <code>_paiement_details.html</code>. Les deux templates PDF (<code>pdf_soumission.html</code> / <code>signature.html</code>) incluent ces partials via <code>{% include %}</code> — plus aucune duplication. Correctifs SP202608-007 : modalités vides (fallback 90/10), mode paiement absent (lecture <code>versions[].mode_paiement</code>), termes coupés (<code>page-break-inside:avoid</code>). · <span style="font-family:monospace;font-size:.8rem;color:#888">~/solarium-sm/templates/</span></td>
+        </tr>
+        <tr>
+          <td class="name">app.py SM — fermer_dossier() + /tracker-dist/</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><strong>Transfert distributeur unifié.</strong> <code>fermer_dossier()</code> envoie maintenant statut + email + PDF joint (bon de travail) + pixel tracking en un seul clic via <code>distributeur_id</code>. Route <code>/tracker-dist/&lt;token&gt;</code> : écrit <code>distributeur_ouvert_le</code> à la première ouverture email. Badge double SP202608-001 corrigé (retrait badge rose redondant dans <code>soumissions.html</code>). <code>rouvrir_dossier()</code> nettoie les champs <code>transfert_distributeur</code> et <code>distributeur_ouvert_le</code>. · <span style="font-family:monospace;font-size:.8rem;color:#888">~/solarium-sm/app.py · templates/dossier_detail.html · soumissions.html</span></td>
+        </tr>
+        <tr>
+          <td class="name">app.py SM — /maj-livraison-km + catalogue.json</td>
+          <td><span class="tag tag-python">Python</span></td>
+          <td class="role"><strong>Livraison km.</strong> Taux 1,25$/km hardcodé retiré — prix lu dynamiquement depuis le catalogue (<code>SOLP-DEPLACEMENT-KM.prix_vendant</code>). Catalogue corrigé : 1,25 → 3,00$/km. Plancher 50 km : <code>km_facture = max(float(km_reel), 50.0)</code>. Migration one-shot <code>_migrer_prix_deplacement_km()</code> au démarrage Railway. Testé : 10 km → 50 km = 150$ / 86,9 km → 260,70$. · <span style="font-family:monospace;font-size:.8rem;color:#888">~/solarium-sm/app.py · data/catalogue.json</span></td>
         </tr>
       </tbody>
     </table>
