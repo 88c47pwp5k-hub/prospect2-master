@@ -136,8 +136,50 @@
       <div class="subtitle">Documentation complète du projet</div>
     </div>
   </div>
-  <div class="date-badge">Mis à jour le <strong>13 août 2026</strong></div>
+  <div class="date-badge">Mis à jour le <strong>14 août 2026</strong></div>
 </header>
+
+<!-- MISES À JOUR 14 AOÛT 2026 — SOLARIUM SM · SUIVI PRODUCTION · RÉSUMÉ MATIN -->
+<div class="section">
+  <div class="section-title">Mises à jour — 14 août 2026 — Fuseau horaire · Service SOLP-LIVSOLP · Résumé matin · Cloudflared · Scrollbar SC · Guide /guide</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">app.py (SM) — Correctif fuseau horaire (5 endroits)</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Toutes les dates enregistrées utilisaient <code>datetime.utcnow()</code> (heure UTC) au lieu de l'heure Montréal. Fix appliqué en 5 endroits : création de dossier, signature client, ouverture email, ouverture PDF distributeur, et envoi email. Remplacement par <code>datetime.now(ZoneInfo("America/Montreal")).isoformat()</code>. Import ajouté : <code>from zoneinfo import ZoneInfo</code>. Les dates affichées dans les fiches et les emails reflètent maintenant l'heure locale réelle.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py (SM) — Service SOLP-LIVSOLP + exclusivité mutuelle</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Nouveau service <code>SOLP-LIVSOLP</code> créé dans le catalogue (livraison Solarium Pro, 150 $/forfait). La route <code>POST /soumissions/&lt;numero&gt;/maj-livraison-km</code> détecte maintenant correctement les deux services de livraison : si <code>SOLP-LIVSOLP</code> est déjà dans le dossier, la mise à jour de <code>SOLP-DEPLACEMENT-KM</code> est ignorée (exclusivité mutuelle). Évite que les deux modes de facturation coexistent dans le même devis.</td>
+        </tr>
+        <tr>
+          <td class="name">résumé-matin/run.sh — Timeout étendu + test IP avant DNS</td>
+          <td><span class="tag tag-shell">Bug</span></td>
+          <td class="role">Le script launchd (7h00) échouait avec <code>[Errno 8] nodename nor servname provided</code> — le DNS n'était pas encore opérationnel après le réveil du Mac (pmset wake 6h55, WiFi lent à reconnecter). Fix : timeout étendu de 60s à 180s, et ajout d'une attente en 2 étapes — <strong>Étape 1 :</strong> connectivité IP brute (<code>ping 8.8.8.8</code>) ; <strong>Étape 2 :</strong> résolution DNS (<code>curl oauth2.googleapis.com</code>). Le script ne lance Python qu'une fois les deux conditions satisfaites.</td>
+        </tr>
+        <tr>
+          <td class="name">Suivi-Production — Tunnel cloudflared relancé</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Le tunnel cloudflared était bloqué depuis le 12 août dans une boucle infinie d'erreurs <code>control stream encountered a failure while serving</code> (PID 2874). Kevin ne pouvait plus accéder à l'app depuis l'usine — ses PATCH et POST n'atteignaient jamais Flask, donc les emails "Terminé ✓" ne partaient pas. Fix : <code>launchctl kickstart -k gui/$(id -u)/com.solariumpro.suivi</code>. Nouvelle URL : <code>https://metres-discipline-taxes-provinces.trycloudflare.com</code>. Fichier <code>Suivi_Production_Keven.bat</code> mis à jour automatiquement par <code>start_all.sh</code>. Mécanisme email confirmé OK (<code>{"sent": true}</code> via test local).</td>
+        </tr>
+        <tr>
+          <td class="name">Suivi Client (index.html, port 5858) — Scrollbar horizontale dans le viewport</td>
+          <td><span class="tag tag-html">Bug</span></td>
+          <td class="role">La barre de défilement horizontale du grand tableau (40+ colonnes) apparaissait tout en bas de la page complète, inaccessible sans scroller jusqu'au bout. Cause : <code>#tw</code> n'avait pas de <code>max-height</code>, le tableau s'étendait sur toute sa hauteur. Fix : ajout d'un bloc JS qui calcule <code>window.innerHeight - tw.getBoundingClientRect().top - 16</code> au rendu et à chaque resize, et applique cette valeur comme <code>maxHeight</code> sur <code>#tw</code> (avec <code>overflowY: auto</code>). La scrollbar horizontale est maintenant collée au bas du viewport, visible sans scroller. Les sticky headers (déjà présents) restent actifs.</td>
+        </tr>
+        <tr>
+          <td class="name">Guide /guide (SM) — Sections 22 et 23 ajoutées</td>
+          <td><span class="tag tag-html">Documentation</span></td>
+          <td class="role"><strong>Section 22 — Modalités de paiement :</strong> explique les 6 modèles disponibles (Standard 90/10, Sur réception, 50/50 signature-livraison [défaut], 50/50+15j, 50/50+30j, 3 paiements égaux), le sélecteur dans le formulaire dossier, et les montants calculés automatiquement. Frais de livraison minimum 50 km / 150 $ documentés dans la section Livraison (s15). <strong>Section 23 — Gérer les modalités :</strong> route <code>/modalites-ref</code> (Benoit uniquement, permission <code>gerer_modalites</code>), interface CRUD pour ajouter/modifier/supprimer les modèles, variables disponibles (<code>{total}</code>, <code>{p50}</code>, <code>{p90}</code>, <code>{p33}</code>, etc.). Section s8 (Distributeurs) mise à jour : le bouton "Marquer comme Transféré" envoie maintenant automatiquement le bon de travail PDF par courriel au distributeur — Cathy peut déclencher ce transfert elle-même.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- MISES À JOUR 13 AOÛT 2026 — SOLARIUM SM · PIPELINE KM/LIVRAISON · PARTIALS JINJA2 · CORRECTIFS PDF -->
 <div class="section">
