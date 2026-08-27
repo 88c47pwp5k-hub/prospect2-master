@@ -14,7 +14,7 @@ Usage :
 """
 
 import os
-from math import gcd as _gcd, atan as _atan, sqrt as _sqrt, degrees as _deg
+from math import gcd as _gcd, atan as _atan, sqrt as _sqrt, degrees as _deg, floor as _floor
 from datetime import date as _date
 
 LOGO_PNG = os.path.expanduser(
@@ -129,9 +129,9 @@ def page_approbation_cadre(c, mur_calc, w, h, inch,
 
     # Dimensions de coupe (pour tableau — rectangulaire seulement)
     trav_bas_po = max((L_po - nb_mont * 2.5) / nb_sec, 0)
-    trav_bas_mm = round(trav_bas_po * 25.4)
+    trav_bas_mm = _floor(trav_bas_po * 25.4)
     mont_po     = H_po - 2.5
-    mont_mm     = round(mont_po * 25.4)
+    mont_mm     = _floor(mont_po * 25.4)
 
     # ── BANDEAU EN-TÊTE OR ────────────────────────────────────────────────────
     HDR_H = 0.74 * inch
@@ -175,13 +175,13 @@ def page_approbation_cadre(c, mur_calc, w, h, inch,
 
     # ── ZONE DESSIN ───────────────────────────────────────────────────────────
     # Réserver depuis le bas : pied + signature + table + dessin
-    FOOT_H  = 0.45 * inch
+    FOOT_H  = 0.50 * inch
     SIG_H   = 1.45 * inch
     TABLE_H = (nb_sec + 3) * 0.265*inch + 0.45*inch  # header + rows + matériaux
-    SEP_H   = 0.20 * inch
+    SEP_H   = 0.25 * inch
 
     DRAW_BOT_ABS = FOOT_H + SIG_H + SEP_H + TABLE_H + SEP_H   # y absolu du bas du dessin + flèches
-    ARROW_BELOW  = 0.52 * inch   # espace flèche largeur + étiquettes baies
+    ARROW_BELOW  = 0.90 * inch   # espace flèche largeur + étiquettes baies
 
     draw_y_bot = DRAW_BOT_ABS + ARROW_BELOW
     draw_y_top_max = h - HDR_H - INFO_H - 0.12*inch   # exploiter tout l'espace disponible
@@ -235,7 +235,7 @@ def page_approbation_cadre(c, mur_calc, w, h, inch,
     hyp_po = hyp_mm = ang_phys = None
     if est_trap and L_po > 0:
         hyp_po   = _sqrt(L_po**2 + (VG - VD)**2)
-        hyp_mm   = round(hyp_po * 25.4)
+        hyp_mm   = _floor(hyp_po * 25.4)
         ang_phys = _deg(_atan((VG - VD) / L_po))
 
     if est_trap:
@@ -342,18 +342,18 @@ def page_approbation_cadre(c, mur_calc, w, h, inch,
             c.drawCentredString(cx_a, ly_a + 0.06*inch,
                                 f"{_dvf(hyp_po)}  \u2013  {ang_phys:.1f}\u00b0")
 
-    # ── LÉGENDE COULEURS (bas-gauche du dessin) ───────────────────────────────
+    # ── LÉGENDE COULEURS (horizontale, sous le dessin, sans superposition) ──
     leg_items = [("Traverse du haut", TRAV_H_C),
                  ("Traverses du bas",  TRAV_B_C),
                  ("Montants",          MONT_C)]
-    lx_leg = x0; ly_leg = y_bot - 0.72*inch
+    lx_leg = x0; ly_leg = y_bot - 0.85*inch
     for lbl, col in leg_items:
-        sw = 0.12*inch; sh = 0.12*inch
+        sw = 0.11*inch; sh = 0.11*inch
         c.setFillColor(col)
         c.roundRect(lx_leg, ly_leg, sw, sh, 1, fill=True, stroke=False)
-        c.setFillColor(GRIS_P); c.setFont("Helvetica", 6)
-        c.drawString(lx_leg + sw + 0.05*inch, ly_leg + 0.01*inch, lbl)
-        lx_leg += sw + 0.05*inch + c.stringWidth(lbl, "Helvetica", 6) + 0.15*inch
+        c.setFillColor(GRIS_P); c.setFont("Helvetica", 5.5)
+        c.drawString(lx_leg + sw + 0.03*inch, ly_leg + 0.01*inch, lbl)
+        lx_leg += sw + 0.03*inch + c.stringWidth(lbl, "Helvetica", 5.5) + 0.12*inch
 
     # ── CONTOUR EXTÉRIEUR ─────────────────────────────────────────────────────
     c.setStrokeColor(BLEU_F); c.setLineWidth(1.6)
@@ -455,7 +455,7 @@ def page_approbation_cadre(c, mur_calc, w, h, inch,
 
     # Rangées sections
     baie_brute_po = L_po / nb_sec
-    baie_brute_mm = round(baie_brute_po * 25.4)
+    baie_brute_mm = _floor(baie_brute_po * 25.4)
     for s in range(nb_sec):
         ry = t_y - row_h - (s + 1) * row_h
         fill_hex = _SEC[s % 4][0]

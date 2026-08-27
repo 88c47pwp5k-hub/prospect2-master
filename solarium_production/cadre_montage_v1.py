@@ -84,7 +84,7 @@ RECETTE STANDARD — RÈGLES DÉFINITIVES (ne jamais dévier)
      et tout autre module PDF). Ne pas patcher au cas par cas — intégrer dès la conception.
 """
 
-from math import gcd as _gcd, sqrt as _sqrt, atan as _atan, cos as _cos, sin as _sin
+from math import gcd as _gcd, sqrt as _sqrt, atan as _atan, cos as _cos, sin as _sin, floor as _fl
 
 TUBE_W = 2.5   # largeur profil aluminium en pouces (constante assemblage)
 
@@ -142,20 +142,20 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
 
     # Longueur réelle de coupe du montant (traverse du haut occupe le dessus)
     mont_po  = H_po - TUBE_W
-    mont_mm  = round(mont_po * 25.4)
+    mont_mm  = _fl(mont_po * 25.4)
 
     # Hypoténuse (pré-calculé ici pour réutilisation dans étiquette + légende)
     if est_trap and L_po > 0:
         from math import sqrt as _sq, atan as _at, degrees as _deg
         hyp_po   = _sq(L_po**2 + (VG - VD)**2)
-        hyp_mm   = round(hyp_po * 25.4)
+        hyp_mm   = _fl(hyp_po * 25.4)
         ang_phys = _deg(_at((VG - VD) / L_po))
     else:
         hyp_po = hyp_mm = ang_phys = None
 
     # Longueur traverse du bas par segment
     trav_bas_po = max((L_po - nb_mont * TUBE_W) / nb_sec, 0)
-    trav_bas_mm = round(trav_bas_po * 25.4)
+    trav_bas_mm = _fl(trav_bas_po * 25.4)
 
     # ── Mise en page ──────────────────────────────────────────────────────────
     mg_l      = 1.10*inch   # marge gauche (cotation V)
@@ -373,8 +373,9 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
     else:
         c.rect(x0, y_bot, vue_w, vue_h, fill=False, stroke=True)
 
-    # 7. Spigots S
-    spigot_r = max(min(tw * 0.38, 0.088*inch), 5.0)
+    # 7. Spigots S — positionnés sur le tube (pas sur la ligne de contour)
+    # Rayon limité à ne pas dépasser la moitié de l'épaisseur du tube
+    spigot_r = max(min(tw * 0.35, th * 0.40, 0.080*inch), 4.0)
 
     def draw_spigot(sx, sy):
         c.setFillColor(SPIG_C)
@@ -385,29 +386,38 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
         c.setFont("Helvetica-Bold", max(6, int(spigot_r * 1.15)))
         c.drawCentredString(sx, sy - spigot_r * 0.38, "S")
 
-    # HAUT — 1 S par montant à la jonction traverse du haut / hypoténuse
-    # Rectangulaire : milieu de la traverse du haut au-dessus de chaque montant
-    # Trapèze : milieu de la traverse hypoténuse au-dessus de chaque montant (même logique)
+    # HAUT — 1 S par montant, centré dans la traverse du haut (sur le tube)
     for m in range(nb_mont):
         sx = mx_left(m) + tw / 2
         if est_trap:
-            # Centre de l'hypoténuse à la position horizontale du montant
             sy = y_at_x(sx) - th / 2
         else:
             frac = m / (nb_mont - 1) if nb_mont > 1 else 0
             sy = _yt(frac) - th / 2
         draw_spigot(sx, sy)
 
-    # BAS — extrémités de chaque segment de traverse du bas (rect ET trapèze identiques)
-    # Position : légèrement au-dessus de la traverse du bas (pas dessus)
-    # bx_l = face droite du montant gauche du segment, bx_r = face gauche du montant droit
-    GAP_BAS = 3.0
-    sy_b = y_bot + th + spigot_r + GAP_BAS
+    # BAS — centré dans la traverse du bas (sur le tube, pas au-dessus)
+    # bx_l = face droite du montant gauche, bx_r = face gauche du montant droit
+    sy_b = y_bot + th / 2   # centre de la traverse du bas
     for s in range(nb_sec):
         bx_l = mx_left(s) + tw
         bx_r = mx_left(s + 1)
         draw_spigot(bx_l, sy_b)
         draw_spigot(bx_r, sy_b)
+
+    # ── Marqueurs T (perçages VA10) — sur les traverses du bas ───────────────
+    TROU_C = cl.HexColor("#CC0000")
+    trou_r = max(spigot_r * 0.60, 3.0)
+    for s in range(nb_sec):
+        bx_l = mx_left(s) + tw
+        bx_r = mx_left(s + 1)
+        for tx_t in [bx_l, bx_r]:
+            c.setFillColor(cl.white)
+            c.circle(tx_t, sy_b, trou_r, fill=True, stroke=False)
+            c.setStrokeColor(TROU_C); c.setLineWidth(0.7)
+            c.circle(tx_t, sy_b, trou_r, fill=False, stroke=True)
+            c.setFillColor(TROU_C); c.setFont("Helvetica-Bold", max(5, int(trou_r * 1.1)))
+            c.drawCentredString(tx_t, sy_b - trou_r * 0.38, "T")
 
     # ══ COTATIONS ════════════════════════════════════════════════════════════
     # HYP (longueur + angle) : affiché dans l'en-tête colonnes, pas sur le dessin.
@@ -542,45 +552,36 @@ def dessiner_cadre_montage(c, y, mur_calc, w, h, inch, colors):
         fleche_h(bx_l, bx_r, cy_sec, BLEU_C)
         etiq_below(cx_s, cy_sec - 0.03*inch, trav_bas_mm, trav_bas_po, BLEU_C, BLEU_BG)
 
-    # ── Légende — taille proportionnelle à l'espace disponible (principe 7) ──
-    # Trapèze : l'espace est en bas de page (sous les cotations) — centrer sous le dessin.
-    # Rectangulaire : à droite du dessin (espace mg_r).
-    if est_trap:
-        leg_x = x0
-        leg_y = cy_sec - 0.58*inch
-    else:
-        leg_x = x1 + 0.12*inch
-        leg_y = y_top - 0.14*inch
-    # Cercle spigot (plus grand, lisible)
+    # ── Légende — toujours sous le dessin (évite débordement à droite) ──────
+    leg_x = x0
+    leg_y = cy_sec - 0.58*inch
+    # Cercle spigot
     c.setFillColor(SPIG_C)
-    c.circle(leg_x + 0.10*inch, leg_y, 0.08*inch, fill=True, stroke=False)
-    c.setFillColor(WHT); c.setFont("Helvetica-Bold", 11)
-    c.drawCentredString(leg_x + 0.10*inch, leg_y - 4.0, "S")
-    # Titre
-    c.setFillColor(NOIR); c.setFont("Helvetica-Bold", 11)
-    c.drawString(leg_x + 0.25*inch, leg_y - 3.5, "Spigot S")
-    leg_y -= 0.26*inch
-    # Explication haut (2 lignes)
-    c.setFont("Helvetica", 10)
-    c.drawString(leg_x, leg_y, "Haut : jonction")
-    leg_y -= 0.17*inch
-    c.drawString(leg_x, leg_y, "  montant")
+    c.circle(leg_x + 0.08*inch, leg_y, 0.065*inch, fill=True, stroke=False)
+    c.setFillColor(WHT); c.setFont("Helvetica-Bold", 9)
+    c.drawCentredString(leg_x + 0.08*inch, leg_y - 3.5, "S")
+    c.setFillColor(NOIR); c.setFont("Helvetica-Bold", 9)
+    c.drawString(leg_x + 0.20*inch, leg_y - 2.5, "Spigot S  —  jonction montant/traverse")
     leg_y -= 0.22*inch
-    # Explication bas (2 lignes)
-    c.drawString(leg_x, leg_y, "Bas : extrémité")
-    leg_y -= 0.17*inch
-    c.drawString(leg_x, leg_y, "  segment")
+    # Cercle T (VA10)
+    c.setStrokeColor(TROU_C); c.setLineWidth(0.7)
+    c.circle(leg_x + 0.08*inch, leg_y, 0.065*inch, fill=False, stroke=True)
+    c.setFillColor(TROU_C); c.setFont("Helvetica-Bold", 9)
+    c.drawCentredString(leg_x + 0.08*inch, leg_y - 3.5, "T")
+    c.setFillColor(NOIR); c.setFont("Helvetica", 8)
+    c.drawString(leg_x + 0.20*inch, leg_y - 2.5, "Trou VA10  —  perçage assemblage")
+    leg_y -= 0.22*inch
 
     # (Angle hypoténuse affiché dans l'en-tête colonne TRAPÈZE — pas d'encadré séparé)
 
-    # Légende couleurs (après la légende spigot)
+    # Légende couleurs
     leg2 = [("Trav. haut", TRAV_H_C), ("Trav. bas", TRAV_B_C), ("Montants", MONT_C)]
     for lbl2, col2 in leg2:
         c.setFillColor(col2)
-        c.roundRect(leg_x, leg_y, 0.12*inch, 0.12*inch, 1, fill=True, stroke=False)
-        c.setFillColor(NOIR); c.setFont("Helvetica", 9)
+        c.roundRect(leg_x, leg_y, 0.11*inch, 0.11*inch, 1, fill=True, stroke=False)
+        c.setFillColor(NOIR); c.setFont("Helvetica", 8)
         c.drawString(leg_x + 0.15*inch, leg_y - 1, lbl2)
-        leg_y -= 0.20*inch
+        leg_y -= 0.18*inch
 
     return cy_sec - 0.48*inch
 
@@ -734,14 +735,14 @@ def dessiner_2_trapezes_cote_a_cote(c, mc_g, mc_d, w, h, inch, colors):
         p.lineTo(x1, _yt(1)); p.lineTo(x0, _yt(0))
         p.close(); c.drawPath(p, fill=0, stroke=1)
 
-        # Spigots
-        spigot_r = max(min(tw * 0.38, 0.088*inch), 5.0)
+        # Spigots — sur le tube (pas sur la ligne de contour)
+        spigot_r = max(min(tw * 0.35, th * 0.40, 0.080*inch), 4.0)
         def draw_spigot(sx, sy):
             c.setFillColor(SPIG_C)
             c.circle(sx, sy, spigot_r, fill=True, stroke=False)
             c.setFillColor(WHT); c.setFont("Helvetica-Bold", max(6, int(spigot_r * 1.15)))
             c.drawCentredString(sx, sy - spigot_r * 0.38, "S")
-        GAP_BAS = 3.0; sy_b = y_bot + th + spigot_r + GAP_BAS
+        sy_b = y_bot + th / 2   # centre traverse du bas
         for m in range(nb_mont):
             sx_s = mx_left(m) + tw / 2
             sy_s = _yt((mx_left(m) + tw/2 - x0) / vue_w if vue_w > 0 else 0) - th/2

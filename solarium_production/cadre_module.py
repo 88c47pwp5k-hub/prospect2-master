@@ -10,7 +10,7 @@ RÈGLE USINE (permanent) :
 """
 
 import os, sys, re
-from math import gcd, sqrt, atan, cos, sin, ceil
+from math import gcd, sqrt, atan, cos, sin, ceil, floor
 from datetime import date as _date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -108,9 +108,9 @@ def calculer_mur_cadre(mur):
         'largeur_po':  L_po,
         'vg_po':       VG,    'vd_po':       VD,
         'hauteur_po':  max(VG, VD),
-        'largeur_mm':  round(L_po * 25.4),
-        'vg_mm':       round(VG * 25.4),   'vd_mm':  round(VD * 25.4),
-        'hauteur_mm':  round(max(VG, VD) * 25.4),
+        'largeur_mm':  floor(L_po * 25.4),
+        'vg_mm':       floor(VG * 25.4),   'vd_mm':  floor(VD * 25.4),
+        'hauteur_mm':  floor(max(VG, VD) * 25.4),
         'nb_montants': nb_mont, 'nb_sections': nb_sec,
         'est_trapeze': est_trap,
         'couleur_alu': mur.get('couleur_alu', ''),
@@ -355,22 +355,20 @@ def generer_pdf_cadre(params, fichier, mode=None):
             )
             c.showPage()
         elif trap_list_m:
-            entete("DESSIN DE MONTAGE — Cadre / Trapèze")
-            y = h - 1.3*inch
             for mc in trap_list_m:
+                entete("DESSIN DE MONTAGE — Cadre / Trapèze")
+                y = h - 1.3*inch
                 y = bandeau_mur(y, mc)
                 y = _montage.dessiner_cadre_montage(c, y, _mcd(mc), w, h, inch, colors)
-                y -= 0.15*inch
-            c.showPage()
+                c.showPage()
 
         if rect_list_m:
-            entete("DESSIN DE MONTAGE — Cadre / Trapèze")
-            y = h - 1.3*inch
             for mc in rect_list_m:
+                entete("DESSIN DE MONTAGE — Cadre / Trapèze")
+                y = h - 1.3*inch
                 y = bandeau_mur(y, mc)
                 y = _montage.dessiner_cadre_montage(c, y, _mcd(mc), w, h, inch, colors)
-                y -= 0.15*inch
-            c.showPage()
+                c.showPage()
 
     # ── Palette couleurs par mur (utilisée dans listes de coupe) ────────────
     MUR_PALETTE = ["#C8640A","#1565C0","#2E7D32","#B71C1C","#6A1B9A","#00695C"]
@@ -428,11 +426,13 @@ def generer_pdf_cadre(params, fichier, mode=None):
                     (pp['longueur_dec'] for pp in mc['pieces_calc'] if 'bas' in pp['nom'].lower()),
                     mc['largeur_po'] / max(nb_sec, 1)
                 )
+                glass_L_po = trav_bas_po + 1.0          # traverse B + 1"
+                glass_H_po = mc['hauteur_po'] - 4.0     # Hauteur totale - 4"
                 for s in range(nb_sec):
                     panneaux.append({
                         'nom': f"{nom_m} #{s+1}", 'type': 'rect',
-                        'L_mm': round(trav_bas_po * 25.4),
-                        'H_mm': mc['hauteur_mm'],
+                        'L_mm': floor(glass_L_po * 25.4),
+                        'H_mm': floor(glass_H_po * 25.4),
                     })
 
         total_pan = len(panneaux)
@@ -535,8 +535,13 @@ def generer_pdf_cadre(params, fichier, mode=None):
                 c.setFillColor(colors.white); c.setStrokeColor(NOIR); c.setLineWidth(0.9)
                 c.rect(gx0, gy0, gw, gh, fill=True, stroke=True)
                 c.setFillColor(NOIR); c.setStrokeColor(NOIR)
-                _arh(gx0, gx1, gy0 - 0.20*inch, f"L±0.5   {L_mm}mm")
-                _arv(gx1 + 0.30*inch, gy0, gy1, f"H±0.5   {H_mm}mm")
+                # Dimensions centrées dans le panneau
+                c.setFont("Helvetica-Bold", 8)
+                c.drawCentredString((gx0+gx1)/2, (gy0+gy1)/2 + 4, f"{L_mm} mm")
+                c.drawCentredString((gx0+gx1)/2, (gy0+gy1)/2 - 9, f"× {H_mm} mm")
+                # Flèches de cotes extérieures (fs réduit)
+                _arh(gx0, gx1, gy0 - 0.20*inch, f"L±0.5   {L_mm}mm", fs=6)
+                _arv(gx1 + 0.30*inch, gy0, gy1, f"H±0.5   {H_mm}mm", fs=6)
 
             # Badge mur (mauve, en haut de cellule)
             bw = max(0.95*inch, len(pan['nom']) * 0.072*inch); bh = 0.24*inch
@@ -608,7 +613,7 @@ def generer_pdf_cadre(params, fichier, mode=None):
         data = [["Pièce", "Longueur (pouces)", "Longueur (mm)", "Qté"]]
         for p in mc['pieces_calc']:
             data.append([p["nom"], _dvf(p["longueur_dec"]),
-                         str(round(p["longueur_dec"]*25.4)), str(p["qte"])])
+                         str(floor(p["longueur_dec"]*25.4)), str(p["qte"])])
         y = tableau(y, data, [3.1*inch, 1.8*inch, 1.5*inch, 1.3*inch])
     if notes.strip():
         c.setFillColor(colors.HexColor("#FFF3CD"))
@@ -776,7 +781,7 @@ def generer_pdf_cadre(params, fichier, mode=None):
         data = [["Profil", "Longueur (pouces)", "Longueur (mm)", "Notes"]]
         for nr in tous_nr:
             data.append([nr['type_profil'], _dvf(nr['longueur']),
-                         str(round(nr['longueur']*25.4)), nr.get('notes', '')])
+                         str(floor(nr['longueur']*25.4)), nr.get('notes', '')])
         y = tableau(y, data, [2.0*inch, 1.5*inch, 1.5*inch, 2.8*inch])
         c.showPage()
 
