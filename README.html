@@ -136,8 +136,60 @@
       <div class="subtitle">Documentation complète du projet</div>
     </div>
   </div>
-  <div class="date-badge">Mis à jour le <strong>14 août 2026</strong></div>
+  <div class="date-badge">Mis à jour le <strong>27 août 2026</strong></div>
 </header>
+
+<!-- MISES À JOUR 27 AOÛT 2026 — SOLARIUM SM · NOTES/RAPPELS · CORRECTIONS SP CADRE/TRAPÈZE -->
+<div class="section">
+  <div class="section-title">Mises à jour — 27 août 2026 — Solarium SM · Notes horodatées · Rappels · Corrections SP Cadre/Trapèze</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">app.py (SM) — Option "Nul" Dimension/état du site</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Nouvelle option "Nul" dans le champ Dimension/état du site. Lorsque sélectionné, le dossier est bloqué au statut "non prêt" — évite les soumissions incomplètes sans dimension validée.</td>
+        </tr>
+        <tr>
+          <td class="name">soumissions.html (SM) — Exclure transférés du filtre Incomplets</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Les dossiers marqués "Transféré" n'apparaissent plus dans le filtre des dossiers incomplets. Ajout aussi de l'avis Google manuel : possibilité d'entrer manuellement un lien vers un avis Google pour les clients qui n'ont pas reçu le courriel automatique.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py (SM) — dupliquer_dossier copie complète</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">La duplication de dossier copiait maintenant le dossier source en entier (tous les champs) au lieu d'une copie partielle. Correction d'un bug de copie superficielle.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py + dossier_detail.html (SM) — Module Notes horodatées + Rappels</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Nouveau module de notes horodatées intégré dans la fiche dossier : ajout/affichage de notes avec date/heure automatique (heure Montréal). Système de rappels : chaque note peut déclencher un rappel à une date future, affiché dans la liste des dossiers avec indicateur visuel.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py (SM) — Création automatique test_qa via TEST_QA_PASSWORD</td>
+          <td><span class="tag tag-python">Infra</span></td>
+          <td class="role">Le compte <code>test_qa</code> est maintenant créé automatiquement au démarrage si la variable d'environnement <code>TEST_QA_PASSWORD</code> est définie sur Railway. Évite de recréer manuellement le compte après chaque redéploiement.</td>
+        </tr>
+        <tr>
+          <td class="name">soumissions.html (SM) — Troncature notes + suppression avec PIN</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Les notes longues sont maintenant tronquées dans la liste (évite le débordement visuel). Le bouton de suppression de dossier exige désormais un PIN de confirmation (code 2580) — cohérent avec le comportement du dashboard.</td>
+        </tr>
+        <tr>
+          <td class="name">soumissions.html (SM) — Bouton "Marquer rappel comme fait"</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Bouton dans la liste des dossiers pour marquer un rappel actif comme accompli sans ouvrir la fiche complète. Le rappel disparaît de la liste immédiatement.</td>
+        </tr>
+        <tr>
+          <td class="name">cadre_module.py + cadre_approbation_v2.py + cadre_montage_v1.py (SP)</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Correctifs SP Cadre/Trapèze : (1) remplacement de <code>round()</code> par <code>floor()</code> sur toutes les conversions pouces→mm (règle Cédrick 20 août, conforme REFERENCE_ABSOLUE). (2) Correctifs layout PDF approbation : espacements FOOT_H/SEP_H/ARROW_BELOW ajustés, légende couleurs repositionnée horizontalement sous le dessin, entête de page correctement positionnée. Committés dans prospect2-master.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- MISES À JOUR 14 AOÛT 2026 — SOLARIUM SM · SUIVI PRODUCTION · RÉSUMÉ MATIN -->
 <div class="section">
