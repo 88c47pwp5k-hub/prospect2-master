@@ -182,7 +182,20 @@ Dossier : `~/Documents/Pastilles/`
 **URL production :** `https://solarium-pro-sm-production.up.railway.app`
 **Repo :** `~/solarium-sm` → GitHub `88c47pwp5k-hub/solarium-sm` → Railway auto-deploy sur `main`
 
-### Déployer les changements SM
+### ⚠️ Toujours tester en local avant de pousser en prod
+**Ne JAMAIS pousser directement en prod sans avoir testé le changement en local d'abord.**
+
+```bash
+cd ~/solarium-sm
+./start_local_test.sh          # démarre sur http://127.0.0.1:5099
+pkill -f "solarium-sm/app.py"  # arrêter
+```
+- Port fixe **5099** — différent de SP (5757), SC (5858), Prospect 2.0 (5959/7374). Ne jamais changer ce port, déjà référencé par `tests/*.py` et `.env.test`.
+- Données : `~/solarium-sm/data_test/` — 3 dossiers fictifs, **jamais** le volume Railway ni les vraies données clients. Aucun courriel réel envoyé (MAIL_* non configuré), aucun accès R2 de production.
+- Comptes : `benoit`/`cathy`/`cedric` (mêmes mots de passe qu'en prod) ou `test_qa`.
+- Détail complet : `~/solarium-sm/README.md`, section "Environnement de test local".
+
+### Déployer les changements SM (une fois validé en local)
 ```bash
 cd ~/solarium-sm
 git add <fichiers>
