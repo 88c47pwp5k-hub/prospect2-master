@@ -220,11 +220,12 @@ PYCHECK
 echo "" >> "$LOG"
 echo "── LAUNCHD ────────────────────────────────────────────" >> "$LOG"
 
-# Vérifie que importleadsv4 est chargé
-if launchctl list | grep -q "com.benoitdupuis.importleadsv4"; then
-    ok "com.benoitdupuis.importleadsv4 chargé dans launchd"
+# Vérifie que le plist importleadsv4 est installé (launchctl list est vide entre les runs — OnDemand=true)
+IMPORT_PLIST="$HOME/Library/LaunchAgents/com.benoitdupuis.importleadsv4.plist"
+if [[ -f "$IMPORT_PLIST" ]]; then
+    ok "com.benoitdupuis.importleadsv4 plist installé"
 else
-    fail "com.benoitdupuis.importleadsv4 absent de launchd"
+    fail "com.benoitdupuis.importleadsv4 plist absent ($IMPORT_PLIST)"
 fi
 
 # Vérifie qu'il a tourné dans les 15 dernières minutes
