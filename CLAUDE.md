@@ -23,6 +23,10 @@ Si aucune de ces trois options n'est techniquement possible dans le contexte de 
 
 ---
 
+## RÈGLE SECRETS — Ne jamais afficher la valeur d'une variable d'environnement ou d'un secret. Interdit : printenv, env, set, export sans argument, echo $VARIABLE, cat/less/head/tail d'un fichier .env, railway variables (et tout équivalent qui imprime des valeurs). Permis : lister les NOMS de variables seulement, ou vérifier qu'une variable existe (ex. test -n "$VAR" && echo "défini"). Un secret se lit dans le code via l'environnement, jamais dans la sortie d'une commande. Si une tâche semble exiger de voir une valeur, ARRÊTE et demande à Benoit. Origine : incident du 5 octobre 2026, 15 secrets de production affichés en clair.
+
+---
+
 ## RÈGLE DESTRUCTIVE-STOP — Arrêt obligatoire avant toute commande destructive
 
 Dès qu'une commande de vérification (git status, git diff, ls, etc.) révèle des changements non commités, non sauvegardés, ou non poussés, TOUTE commande destructive qui écraserait ce travail (git reset --hard, git checkout --force, git clean -fd, rm -rf, écrasement de fichier, ou équivalent) doit être un point d'ARRÊT séparé — jamais enchaînée dans la même action ou le même bloc de commandes que la vérification qui l'a révélé.
