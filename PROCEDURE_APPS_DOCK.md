@@ -98,8 +98,26 @@ echo "http://localhost:5858" > ~/Documents/Suivi-Production/url_courante.txt
 ## 6. SD — SolariumDashboard (détail)
 
 - **Chemin** : `~/Desktop/Solarium Pro /application SP/SolariumDashboard.app`
-- **Lancement** : exécute `python3 ~/Documents/import_leads_v4.py` puis ouvre `dashboard_leads.html` dans Chrome
+- **Lancement** : ouvre `dashboard_leads.html` dans Chrome (le dashboard lui-même, `~/Library/SolariumDashboard/dashboard_server.py`, tourne en continu via launchd `com.benoitdupuis.dashboardserver`, port 7373)
 - **Dashboard HTML** : `~/Desktop/dashboard_leads.html`
+
+### Import des leads (migré sur Railway le 18 septembre 2026)
+- **Avant** : `~/Library/SolariumDashboard/import_leads_v4.py` tournait en local via launchd (`com.benoitdupuis.importleadsv4.plist`, toutes les 15 min) — cassait quand le Mac dormait/était éteint.
+- **Maintenant** :
+  - **Ingestion IMAP** (Facebook + site web) tourne sur **Railway**, projet `import-leads-v4` (repo GitHub `88c47pwp5k-hub/import-leads-v4`), service `import-leads-v4`, indépendant de l'état du Mac.
+  - Le Mac **synchronise** les nouveaux leads toutes les 15 min via `~/Library/SolariumDashboard/sync_leads_railway.py`, lancé par launchd (`com.benoitdupuis.leadsyncrailway.plist`) — pull HTTP authentifié (`SYNC_TOKEN`) depuis Railway, fusionne en respectant `leads_supprimes.json` (un lead supprimé localement ne revient jamais).
+  - **Ancien job désactivé** : `com.benoitdupuis.importleadsv4.plist` déplacé dans `~/Library/LaunchAgents/_desactives/` (pas supprimé, juste hors du dossier surveillé par launchd — ne revient pas au redémarrage).
+- **Commandes utiles** :
+  ```bash
+  # Vérifier que le service Railway répond
+  curl https://import-leads-v4-production.up.railway.app/health
+
+  # Forcer une sync manuelle (au lieu d'attendre les 15 min)
+  /usr/bin/python3 ~/Library/SolariumDashboard/sync_leads_railway.py
+
+  # Voir les logs de sync
+  tail -f ~/Library/SolariumDashboard/sync_leads_railway.log
+  ```
 
 
 ## 7. Modifier l'interface Suivi Production
@@ -212,6 +230,7 @@ git push origin main   # Railway redéploie automatiquement (~2 min)
 - Scanne INBOX pour sujets contenant `alerte nouveau dossier`
 - Résultat dans `~/Library/SolariumDashboard/soumissions.json`
 - Log : `~/Library/SolariumDashboard/scan_soumissions.log`
+- **Credentials IMAP** : fichier `~/Library/SolariumDashboard/.env` (propre à ce script depuis le 18 septembre 2026 — avant, il lisait `~/Documents/resume-matin/.env`, ce qui a cassé silencieusement après la restructuration du repo resume-matin le 16 sept., bloqué par une protection macOS "Fichiers et dossiers" sur `~/Documents` appliquée aux process lancés par launchd). Ne plus faire dépendre ce script d'un `.env` d'un autre projet.
 
 ### Comportements conditionnels (depuis 18 juillet 2026)
 - **Clause délai** : `_build_termes(dossier)` dans `app.py` → si installation par tiers (`installateur_accredit` / `client`), clause délai ne mentionne pas Solarium Pro pour l'installation
