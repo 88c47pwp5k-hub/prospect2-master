@@ -1,0 +1,37 @@
+{
+  "outils": {
+    "inventaire": {
+      "actif": false,
+      "chemin": "",
+      "lien": ""
+    },
+    "sd": {
+      "actif": false,
+      "chemin": "",
+      "lien": ""
+    },
+    "sm": {
+      "actif": true,
+      "chemin": "/Users/benoitdupuis/Documents/prospect2",
+      "lien": "localhost:7374"
+    },
+    "sp": {
+      "actif": false,
+      "chemin": "",
+      "lien": ""
+    },
+    "personnalises": []
+  },
+  "identifiants": [
+    {
+      "nom": "Gmail",
+      "valeur": "test123"
+    }
+  ],
+  "historique": [
+    {
+      "date": "2026-07-31",
+      "note": "Premier contact — rapport envoyé par email"
+    }
+  ]
+}
