@@ -11,12 +11,14 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from dotenv import load_dotenv
+from keychain_secret import keychain_secret
 
 # ── Configuration ────────────────────────────────────────────────────────────
 load_dotenv(os.path.expanduser("~/Documents/prospect2/.env"))
 
 EXPEDITEUR    = "bdprospect2.0@gmail.com"
 APP_PASSWORD  = os.environ.get("GMAIL_APP_PASSWORD", "")
+APP_PASSWORD  = keychain_secret("gmail-app-password") or APP_PASSWORD
 BASE          = os.path.expanduser("~/Documents/prospect2")
 RAPPORTS_DIR  = os.path.join(BASE, "RAPPORTS_CLIENTS")
 SUIVI_CSV     = os.path.join(RAPPORTS_DIR, "suivi_global.csv")

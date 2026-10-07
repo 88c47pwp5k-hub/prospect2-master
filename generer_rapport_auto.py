@@ -220,7 +220,12 @@ def _compute_scores(sections, id_to_section, response):
 _ENV_PATH = os.path.expanduser("~/Documents/resume-matin/.env")
 
 def _load_anthropic_key():
-    """Lit ANTHROPIC_API_KEY depuis l'environnement ou ~/Documents/resume-matin/.env."""
+    """Lit ANTHROPIC_API_KEY depuis le trousseau macOS, l'environnement, ou
+    ~/Documents/resume-matin/.env (repli temporaire pendant la transition)."""
+    from keychain_secret import keychain_secret
+    key = keychain_secret("anthropic-api-key")
+    if key:
+        return key
     key = os.environ.get("ANTHROPIC_API_KEY", "")
     if key:
         return key
