@@ -136,8 +136,55 @@
       <div class="subtitle">Documentation complète du projet</div>
     </div>
   </div>
-  <div class="date-badge">Mis à jour le <strong>27 août 2026</strong></div>
+  <div class="date-badge">Mis à jour le <strong>6 octobre 2026</strong></div>
 </header>
+
+<!-- MISES À JOUR 6 OCTOBRE 2026 — RÈGLE SECRETS · AIKA POIGNÉES/BOM · TOURNÉE SM -->
+<div class="section">
+  <div class="section-title">Mises à jour — 6 octobre 2026 — Règle sécurité secrets (tous dépôts) · Aika poignées/BOM (SP) · Navigation Tournée (SM)</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">CLAUDE.md (tous les dépôts) — RÈGLE SECRETS</td>
+          <td><span class="tag tag-config">Sécurité</span></td>
+          <td class="role">Nouvelle règle globale : interdiction d'afficher la valeur d'une variable d'environnement ou d'un secret (<code>printenv</code>, <code>env</code>, <code>echo $VAR</code>, lecture de <code>.env</code>, <code>railway variables</code>, etc.). Seuls les noms de variables ou leur existence (<code>test -n "$VAR"</code>) peuvent être affichés. Suite à l'incident du 5 octobre 2026 : 15 secrets de production affichés en clair. Propagée dans tous les dépôts (CLAUDE.md local + global).</td>
+        </tr>
+        <tr>
+          <td class="name">aika_6mm_module.py (SP) — mm saisi = source de vérité</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role"><code>calculer_mur_aika()</code> repassait une mesure déjà saisie en mm par la conversion pouces→mm (<code>_po_to_mm</code>), ce qui la dégradait d'1mm via le floor au 1/16" (ex. 2948→2947). <code>L_mm</code>/<code>H_mm</code> priorisent maintenant directement <code>largeur_mm_brut</code>/<code>hauteur_mm_brut</code> ; la règle floor reste inchangée pour une mesure saisie en pouces. Au passage : barres 60-2001/60-2002 plafonnées à 5200mm, et modèles A/B ramenés à 1 seule poignée par mur (au lieu d'1 par panneau opérant du groupe).</td>
+        </tr>
+        <tr>
+          <td class="name">aika_6mm_module.py + interface (SP) — Refonte poignées 4 positions</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">La grille à cocher (max 2, <code>SERRURES_AIKA</code>) + le champ générique "Type de poignée" sont remplacés par 4 menus indépendants (gauche, centre_gauche, centre_droite, droite), chacun avec sa propre hauteur en mm. Décaissement quincaillerie recalculé par somme des kits réellement sélectionnés (liste vide si aucune poignée sur le mur) au lieu d'une quantité forfaitaire. Règle "ouverture centrale" (modèles E/F/G) revue : 2 poignées fixes, <code>60-3003 = 1</code> par mur (plus <code>rails × factor</code>), joint brosse 60-7004 corrigé pour compter 60-3003 en double hauteur. Scripts de validation committés : <code>test_poignees_aika.py</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">aika_6mm_module.py (SP) — Descriptions officielles BOM Cover Global</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Les 3 descriptions inventées (60-5001, 60-8004, 60-8018) remplacées par les termes officiels fournis par Benoit (<em>Eurocylinder lock housing/lock</em>, <em>pop-rivet</em>), et les 15 autres descriptions des 5 kits vérifiées contre la même source. Format retenu : <code>Français (terme anglais officiel)</code>. Bug découvert au passage : le word-wrap 2 lignes de la fiche d'installation retestait chaque mot contre <code>line1</code> même après un premier débordement, mélangeant l'ordre du texte avec les descriptions plus longues — corrigé (une fois qu'un mot déborde, tout le reste va sur <code>line2</code>).</td>
+        </tr>
+        <tr>
+          <td class="name">aika_6mm_module.py (SP) — Décaisse inventaire : 2 lignes taille normale</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Le tableau DÉCAISSE INVENTAIRE avait d'abord reçu un rétrécissement automatique de police (jusqu'à 7.5pt) pour les descriptions trop longues. Remplacé à la demande de Benoit par un retour à la ligne sur 2 lignes à taille normale (10.5pt inchangé), même logique de wrap corrigée que la fiche d'installation — plus aucune police réduite dans ce tableau. Voir REFERENCE_ABSOLUE_SP_SOLARIUM_PRO.md, section "Session 6 octobre 2026", pour le détail complet des 4 correctifs Aika du jour.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py + tournee_pilote.html (SM) — Lien Conducteur/Observateur toujours sur la tournée en cours</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Un lien copié avant le démarrage pouvait afficher "Tournée terminée" si la tournée datait de la veille (enregistrée un jour, confirmée le lendemain) — <code>confirmer()</code> sautait le ré-enregistrement de la date si déjà sauvegardé. Corrigé pour que le lien pointe toujours sur la tournée en cours, avec un historique complet désormais accessible.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py + tournee_planifier.html (SM) — Bouton "Nouvelle tournée" navigue vers le planificateur</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Sur l'écran "Tournée terminée !", le bouton appelait <code>resetTournee()</code> → <code>POST /tournee/api/reset</code>, qui se contentait de remettre <code>termine=true</code> (déjà vrai) puis rechargeait la page — rien ne changeait à l'écran. Corrigé : le bouton navigue maintenant directement vers le planificateur.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- MISES À JOUR 27 AOÛT 2026 — SOLARIUM SM · NOTES/RAPPELS · CORRECTIONS SP CADRE/TRAPÈZE -->
 <div class="section">
