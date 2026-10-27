@@ -10,7 +10,7 @@ load_dotenv(os.path.expanduser("~/Documents/prospect2/.env"))
 
 EXPEDITEUR   = "bdprospect2.0@gmail.com"
 APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "")
-APP_PASSWORD = keychain_secret("gmail-app-password") or APP_PASSWORD
+APP_PASSWORD = keychain_secret("gmail-app-password-prospect2") or APP_PASSWORD
 SUJET        = "Votre diagnostic confidentiel — Prospect 2.0"
 HTML_PATH    = os.path.expanduser("~/Documents/prospect2/invitation_courriel.html")
 CSV_PATH     = os.path.expanduser("~/Documents/prospect2/prospects.csv")
