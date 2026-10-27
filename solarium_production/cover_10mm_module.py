@@ -123,6 +123,22 @@ def _fmt_dim(po):
     mm = _po_to_mm(po)
     return f'{_dvf(po)}  ({mm:,} mm)'.replace(',', ' ')
 
+def _verre_cover_ab(L_mm, nb, poignee):
+    """
+    Formule verre Cover — ouverture A/x, B/x uniquement (hauteur 2438mm).
+    Vérifiée exactement (au mm) sur les 12 cas de référence fournis par
+    Cédric le 2026-10-27 (6 trivel/bec-de-canne + 6 bouton simple/double).
+    L_mm = largeur totale du mur en mm, nb = nombre total de panneaux.
+    Retourne (verre_panneau1_mm, verre_coulissant_mm).
+    """
+    if poignee == 'trivel':
+        g_coul = round((L_mm - 210) / nb - 4)
+        g_porte = g_coul + 190
+    else:  # 'simple' ou 'double' (bouton 10-9033) — tous les panneaux identiques
+        g_coul = round((L_mm - 22) / nb - 3.5)
+        g_porte = g_coul
+    return g_porte, g_coul
+
 def _ffd_cover(pieces_list, utile_po, kerf=0.25):
     """FFD pour profils Cover — barres en pouces"""
     toutes = []
@@ -174,14 +190,25 @@ def calculer_mur_cover(mur):
     DELTA_ENCASTRE = 1.25  # pouces
     H_calcul = H + (DELTA_ENCASTRE if mur.get('encastre') else 0)
 
+    # ── Système A/x, B/x (bec-de-canne/trivel ou bouton) : formule verre dédiée ──
+    # Référence Cédric (2026-10-27), vérifiée exactement sur 12 cas. Ne s'applique
+    # qu'aux modèles A et B avec panneaux inégaux (porte + fixes) ; les autres
+    # systèmes (C/D/E, panneaux égaux, Aika, Neoscenica) ne sont pas touchés.
+    modele_lettre = (mur.get('modele') or '').split('/')[0]
+    poignee = mur.get('serrure', 'simple')
+    ab_scope = modele_lettre in ('A', 'B') and not egaux
+    if ab_scope:
+        g_porte_mm, g_coul_mm = _verre_cover_ab(_po_to_mm(L), nb, poignee)
+
     # ── Largeurs panneau (calculées avant profils) ────────────────────────────
-    if egaux:
-        larg_panneau_po = L / nb
-        panneaux_po = [(larg_panneau_po, nb, "porte+fixes")]
-    else:
-        larg_porte_po = mur.get('largeur_porte_po', L/nb)
-        larg_fixes_po = (L - larg_porte_po) / (nb - 1) if nb > 1 else L
-        panneaux_po = [(larg_porte_po, 1, "porte"), (larg_fixes_po, nb-1, "fixe")]
+    if not ab_scope:
+        if egaux:
+            larg_panneau_po = L / nb
+            panneaux_po = [(larg_panneau_po, nb, "porte+fixes")]
+        else:
+            larg_porte_po = mur.get('largeur_porte_po', L/nb)
+            larg_fixes_po = (L - larg_porte_po) / (nb - 1) if nb > 1 else L
+            panneaux_po = [(larg_porte_po, 1, "porte"), (larg_fixes_po, nb-1, "fixe")]
 
     # ── Profils ──
     # 10-1006 = rail supérieur TOUJOURS (guidage plafond, non encastré)
@@ -193,20 +220,41 @@ def calculer_mur_cover(mur):
         {"code": profil_inf, "desc": BARRES_COVER[profil_inf]['desc'], "long_po": L, "qte": 1},
     ]
     # 10-2006_10-3005 : 1 profil vitrage+couvercle par panneau × 2 faces
-    # Longueur = largeur panneau mm - 11mm (source Cielo 6020/6210)
-    for larg_po, qte_pan, _ in panneaux_po:
-        long_vitr_mm = _po_to_mm(larg_po) - 11
+    if ab_scope:
+        # A/x, B/x : profilé = verre - 5mm (référence Cédric), pas la déduction générique.
         profils.append({
-            "code": "10-2006_10-3005",
-            "desc": "Profil vitrage + couvercle 10mm",
-            "long_po": long_vitr_mm / 25.4,
-            "qte": 2 * qte_pan,
+            "code": "10-2006_10-3005", "desc": "Profil vitrage + couvercle 10mm",
+            "long_po": (g_porte_mm - 5) / 25.4, "qte": 2,
         })
+        profils.append({
+            "code": "10-2006_10-3005", "desc": "Profil vitrage + couvercle 10mm",
+            "long_po": (g_coul_mm - 5) / 25.4, "qte": 2 * (nb - 1),
+        })
+    else:
+        # Longueur = largeur panneau mm - 11mm (source Cielo 6020/6210)
+        for larg_po, qte_pan, _ in panneaux_po:
+            long_vitr_mm = _po_to_mm(larg_po) - 11
+            profils.append({
+                "code": "10-2006_10-3005",
+                "desc": "Profil vitrage + couvercle 10mm",
+                "long_po": long_vitr_mm / 25.4,
+                "qte": 2 * qte_pan,
+            })
 
     # ── Panneaux et verres ──
     H_verre_mm = _po_to_mm(H_calcul) - 6
 
-    if egaux:
+    if ab_scope:
+        type_porte = "TRIVEL R" if poignee == 'trivel' else "4R"
+        verres = [
+            {"type": type_porte, "larg_mm": g_porte_mm, "haut_mm": H_verre_mm, "qte": 1},
+            {"type": "4R",       "larg_mm": g_coul_mm,  "haut_mm": H_verre_mm, "qte": nb-1},
+        ]
+        panneaux = [
+            {"larg_po": g_porte_mm / 25.4, "qte": 1,    "type": "porte"},
+            {"larg_po": g_coul_mm / 25.4,  "qte": nb-1, "type": "fixe"},
+        ]
+    elif egaux:
         larg_verre_mm = _po_to_mm(larg_panneau_po) - 6
         serrure = mur.get('serrure', 'simple')
         type_verre = "5R R" if mur.get('modele','').endswith('/i') else "5R L"
@@ -225,7 +273,12 @@ def calculer_mur_cover(mur):
         ]
 
     # ── Quincaillerie ──
-    nb_trivel = sum(1 for v in verres if 'TRIVEL' in v['type'])
+    if ab_scope:
+        nb_trivel = 1 if poignee == 'trivel' else 0
+        serrure_a_ajouter = None if poignee == 'trivel' else poignee
+    else:
+        nb_trivel = sum(1 for v in verres if 'TRIVEL' in v['type'])
+        serrure_a_ajouter = mur.get('serrure', 'simple')
     quincaillerie = []
     for item in QUINCAILLERIE_BASE:
         q = item.copy()
@@ -242,14 +295,15 @@ def calculer_mur_cover(mur):
         if q['qte_calc'] > 0:
             quincaillerie.append(q)
 
-    # Ajouter serrure
-    serrure_data = SERRURE_SIMPLE if mur.get('serrure','simple') == 'simple' else SERRURE_DOUBLE
-    for p in serrure_data['pieces']:
-        quincaillerie.append({
-            "code": p['code'], "desc": p['desc'],
-            "unite": "pcs", "qte_calc": p['qte'],
-            "groupe": "serrure"
-        })
+    # Ajouter serrure (aucune si trivel — géré via 10-9045 / 10-A-8 ci-dessus)
+    if serrure_a_ajouter is not None:
+        serrure_data = SERRURE_SIMPLE if serrure_a_ajouter == 'simple' else SERRURE_DOUBLE
+        for p in serrure_data['pieces']:
+            quincaillerie.append({
+                "code": p['code'], "desc": p['desc'],
+                "unite": "pcs", "qte_calc": p['qte'],
+                "groupe": "serrure"
+            })
 
     # Câble 10-1081: hauteur verre porte en mm (basé sur H_calcul aussi)
     larg_porte_po_cable = mur.get('largeur_porte_po', L/nb) if not egaux else L/nb

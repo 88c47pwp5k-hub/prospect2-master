@@ -1362,7 +1362,8 @@ function coverMurBlock(n) {
     <div class="row3">
       <div><label>Couleur extrusions</label><select id="cm${n}_couleur_alu">${s(COULEURS_ALU_C)}</select></div>
       <div><label>Couleur du verre</label><select id="cm${n}_couleur_verre">${s(COULEURS_VERRE_C)}</select></div>
-      <div><label>Type de serrure</label><select id="cm${n}_serrure">
+      <div><label>Type de serrure / poignée</label><select id="cm${n}_serrure">
+        <option value="trivel">Trivel / bec-de-canne (10-9045)</option>
         <option value="simple">Bouton simple (10-9033-1)</option>
         <option value="double">Bouton double (10-9033-2)</option>
       </select></div>
