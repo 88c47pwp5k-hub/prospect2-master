@@ -139,6 +139,53 @@
   <div class="date-badge">Mis à jour le <strong>6 octobre 2026</strong></div>
 </header>
 
+<!-- MISES À JOUR 27-28 OCTOBRE 2026 — COVER A/B VERRE · BON DE COMMANDE COMBINÉ · AIKA MESURES · SM PROSPECTS/SONDAGE/APPELS DE SERVICE · TROUSSEAU -->
+<div class="section">
+  <div class="section-title">Mises à jour — 27-28 octobre 2026 — Cover A/B verre (SP) · Bon de commande combiné (SP) · Aika mesures verticales (SP) · Fiche prospect notes/photos, rappel sondage, appels de service (SM) · Trousseau secrets_mac.py</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Fichier / Fonctionnalité</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">verres_module (SP) — Cover A/x, B/x trivel/bouton</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Nouvelle formule de commande verre dédiée aux configurations Cover A/x et B/x avec quincaillerie trivel/bouton (demande Cédric), distincte de la formule verre générique Cover. Commit <code>e0c0ce2</code> (<code>~/solarium_app</code>), répliqué dans <code>~/Documents/prospect2</code> (<code>bc2d358</code>).</td>
+        </tr>
+        <tr>
+          <td class="name">solarium_production.py (SP) — Bon de commande verre combiné Aika + Cadre</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Un seul bon de commande verre peut regrouper les pièces Aika et Cadre fixe d'un même projet, au lieu de deux documents séparés. Commit <code>a1b3990</code> (28 oct., demande Cédric) — déployé en production.</td>
+        </tr>
+        <tr>
+          <td class="name">aika_6mm_module.py / aika_dessin_v3.py (SP) — Mesures verticales 12+ panneaux</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role">Pour 12 panneaux et plus (E/F/G/H) : retrait d'un avertissement devenu inutile et correction du positionnement des mesures (<code>efcab32</code>). Chaque mesure reste désormais dans son propre panneau — fin du chevauchement en quinconce entre panneaux voisins (<code>fb10f21</code>).</td>
+        </tr>
+        <tr>
+          <td class="name">dossier_detail.html + app.py (SM) — Fiche prospect : notes et photos personnel</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Notes de la fiche prospect rendues multilignes et modifiables ; ajout de photos par le personnel directement sur la fiche (<code>975c41f</code>). La suppression d'un prospect "à relancer" efface désormais aussi ses photos dans R2 — plus d'orphelins (<code>7e1fa11</code>).</td>
+        </tr>
+        <tr>
+          <td class="name">app.py — get_interne() (SM) — Rappel sondage : backfill questionnaire</td>
+          <td><span class="tag tag-python">Bug</span></td>
+          <td class="role"><code>get_interne()</code> ne trouvait pas le champ <code>questionnaire</code> sur certains dossiers plus anciens, faussant l'éligibilité au rappel de sondage interne. Backfill du champ manquant (<code>8b9a916</code>). Test : <code>test_rappel_sondage_interne_sans_questionnaire.py</code>.</td>
+        </tr>
+        <tr>
+          <td class="name">app.py (SM) — Appels de service (nouveau flux)</td>
+          <td><span class="tag tag-python">Fonctionnalité</span></td>
+          <td class="role">Nouveau flux "appel de service" : enregistrement direct sans soumission, historique par client, bon de travail, conversion possible en soumission complète (<code>9af75f6</code>). Testé en prod avec un flag temporaire <code>test_qa</code> (ajouté <code>f3caca7</code>, retiré <code>c6b4b99</code> une fois les tests terminés).</td>
+        </tr>
+        <tr>
+          <td class="name">secrets_mac.py / keychain_secret.py — chemin Trousseau macOS déplacé</td>
+          <td><span class="tag tag-config">Sécurité</span></td>
+          <td class="role"><code>secrets_mac.py</code> (<code>get_secret</code>) déplacé de <code>~/Documents/secrets_mac.py</code> vers <code>~/Library/SolariumDashboard/secrets_mac.py</code> : les LaunchAgents lancés par launchd (hors Terminal) n'ont pas l'autorisation TCC pour lire dans <code>~/Documents</code> (dossier protégé), ce qui causait un <code>ModuleNotFoundError</code> en boucle de crash sur <code>sync_leads_railway</code> et sur <code>keychain_secret.py</code> (SM). Correctifs en cascade côté SM : ajout du fichier manquant en prod (<code>bb768d4</code>), repli sur <code>None</code> hors du Mac de Benoit (<code>6f8371c</code>), chemin corrigé (<code>96c8a62</code>). Côté prospect2 : entrée Trousseau Gmail corrigée vers <code>gmail-app-password-prospect2</code> (<code>27929a5</code>). Voir RÈGLE TROUSSEAU dans <code>~/.claude/CLAUDE.md</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- MISES À JOUR 6 OCTOBRE 2026 — RÈGLE SECRETS · AIKA POIGNÉES/BOM · TOURNÉE SM -->
 <div class="section">
   <div class="section-title">Mises à jour — 6 octobre 2026 — Règle sécurité secrets (tous dépôts) · Aika poignées/BOM (SP) · Navigation Tournée (SM)</div>

@@ -388,6 +388,14 @@ Toutes les clés API, mots de passe et tokens sont stockés dans **l'app Mots de
 ### Rotation suggérée
 Prochaine rotation annuelle : **août 2027** (IMAP, Anthropic, token API SM, clé RSA Google)
 
+### Module partagé `secrets_mac.py` — emplacement (migré le 28 octobre 2026)
+Le module `secrets_mac.py` (fonction `get_secret`, lecture du Trousseau macOS) vit dans
+`~/Library/SolariumDashboard/secrets_mac.py` — **jamais dans `~/Documents`**. Un LaunchAgent
+lancé directement par launchd (hors Terminal) n'a pas l'autorisation TCC pour lire dans
+`~/Documents` (dossier protégé) : y placer un module partagé provoque un `ModuleNotFoundError`
+en boucle de crash au démarrage (constaté sur `sync_leads_railway` et `keychain_secret.py`).
+Même règle pour tout futur module partagé lu par un LaunchAgent.
+
 ---
 
 ## 13. Checklist fin de session

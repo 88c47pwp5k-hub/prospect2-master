@@ -7,5 +7,5 @@ Utilisation :
 import os
 import sys
 
-sys.path.insert(0, os.path.expanduser("~/Documents"))
+sys.path.insert(0, os.path.expanduser("~/Library/SolariumDashboard"))
 from secrets_mac import get_secret as keychain_secret  # noqa: E402,F401
