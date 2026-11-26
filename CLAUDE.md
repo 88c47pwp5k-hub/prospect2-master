@@ -36,3 +36,32 @@ Concrètement : si `git status --short` montre des fichiers modifiés non commit
 Cette règle s'applique à toute commande destructive, pas seulement git — chaque fois qu'une action irréversible menace du travail non sauvegardé qui vient d'être détecté, le réflexe est de s'arrêter et demander, jamais de continuer dans la foulée.
 
 Si un fichier suivi (tracked) doit être écrasé/réinitialisé, propose d'abord de le sauvegarder ailleurs (copie, stash) avant l'action destructive, même si ça semble redondant.
+
+## On ne perd jamais rien — toute donnée neuve entre dans la sauvegarde dans le même lot
+
+Règle permanente de Benoit, posée le 26 novembre 2026 après l'audit des
+sauvegardes. Elle vaut pour toutes les sessions et tous les dépôts ; le texte
+complet est dans le `CLAUDE.md` global (§ RÈGLE ON NE PERD JAMAIS RIEN).
+
+**Toute donnée, application, volume, base ou dossier créé par un agent doit être
+ajouté à la sauvegarde Backblaze B2 dans le MÊME lot, et le lot n'est pas fini
+tant que la restauration de ce nouvel élément n'a pas été prouvée.**
+
+Trois gestes, dans l'ordre, sans en sauter un :
+
+1. déclarer la donnée dans `~/Library/SolariumSauvegardeB2/sources.json` — c'est
+   la liste qui fait foi, et c'est elle que lit la barrière de déploiement ;
+2. `python3 ~/Library/SolariumSauvegardeB2/sauvegarde_b2.py` pour qu'elle parte
+   réellement ;
+3. `python3 ~/Library/SolariumSauvegardeB2/restaurer_epreuve.py <id>` et **coller
+   le verdict dans le rapport du lot**. Une épreuve non montrée ne compte pas.
+
+**Ce n'est pas qu'une consigne : la barrière de déploiement de ce service appelle
+`couverture.py`, qui REFUSE le déploiement** si un volume du projet n'est déclaré
+ni dans `sources.json` ni dans `hors_perimetre` avec une raison écrite, si la
+dernière sauvegarde B2 réussie date de plus de 48 h, ou si une source critique
+n'a pas été collectée au dernier passage.
+
+Pour écarter volontairement quelque chose, l'écrire dans `hors_perimetre` **avec
+la raison** — jamais le laisser hors de la liste en silence. Et ne jamais retirer
+une source pour faire passer un déploiement.
